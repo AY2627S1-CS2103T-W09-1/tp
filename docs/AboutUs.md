@@ -18,14 +18,13 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Filtering/search commands
 
-### Jane Doe
+### Zong Wei Quah
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/zwqqwz123.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/zwqqwz123)]
 
-* Role: Team Lead
+* Role: Developer
 * Responsibilities: UI
 
 ### Johnny Doe
