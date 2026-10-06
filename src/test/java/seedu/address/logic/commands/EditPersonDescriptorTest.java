@@ -14,6 +14,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditPersonDescriptorTest {
@@ -64,8 +65,21 @@ public class EditPersonDescriptorTest {
                 + editPersonDescriptor.getName().orElse(null) + ", phone="
                 + editPersonDescriptor.getPhone().orElse(null) + ", email="
                 + editPersonDescriptor.getEmail().orElse(null) + ", address="
-                + editPersonDescriptor.getAddress().orElse(null) + ", tags="
+                + editPersonDescriptor.getAddress().orElse(null) + ", smokingStatus="
+                + editPersonDescriptor.getSmokingStatus().orElse(null) + ", tags="
                 + editPersonDescriptor.getTags().orElse(null) + "}";
         assertEquals(expected, editPersonDescriptor.toString());
+    }
+
+    @Test
+    public void copyConstructor_smokingStatus_preservesUpdate() {
+        EditPersonDescriptor original = new EditPersonDescriptor();
+        original.setSmokingStatus(new SmokingStatus("yes"));
+        EditPersonDescriptor copy = new EditPersonDescriptor(original);
+        assertTrue(copy.isAnyFieldEdited());
+        assertEquals(original, copy);
+        original.setSmokingStatus(new SmokingStatus("no"));
+        assertEquals(new SmokingStatus("yes"), copy.getSmokingStatus().orElseThrow());
+        assertFalse(original.equals(copy));
     }
 }
