@@ -17,6 +17,7 @@ CupidMaxxing is a desktop address book for independent professional matchmakers 
 
 ## Documentation
 
+* [Project Website](https://ay2627s1-cs2103t-w09-1.github.io/tp/)
 * [User Guide](docs/UserGuide.md)
 * [Developer Guide](docs/DeveloperGuide.md)
 * [About Us](docs/AboutUs.md)
