@@ -88,12 +88,36 @@ public class PersonTest {
         // different tags -> returns false
         editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // different religion or partner criteria -> returns false
+        editedAlice = new PersonBuilder(ALICE).withReligion("Islam").build();
+        assertFalse(ALICE.equals(editedAlice));
+        editedAlice = new PersonBuilder(ALICE).withExcludedReligions("No religion").build();
+        assertFalse(ALICE.equals(editedAlice));
+    }
+
+    /** Religion criteria must not contradict each other. */
+    @Test
+    public void constructor_conflictingReligionCriteria_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Religion.MESSAGE_CONFLICT, () -> new PersonBuilder()
+                .withPreferredReligion("Islam").withRequiredReligion("Buddhism").build());
+        assertThrows(IllegalArgumentException.class, Religion.MESSAGE_CONFLICT, () -> new PersonBuilder()
+                .withRequiredReligion("Islam").withExcludedReligions("Islam").build());
+    }
+
+    /** Exclusion sets cannot be modified through the getter. */
+    @Test
+    public void getExcludedReligions_unmodifiable() {
+        Person person = new PersonBuilder().withExcludedReligions("Islam").build();
+        assertThrows(UnsupportedOperationException.class, () -> person.getExcludedReligions()
+                .add(new Religion("Buddhism")));
     }
 
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
+                + ", religion=null, preferredReligion=null, requiredReligion=null, excludedReligions=[]}";
         assertEquals(expected, ALICE.toString());
     }
 }

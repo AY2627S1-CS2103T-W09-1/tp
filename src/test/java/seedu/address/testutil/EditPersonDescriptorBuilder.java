@@ -10,6 +10,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -81,6 +82,32 @@ public class EditPersonDescriptorBuilder {
         return this;
     }
 
+    /** Sets or clears the client's religion; null means clear. */
+    public EditPersonDescriptorBuilder withReligion(String value) {
+        descriptor.setReligion(value == null ? null : new Religion(value));
+        return this;
+    }
+
+    /** Sets or clears the preferred partner religion. */
+    public EditPersonDescriptorBuilder withPreferredReligion(String value) {
+        descriptor.setPreferredReligion(value == null ? null : new Religion(value));
+        return this;
+    }
+
+    /** Sets or clears the required partner religion. */
+    public EditPersonDescriptorBuilder withRequiredReligion(String value) {
+        descriptor.setRequiredReligion(value == null ? null : new Religion(value));
+        return this;
+    }
+
+    /** Replaces excluded partner religions, clearing them for zero values. */
+    public EditPersonDescriptorBuilder withExcludedReligions(String... values) {
+        Set<Religion> religions = Stream.of(values).map(Religion::new).collect(Collectors.toSet());
+        descriptor.setExcludedReligions(religions);
+        return this;
+    }
+
+    /** Returns the prepared edit descriptor. */
     public EditPersonDescriptor build() {
         return descriptor;
     }

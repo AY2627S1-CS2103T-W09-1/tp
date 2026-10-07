@@ -1,5 +1,6 @@
 package seedu.address.logic;
 
+import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,6 +46,14 @@ public class Messages {
                 .append(person.getAddress())
                 .append("; Tags: ");
         person.getTags().forEach(builder::append);
+        builder.append("; Religion: ").append(person.getReligion().map(Object::toString).orElse("Not specified"));
+        person.getPreferredReligion().ifPresent(value -> builder.append("; Preferred religion: ").append(value));
+        person.getRequiredReligion().ifPresent(value -> builder.append("; Required religion: ").append(value));
+        if (!person.getExcludedReligions().isEmpty()) {
+            builder.append("; Excluded religions: ");
+            builder.append(person.getExcludedReligions().stream().map(Object::toString)
+                    .sorted(Comparator.naturalOrder()).collect(Collectors.joining(", ")));
+        }
         return builder.toString();
     }
 

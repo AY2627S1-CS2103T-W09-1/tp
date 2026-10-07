@@ -3,8 +3,12 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
@@ -26,6 +30,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -43,7 +48,11 @@ public class EditCommand extends Command {
             + "[" + PREFIX_PHONE + "PHONE] "
             + "[" + PREFIX_EMAIL + "EMAIL] "
             + "[" + PREFIX_ADDRESS + "ADDRESS] "
-            + "[" + PREFIX_TAG + "TAG]...\n"
+            + "[" + PREFIX_TAG + "TAG]... "
+            + "[" + PREFIX_RELIGION + "RELIGION] "
+            + "[" + PREFIX_PREFERRED_RELIGION + "PREFERRED_RELIGION] "
+            + "[" + PREFIX_REQUIRED_RELIGION + "REQUIRED_RELIGION] "
+            + "[" + PREFIX_EXCLUDED_RELIGION + "EXCLUDED_RELIGION]...\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
@@ -77,7 +86,12 @@ public class EditCommand extends Command {
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
-        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        Person editedPerson;
+        try {
+            editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        } catch (IllegalArgumentException exception) {
+            throw new CommandException(exception.getMessage());
+        }
 
         if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
@@ -100,8 +114,19 @@ public class EditCommand extends Command {
         Email updatedEmail = editPersonDescriptor.getEmail().orElse(personToEdit.getEmail());
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
+        Religion updatedReligion = editPersonDescriptor.isReligionEdited()
+                ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
+        Religion updatedPreferred = editPersonDescriptor.isPreferredReligionEdited()
+                ? editPersonDescriptor.getPreferredReligion().orElse(null)
+                : personToEdit.getPreferredReligion().orElse(null);
+        Religion updatedRequired = editPersonDescriptor.isRequiredReligionEdited()
+                ? editPersonDescriptor.getRequiredReligion().orElse(null)
+                : personToEdit.getRequiredReligion().orElse(null);
+        Set<Religion> updatedExcluded = editPersonDescriptor.getExcludedReligions()
+                .orElse(personToEdit.getExcludedReligions());
 
-        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedTags);
+        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedTags,
+                updatedReligion, updatedPreferred, updatedRequired, updatedExcluded);
     }
 
     @Override
@@ -137,6 +162,13 @@ public class EditCommand extends Command {
         private Email email;
         private Address address;
         private Set<Tag> tags;
+        private Religion religion;
+        private Religion preferredReligion;
+        private Religion requiredReligion;
+        private Set<Religion> excludedReligions;
+        private boolean religionEdited;
+        private boolean preferredReligionEdited;
+        private boolean requiredReligionEdited;
 
         public EditPersonDescriptor() {}
 
@@ -150,13 +182,26 @@ public class EditCommand extends Command {
             setEmail(toCopy.email);
             setAddress(toCopy.address);
             setTags(toCopy.tags);
+            if (toCopy.religionEdited) {
+                setReligion(toCopy.religion);
+            }
+            if (toCopy.preferredReligionEdited) {
+                setPreferredReligion(toCopy.preferredReligion);
+            }
+            if (toCopy.requiredReligionEdited) {
+                setRequiredReligion(toCopy.requiredReligion);
+            }
+            if (toCopy.excludedReligions != null) {
+                setExcludedReligions(toCopy.excludedReligions);
+            }
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, address, tags);
+            return CollectionUtil.isAnyNonNull(name, phone, email, address, tags, excludedReligions)
+                    || religionEdited || preferredReligionEdited || requiredReligionEdited;
         }
 
         public void setName(Name name) {
@@ -208,6 +253,65 @@ public class EditCommand extends Command {
             return (tags != null) ? Optional.of(Collections.unmodifiableSet(tags)) : Optional.empty();
         }
 
+        /** Sets or clears the client's religion; null explicitly clears it. */
+        public void setReligion(Religion religion) {
+            this.religion = religion;
+            religionEdited = true;
+        }
+
+        /** Returns the new religion, if one was supplied rather than cleared. */
+        public Optional<Religion> getReligion() {
+            return Optional.ofNullable(religion);
+        }
+
+        /** Returns whether the religion was supplied, including an explicit clear. */
+        public boolean isReligionEdited() {
+            return religionEdited;
+        }
+
+        /** Sets or clears the soft religion preference. */
+        public void setPreferredReligion(Religion religion) {
+            preferredReligion = religion;
+            preferredReligionEdited = true;
+        }
+
+        /** Returns the new soft religion preference, if present. */
+        public Optional<Religion> getPreferredReligion() {
+            return Optional.ofNullable(preferredReligion);
+        }
+
+        /** Returns whether the soft religion preference was supplied. */
+        public boolean isPreferredReligionEdited() {
+            return preferredReligionEdited;
+        }
+
+        /** Sets or clears the required partner religion. */
+        public void setRequiredReligion(Religion religion) {
+            requiredReligion = religion;
+            requiredReligionEdited = true;
+        }
+
+        /** Returns the new required partner religion, if present. */
+        public Optional<Religion> getRequiredReligion() {
+            return Optional.ofNullable(requiredReligion);
+        }
+
+        /** Returns whether the required partner religion was supplied. */
+        public boolean isRequiredReligionEdited() {
+            return requiredReligionEdited;
+        }
+
+        /** Replaces the excluded religions with a defensive copy, possibly empty to clear them. */
+        public void setExcludedReligions(Set<Religion> religions) {
+            excludedReligions = new HashSet<>(religions);
+        }
+
+        /** Returns the replacement exclusion set, if supplied. */
+        public Optional<Set<Religion>> getExcludedReligions() {
+            return excludedReligions == null ? Optional.empty()
+                    : Optional.of(Collections.unmodifiableSet(excludedReligions));
+        }
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -223,7 +327,14 @@ public class EditCommand extends Command {
                     && Objects.equals(phone, otherEditPersonDescriptor.phone)
                     && Objects.equals(email, otherEditPersonDescriptor.email)
                     && Objects.equals(address, otherEditPersonDescriptor.address)
-                    && Objects.equals(tags, otherEditPersonDescriptor.tags);
+                    && Objects.equals(tags, otherEditPersonDescriptor.tags)
+                    && Objects.equals(religion, otherEditPersonDescriptor.religion)
+                    && Objects.equals(preferredReligion, otherEditPersonDescriptor.preferredReligion)
+                    && Objects.equals(requiredReligion, otherEditPersonDescriptor.requiredReligion)
+                    && Objects.equals(excludedReligions, otherEditPersonDescriptor.excludedReligions)
+                    && religionEdited == otherEditPersonDescriptor.religionEdited
+                    && preferredReligionEdited == otherEditPersonDescriptor.preferredReligionEdited
+                    && requiredReligionEdited == otherEditPersonDescriptor.requiredReligionEdited;
         }
 
         @Override
@@ -234,6 +345,13 @@ public class EditCommand extends Command {
                     .add("email", email)
                     .add("address", address)
                     .add("tags", tags)
+                    .add("religion", religion)
+                    .add("preferredReligion", preferredReligion)
+                    .add("requiredReligion", requiredReligion)
+                    .add("excludedReligions", excludedReligions)
+                    .add("religionEdited", religionEdited)
+                    .add("preferredReligionEdited", preferredReligionEdited)
+                    .add("requiredReligionEdited", requiredReligionEdited)
                     .toString();
         }
     }

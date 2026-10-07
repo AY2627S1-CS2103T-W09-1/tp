@@ -28,6 +28,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalPersons.AMY;
@@ -42,6 +43,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
@@ -160,6 +162,30 @@ public class AddCommandParserTest {
         // all prefixes missing
         assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_EMAIL_BOB + VALID_ADDRESS_BOB,
                 expectedMessage);
+    }
+
+    /** Parses own religion and all three types of partner criterion. */
+    @Test
+    public void parse_religionFields_success() {
+        String base = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
+        Person expected = new PersonBuilder(BOB).withTags().withReligion("Jainism")
+                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
+                .withExcludedReligions("Islam", "No religion").build();
+        assertParseSuccess(parser, base + " r/Jainism rp/Buddhism rr/Buddhism"
+                + " rx/Islam rx/No religion", new AddCommand(expected));
+    }
+
+    /** Invalid, repeated, and conflicting religion fields are rejected. */
+    @Test
+    public void parse_invalidReligionFields_failure() {
+        String base = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
+        assertParseFailure(parser, base + " r/Other: Jainism", Religion.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, base + " rp/Unlisted faith", Religion.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, base + " r/Islam r/Buddhism",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_RELIGION));
+        assertParseFailure(parser, base + " rx/Islam rx/islam", "Duplicate excluded religion: Islam");
+        assertParseFailure(parser, base + " rp/Islam rr/Buddhism", Religion.MESSAGE_CONFLICT);
+        assertParseFailure(parser, base + " rr/Islam rx/Islam", Religion.MESSAGE_CONFLICT);
     }
 
     @Test

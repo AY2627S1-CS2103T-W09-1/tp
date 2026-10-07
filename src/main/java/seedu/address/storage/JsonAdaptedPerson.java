@@ -15,6 +15,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -29,6 +30,10 @@ class JsonAdaptedPerson {
     private final String email;
     private final String address;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
+    private final String religion;
+    private final String preferredReligion;
+    private final String requiredReligion;
+    private final List<String> excludedReligions = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -36,14 +41,28 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+            @JsonProperty("tags") List<JsonAdaptedTag> tags, @JsonProperty("religion") String religion,
+            @JsonProperty("preferredReligion") String preferredReligion,
+            @JsonProperty("requiredReligion") String requiredReligion,
+            @JsonProperty("excludedReligions") List<String> excludedReligions) {
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
+        this.religion = religion;
+        this.preferredReligion = preferredReligion;
+        this.requiredReligion = requiredReligion;
         if (tags != null) {
             this.tags.addAll(tags);
         }
+        if (excludedReligions != null) {
+            this.excludedReligions.addAll(excludedReligions);
+        }
+    }
+
+    /** Creates an adapted legacy person with no recorded religion details. */
+    public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags) {
+        this(name, phone, email, address, tags, null, null, null, null);
     }
 
     /**
@@ -56,6 +75,13 @@ class JsonAdaptedPerson {
         address = source.getAddress().value;
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
+                .collect(Collectors.toList()));
+        religion = source.getReligion().map(Religion::toString).orElse(null);
+        preferredReligion = source.getPreferredReligion().map(Religion::toString).orElse(null);
+        requiredReligion = source.getRequiredReligion().map(Religion::toString).orElse(null);
+        excludedReligions.addAll(source.getExcludedReligions().stream()
+                .map(Religion::toString)
+                .sorted()
                 .collect(Collectors.toList()));
     }
 
@@ -103,7 +129,21 @@ class JsonAdaptedPerson {
         final Address modelAddress = new Address(address);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags);
+        try {
+            Religion modelReligion = religion == null ? null : new Religion(religion);
+            Religion modelPreferred = preferredReligion == null ? null : new Religion(preferredReligion);
+            Religion modelRequired = requiredReligion == null ? null : new Religion(requiredReligion);
+            Set<Religion> modelExcluded = new HashSet<>();
+            for (String excluded : excludedReligions) {
+                if (excluded == null || !modelExcluded.add(new Religion(excluded))) {
+                    throw new IllegalArgumentException("Excluded religions must be valid and unique.");
+                }
+            }
+            return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags,
+                    modelReligion, modelPreferred, modelRequired, modelExcluded);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalValueException(exception.getMessage());
+        }
     }
 
 }

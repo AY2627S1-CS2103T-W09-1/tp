@@ -3,8 +3,12 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -26,7 +30,11 @@ public class AddCommand extends Command {
             + PREFIX_PHONE + "PHONE "
             + PREFIX_EMAIL + "EMAIL "
             + PREFIX_ADDRESS + "ADDRESS "
-            + "[" + PREFIX_TAG + "TAG]...\n"
+            + "[" + PREFIX_TAG + "TAG]... "
+            + "[" + PREFIX_RELIGION + "RELIGION] "
+            + "[" + PREFIX_PREFERRED_RELIGION + "PREFERRED_RELIGION] "
+            + "[" + PREFIX_REQUIRED_RELIGION + "REQUIRED_RELIGION] "
+            + "[" + PREFIX_EXCLUDED_RELIGION + "EXCLUDED_RELIGION]...\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + "John Doe "
             + PREFIX_PHONE + "98765432 "

@@ -3,8 +3,12 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Set;
@@ -17,6 +21,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -31,21 +36,35 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG);
+                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
+                        PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION, PREFIX_REQUIRED_RELIGION,
+                        PREFIX_EXCLUDED_RELIGION);
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL)
                 || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS);
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION, PREFIX_REQUIRED_RELIGION);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
         Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
         Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
         Address address = ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get());
         Set<Tag> tagList = ParserUtil.parseTags(argMultimap.getAllValues(PREFIX_TAG));
 
-        Person person = new Person(name, phone, email, address, tagList);
+        Religion religion = parseOptionalReligion(argMultimap, PREFIX_RELIGION);
+        Religion preferred = parseOptionalReligion(argMultimap, PREFIX_PREFERRED_RELIGION);
+        Religion required = parseOptionalReligion(argMultimap, PREFIX_REQUIRED_RELIGION);
+        Set<Religion> excluded = ParserUtil.parseExcludedReligions(
+                argMultimap.getAllValues(PREFIX_EXCLUDED_RELIGION));
+
+        Person person;
+        try {
+            person = new Person(name, phone, email, address, tagList, religion, preferred, required, excluded);
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(exception.getMessage());
+        }
 
         return new AddCommand(person);
     }
@@ -56,6 +75,14 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     private static boolean arePrefixesPresent(ArgumentMultimap argumentMultimap, Prefix... prefixes) {
         return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
+    }
+
+    /** Parses a single optional religion field, leaving an absent field unknown. */
+    private static Religion parseOptionalReligion(ArgumentMultimap arguments, Prefix prefix) throws ParseException {
+        if (arguments.getValue(prefix).isEmpty()) {
+            return null;
+        }
+        return ParserUtil.parseReligion(arguments.getValue(prefix).get());
     }
 
 }

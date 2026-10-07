@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -39,6 +40,10 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label email;
     @FXML
+    private Label religion;
+    @FXML
+    private Label religionCriteria;
+    @FXML
     private FlowPane tags;
 
     /**
@@ -52,6 +57,26 @@ public class PersonCard extends UiPart<Region> {
         phone.setText(person.getPhone().value);
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);
+        religion.setText("Religion: " + person.getReligion().map(Object::toString).orElse("Not specified"));
+        StringBuilder criteria = new StringBuilder();
+        person.getPreferredReligion().ifPresent(value -> criteria.append("Preferred: ").append(value));
+        person.getRequiredReligion().ifPresent(value -> {
+            if (!criteria.isEmpty()) {
+                criteria.append("; ");
+            }
+            criteria.append("Required: ").append(value);
+        });
+        if (!person.getExcludedReligions().isEmpty()) {
+            if (!criteria.isEmpty()) {
+                criteria.append("; ");
+            }
+            criteria.append("Excluded: ");
+            criteria.append(person.getExcludedReligions().stream().map(Object::toString)
+                    .sorted().collect(Collectors.joining(", ")));
+        }
+        religionCriteria.setText(criteria.toString());
+        religionCriteria.setManaged(!criteria.isEmpty());
+        religionCriteria.setVisible(!criteria.isEmpty());
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));

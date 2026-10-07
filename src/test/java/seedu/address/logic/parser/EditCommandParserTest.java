@@ -25,6 +25,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -42,6 +43,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
@@ -193,6 +195,29 @@ public class EditCommandParserTest {
 
         assertParseFailure(parser, userInput,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
+    }
+
+    /** Parses setting and clearing religion fields without conflating clear with omission. */
+    @Test
+    public void parse_religionEdits_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withReligion("Jainism").withPreferredReligion("Buddhism")
+                .withRequiredReligion("Buddhism").withExcludedReligions("Islam", "No religion").build();
+        assertParseSuccess(parser, "1 r/Jainism rp/Buddhism rr/Buddhism"
+                + " rx/Islam rx/No religion", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        descriptor = new EditPersonDescriptorBuilder().withReligion(null)
+                .withPreferredReligion(null).withRequiredReligion(null).withExcludedReligions().build();
+        assertParseSuccess(parser, "1 r/ rp/ rr/ rx/", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    /** Invalid values and repeated single-valued religion fields are rejected. */
+    @Test
+    public void parse_invalidReligionEdit_failure() {
+        assertParseFailure(parser, "1 r/Other: Jainism", Religion.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 rr/Unlisted faith", Religion.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 r/Islam r/Buddhism",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_RELIGION));
     }
 
     @Test
