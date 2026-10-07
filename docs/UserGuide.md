@@ -96,8 +96,10 @@ Religion is optional. Omit `r/` when a client's religion is not known; this is d
 `Baha'i Faith`, `Shinto`, `Taoism`, `Confucianism`, `Zoroastrianism`, `Rastafari`,
 `Wicca`, `Paganism`, `Tenrikyo`, `Cao Dai`, `Druze`, `Atheism`, `Agnosticism`, and
 `No religion`. Use one of these names for any of `r/`, `rp/`, `rr/`, or `rx/`.
-Names are matched without regard to letter case or repeated spaces. There is no
-free-text or `Other` category. If none applies, leave the field unset rather than selecting
+Names are matched without regard to letter case or repeated spaces: for example,
+`r/jAiNiSm` is accepted and displayed as `Jainism`. A misspelled name is not accepted;
+use the listed spelling, although its letter case can vary. There is no free-text or
+`Other` category. If none applies, leave the field unset rather than selecting
 `No religion`, which means the client explicitly has no religion.
 
 * `rp/RELIGION` records a **soft preference** for a partner's religion.
