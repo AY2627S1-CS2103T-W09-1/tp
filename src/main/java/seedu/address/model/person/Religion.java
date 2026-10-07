@@ -35,9 +35,6 @@ public final class Religion {
     public Religion(String value) {
         requireNonNull(value);
         String cleaned = value.strip().replaceAll("\\s+", " ");
-        if (cleaned.equalsIgnoreCase("Bahá'í Faith") || cleaned.equalsIgnoreCase("Bahá’í Faith")) {
-            cleaned = "Baha'i Faith";
-        }
         for (String category : CATEGORIES) {
             if (category.equalsIgnoreCase(cleaned)) {
                 displayValue = category;
