@@ -79,8 +79,10 @@ public class EditCommand extends Command {
     private final EditPersonDescriptor editPersonDescriptor;
 
     /**
-     * @param index of the person in the filtered person list to edit
-     * @param editPersonDescriptor details to edit the person with
+     * Creates an edit command for a person in the displayed list.
+     *
+     * @param index Index of the person to edit.
+     * @param editPersonDescriptor Details to apply to the person.
      */
     public EditCommand(Index index, EditPersonDescriptor editPersonDescriptor) {
         requireNonNull(index);
@@ -90,6 +92,11 @@ public class EditCommand extends Command {
         this.editPersonDescriptor = new EditPersonDescriptor(editPersonDescriptor);
     }
 
+    /**
+     * Applies the edits to the selected person and reports the result.
+     *
+     * @throws CommandException If the index or resulting person is invalid.
+     */
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
@@ -176,8 +183,8 @@ public class EditCommand extends Command {
     }
 
     /**
-     * Stores the details to edit the person with. Each non-empty field value will replace the
-     * corresponding field value of the person.
+     * Stores the details to edit a person. Supplied fields replace existing values;
+     * explicitly empty religion fields clear their corresponding values.
      */
     public static class EditPersonDescriptor {
         private Name name;
@@ -192,6 +199,7 @@ public class EditCommand extends Command {
         private Religion preferredReligion;
         private Religion requiredReligion;
         private Set<Religion> excludedReligions;
+        // Track supplied fields separately so null can mean an explicit clear.
         private boolean religionEdited;
         private boolean preferredReligionEdited;
         private boolean requiredReligionEdited;
@@ -313,77 +321,105 @@ public class EditCommand extends Command {
             return (tags != null) ? Optional.of(Collections.unmodifiableSet(tags)) : Optional.empty();
         }
 
-        /** Sets or clears the client's religion; null explicitly clears it. */
+        /**
+         * Sets or clears the client's religion; null explicitly clears it.
+         */
         public void setReligion(Religion religion) {
             this.religion = religion;
             religionEdited = true;
         }
 
-        /** Returns the new religion, if one was supplied rather than cleared. */
+        /**
+         * Returns the new religion, if one was supplied rather than cleared.
+         */
         public Optional<Religion> getReligion() {
             return Optional.ofNullable(religion);
         }
 
-        /** Returns whether the religion was supplied, including an explicit clear. */
+        /**
+         * Returns whether the religion was supplied, including an explicit clear.
+         */
         public boolean isReligionEdited() {
             return religionEdited;
         }
 
-        /** Sets or clears the soft religion preference. */
+        /**
+         * Sets or clears the soft religion preference.
+         */
         public void setPreferredReligion(Religion religion) {
             preferredReligion = religion;
             preferredReligionEdited = true;
         }
 
-        /** Returns the new soft religion preference, if present. */
+        /**
+         * Returns the new soft religion preference, if present.
+         */
         public Optional<Religion> getPreferredReligion() {
             return Optional.ofNullable(preferredReligion);
         }
 
-        /** Returns whether the soft religion preference was supplied. */
+        /**
+         * Returns whether the soft religion preference was supplied.
+         */
         public boolean isPreferredReligionEdited() {
             return preferredReligionEdited;
         }
 
-        /** Sets or clears the required partner religion. */
+        /**
+         * Sets or clears the required partner religion.
+         */
         public void setRequiredReligion(Religion religion) {
             requiredReligion = religion;
             requiredReligionEdited = true;
         }
 
-        /** Returns the new required partner religion, if present. */
+        /**
+         * Returns the new required partner religion, if present.
+         */
         public Optional<Religion> getRequiredReligion() {
             return Optional.ofNullable(requiredReligion);
         }
 
-        /** Returns whether the required partner religion was supplied. */
+        /**
+         * Returns whether the required partner religion was supplied.
+         */
         public boolean isRequiredReligionEdited() {
             return requiredReligionEdited;
         }
 
-        /** Replaces the excluded religions with a defensive copy, possibly empty to clear them. */
+        /**
+         * Replaces the excluded religions with a defensive copy, possibly empty to clear them.
+         */
         public void setExcludedReligions(Set<Religion> religions) {
             excludedReligions = new HashSet<>(religions);
         }
 
-        /** Returns the replacement exclusion set, if supplied. */
+        /**
+         * Returns the replacement exclusion set, if supplied.
+         */
         public Optional<Set<Religion>> getExcludedReligions() {
             return excludedReligions == null ? Optional.empty()
                     : Optional.of(Collections.unmodifiableSet(excludedReligions));
         }
 
-        /** Sets or clears the client's relationship goal; null explicitly clears it. */
+        /**
+         * Sets or clears the client's relationship goal; null explicitly clears it.
+         */
         public void setRelationshipGoal(RelationshipGoal relationshipGoal) {
             this.relationshipGoal = relationshipGoal;
             relationshipGoalEdited = true;
         }
 
-        /** Returns the new relationship goal, if one was supplied rather than cleared. */
+        /**
+         * Returns the new relationship goal, if one was supplied rather than cleared.
+         */
         public Optional<RelationshipGoal> getRelationshipGoal() {
             return Optional.ofNullable(relationshipGoal);
         }
 
-        /** Returns whether the relationship goal was supplied, including an explicit clear. */
+        /**
+         * Returns whether the relationship goal was supplied, including an explicit clear.
+         */
         public boolean isRelationshipGoalEdited() {
             return relationshipGoalEdited;
         }
@@ -418,6 +454,9 @@ public class EditCommand extends Command {
                     && relationshipGoalEdited == otherEditPersonDescriptor.relationshipGoalEdited;
         }
 
+        /**
+         * Returns a string representation of the supplied fields and edit flags.
+         */
         @Override
         public String toString() {
             return new ToStringBuilder(this)

@@ -101,7 +101,9 @@ public class EditCommandTest {
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
 
-    /** Edits religion criteria while preserving other client details. */
+    /**
+     * Checks that religion criteria can be edited without changing other details.
+     */
     @Test
     public void execute_religionFields_success() {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
@@ -113,16 +115,21 @@ public class EditCommandTest {
                 .withExcludedReligions("Islam").build();
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(original, edited);
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS,
+                Messages.format(edited));
         assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
-                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(edited)), expectedModel);
+                expectedMessage, expectedModel);
     }
 
-    /** A conflicting edit fails without changing the model. */
+    /**
+     * Checks that a conflicting edit fails without changing the model.
+     */
     @Test
     public void execute_conflictingReligionFields_failure() {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
                 .withRequiredReligion("Islam").withExcludedReligions("Islam").build();
-        assertCommandFailure(new EditCommand(INDEX_FIRST_PERSON, descriptor), model, Religion.MESSAGE_CONFLICT);
+        assertCommandFailure(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                Religion.MESSAGE_CONFLICT);
     }
 
     @Test

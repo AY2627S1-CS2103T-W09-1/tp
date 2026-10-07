@@ -58,12 +58,16 @@ public class Person {
         this(name, phone, email, address, age, tags, smokingStatus, gender, null, null, null, Set.of());
     }
 
-    /** Creates a person with required contact details and no religion details. */
+    /**
+     * Creates a person with required contact details and no religion details.
+     */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
         this(name, phone, email, address, new Age(18), tags);
     }
 
-    /** Creates a person with all supported client characteristics except a relationship goal. */
+    /**
+     * Creates a person with all supported client characteristics except a relationship goal.
+     */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus, Gender gender, Religion religion, Religion preferredReligion,
             Religion requiredReligion, Set<Religion> excludedReligions) {
@@ -73,7 +77,10 @@ public class Person {
 
     /**
      * Creates a person with all supported client characteristics.
-     * A null relationship goal means it has not been recorded.
+     * Null religion details and a null relationship goal mean they have not been recorded.
+     * Preferred religion is a soft criterion; required and excluded are hard criteria for later matching.
+     *
+     * @throws IllegalArgumentException If the religion criteria contradict each other.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus, Gender gender, Religion religion, Religion preferredReligion,
@@ -128,27 +135,37 @@ public class Person {
         return age;
     }
 
-    /** Returns the client's recorded religion, if known. */
+    /**
+     * Returns the client's recorded religion, if known.
+     */
     public Optional<Religion> getReligion() {
         return Optional.ofNullable(religion);
     }
 
-    /** Returns the religion the client would prefer in a partner, if specified. */
+    /**
+     * Returns the religion the client would prefer in a partner, if specified.
+     */
     public Optional<Religion> getPreferredReligion() {
         return Optional.ofNullable(preferredReligion);
     }
 
-    /** Returns the religion the client requires in a partner, if specified. */
+    /**
+     * Returns the religion the client requires in a partner, if specified.
+     */
     public Optional<Religion> getRequiredReligion() {
         return Optional.ofNullable(requiredReligion);
     }
 
-    /** Returns religions the client excludes in a partner. */
+    /**
+     * Returns religions the client excludes in a partner.
+     */
     public Set<Religion> getExcludedReligions() {
         return Collections.unmodifiableSet(excludedReligions);
     }
 
-    /** Returns the client's recorded relationship goal, if known. */
+    /**
+     * Returns the client's recorded relationship goal, if known.
+     */
     public Optional<RelationshipGoal> getRelationshipGoal() {
         return Optional.ofNullable(relationshipGoal);
     }
@@ -204,6 +221,9 @@ public class Person {
                 && Objects.equals(relationshipGoal, otherPerson.relationshipGoal);
     }
 
+    /**
+     * Returns a hash code derived from the person's identity and data fields.
+     */
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
@@ -211,6 +231,9 @@ public class Person {
                 excludedReligions, age, smokingStatus, gender, relationshipGoal);
     }
 
+    /**
+     * Returns a string representation of the person's identity and data fields.
+     */
     @Override
     public String toString() {
         return new ToStringBuilder(this)

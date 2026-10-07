@@ -168,7 +168,7 @@ public class ParserUtil {
     /**
      * Parses a supported religion category.
      *
-     * @throws ParseException if the value is unsupported or incomplete
+     * @throws ParseException If the value is unsupported or incomplete.
      */
     public static Religion parseReligion(String value) throws ParseException {
         requireNonNull(value);
@@ -182,7 +182,7 @@ public class ParserUtil {
     /**
      * Parses repeated excluded-religion values, rejecting duplicates.
      *
-     * @throws ParseException if a value is invalid or repeated
+     * @throws ParseException If a value is invalid or repeated.
      */
     public static Set<Religion> parseExcludedReligions(Collection<String> values) throws ParseException {
         requireNonNull(values);

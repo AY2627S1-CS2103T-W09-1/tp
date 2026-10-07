@@ -40,7 +40,8 @@ public class AddCommandParser implements Parser<AddCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
-     * @throws ParseException if the user input does not conform to the expected format
+     *
+     * @throws ParseException If the user input does not conform to the expected format.
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap =
@@ -91,15 +92,20 @@ public class AddCommandParser implements Parser<AddCommand> {
         return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
     }
 
-    /** Parses a single optional religion field, leaving an absent field unknown. */
-    private static Religion parseOptionalReligion(ArgumentMultimap arguments, Prefix prefix) throws ParseException {
+    /**
+     * Parses a single optional religion field, leaving an absent field unknown.
+     */
+    private static Religion parseOptionalReligion(ArgumentMultimap arguments, Prefix prefix)
+            throws ParseException {
         if (arguments.getValue(prefix).isEmpty()) {
             return null;
         }
         return ParserUtil.parseReligion(arguments.getValue(prefix).get());
     }
 
-    /** Parses the optional relationship goal field, leaving an absent field unknown. */
+    /**
+     * Parses the optional relationship goal field, leaving an absent field unknown.
+     */
     private static RelationshipGoal parseOptionalRelationshipGoal(ArgumentMultimap arguments) throws ParseException {
         if (arguments.getValue(PREFIX_RELATIONSHIP_GOAL).isEmpty()) {
             return null;

@@ -196,7 +196,9 @@ public class AddCommandParserTest {
                 expectedMessage);
     }
 
-    /** Parses own religion and all three types of partner criterion. */
+    /**
+     * Checks parsing of own religion and all three partner criteria.
+     */
     @Test
     public void parse_religionFields_success() {
         String base = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB;
@@ -207,7 +209,9 @@ public class AddCommandParserTest {
                 + " rx/Islam rx/No religion", new AddCommand(expected));
     }
 
-    /** Invalid, repeated, and conflicting religion fields are rejected. */
+    /**
+     * Checks rejection of invalid, repeated, and conflicting religion fields.
+     */
     @Test
     public void parse_invalidReligionFields_failure() {
         String base = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB;

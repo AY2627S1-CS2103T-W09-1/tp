@@ -48,7 +48,9 @@ public class JsonAdaptedPersonTest {
         assertEquals(BENSON, person.toModelType());
     }
 
-    /** New religion fields survive JSON serialization while legacy fields remain readable. */
+    /**
+     * Checks that religion fields survive a JSON round trip.
+     */
     @Test
     public void jsonRoundTrip_religionFieldsPreserved() throws Exception {
         var original = new PersonBuilder(BENSON).withReligion("Jainism")
@@ -59,7 +61,9 @@ public class JsonAdaptedPersonTest {
         assertEquals(original, restored.toModelType());
     }
 
-    /** Invalid persisted religion values are rejected instead of silently becoming unknown. */
+    /**
+     * Checks rejection of an invalid persisted religion value.
+     */
     @Test
     public void toModelType_invalidReligion_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,

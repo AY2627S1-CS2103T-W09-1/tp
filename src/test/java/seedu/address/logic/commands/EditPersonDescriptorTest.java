@@ -21,6 +21,9 @@ import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditPersonDescriptorTest {
 
+    /**
+     * Checks equality including religion fields and exclusions.
+     */
     @Test
     public void equals() {
         // same values -> returns true
@@ -98,6 +101,9 @@ public class EditPersonDescriptorTest {
         assertTrue(new EditPersonDescriptor(descriptor).isRelationshipGoalEdited());
     }
 
+    /**
+     * Checks that the descriptor string includes the unset religion fields.
+     */
     @Test
     public void toStringMethod() {
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();

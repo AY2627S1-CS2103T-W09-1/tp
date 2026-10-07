@@ -203,7 +203,9 @@ public class EditCommandParserTest {
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
     }
 
-    /** Parses setting and clearing religion fields without conflating clear with omission. */
+    /**
+     * Checks that setting and clearing religion fields differ from omission.
+     */
     @Test
     public void parse_religionEdits_success() {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
@@ -217,7 +219,9 @@ public class EditCommandParserTest {
         assertParseSuccess(parser, "1 r/ rp/ rr/ rx/", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
-    /** Invalid values and repeated single-valued religion fields are rejected. */
+    /**
+     * Checks rejection of invalid and repeated single-valued religion fields.
+     */
     @Test
     public void parse_invalidReligionEdit_failure() {
         assertParseFailure(parser, "1 r/Other: Jainism", Religion.MESSAGE_CONSTRAINTS);

@@ -98,7 +98,9 @@ public class PersonBuilder {
         return this;
     }
 
-    /** Sets the {@code Age} of the {@code Person} that we are building. */
+    /**
+     * Sets the {@code Age} of the {@code Person} that we are building.
+     */
     public PersonBuilder withAge(int age) {
         this.age = new Age(age);
         return this;
@@ -136,25 +138,33 @@ public class PersonBuilder {
         return this;
     }
 
-    /** Sets the client's own religion. */
+    /**
+     * Sets the client's own religion.
+     */
     public PersonBuilder withReligion(String value) {
         religion = new Religion(value);
         return this;
     }
 
-    /** Sets a soft preference for a partner's religion. */
+    /**
+     * Sets a soft preference for a partner's religion.
+     */
     public PersonBuilder withPreferredReligion(String value) {
         preferredReligion = new Religion(value);
         return this;
     }
 
-    /** Sets a required partner religion. */
+    /**
+     * Sets a required partner religion.
+     */
     public PersonBuilder withRequiredReligion(String value) {
         requiredReligion = new Religion(value);
         return this;
     }
 
-    /** Replaces the excluded partner religions. */
+    /**
+     * Replaces the excluded partner religions.
+     */
     public PersonBuilder withExcludedReligions(String... values) {
         excludedReligions = new HashSet<>();
         for (String value : values) {
@@ -171,7 +181,9 @@ public class PersonBuilder {
         return this;
     }
 
-    /** Builds an immutable person with the selected details. */
+    /**
+     * Builds an immutable person with the selected details.
+     */
     public Person build() {
         return new Person(name, phone, email, address, age, tags, smokingStatus, gender, religion,
                 preferredReligion, requiredReligion, excludedReligions, relationshipGoal);

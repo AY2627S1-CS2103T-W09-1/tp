@@ -51,9 +51,12 @@ public class Messages {
                 .append(person.getSmokingStatus())
                 .append("; Tags: ");
         person.getTags().forEach(builder::append);
-        builder.append("; Religion: ").append(person.getReligion().map(Object::toString).orElse("Not specified"));
-        person.getPreferredReligion().ifPresent(value -> builder.append("; Preferred religion: ").append(value));
-        person.getRequiredReligion().ifPresent(value -> builder.append("; Required religion: ").append(value));
+        builder.append("; Religion: ")
+                .append(person.getReligion().map(Object::toString).orElse("Not specified"));
+        person.getPreferredReligion()
+                .ifPresent(value -> builder.append("; Preferred religion: ").append(value));
+        person.getRequiredReligion()
+                .ifPresent(value -> builder.append("; Required religion: ").append(value));
         if (!person.getExcludedReligions().isEmpty()) {
             builder.append("; Excluded religions: ");
             builder.append(person.getExcludedReligions().stream().map(Object::toString)

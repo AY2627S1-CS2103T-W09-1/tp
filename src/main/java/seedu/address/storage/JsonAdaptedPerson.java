@@ -76,7 +76,9 @@ class JsonAdaptedPerson {
         this.relationshipGoal = relationshipGoal;
     }
 
-    /** Creates an adapted legacy person with no recorded religion details. */
+    /**
+     * Creates an adapted legacy person with no recorded religion details.
+     */
     public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags) {
         this(name, phone, email, address, null, tags, null, null, null, null, null, null, null);
     }

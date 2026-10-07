@@ -53,6 +53,9 @@ public class PersonTest {
         assertFalse(BOB.isSamePerson(editedBob));
     }
 
+    /**
+     * Checks equality across contact details and religion fields.
+     */
     @Test
     public void equals() {
         // same values -> returns true
@@ -102,7 +105,9 @@ public class PersonTest {
         assertFalse(ALICE.equals(editedAlice));
     }
 
-    /** Religion criteria must not contradict each other. */
+    /**
+     * Checks that religion criteria cannot contradict each other.
+     */
     @Test
     public void constructor_conflictingReligionCriteria_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, Religion.MESSAGE_CONFLICT, () -> new PersonBuilder()
@@ -111,7 +116,9 @@ public class PersonTest {
                 .withRequiredReligion("Islam").withExcludedReligions("Islam").build());
     }
 
-    /** Exclusion sets cannot be modified through the getter. */
+    /**
+     * Checks that the exclusion getter returns an unmodifiable set.
+     */
     @Test
     public void getExcludedReligions_unmodifiable() {
         Person person = new PersonBuilder().withExcludedReligions("Islam").build();
@@ -119,6 +126,9 @@ public class PersonTest {
                 .add(new Religion("Buddhism")));
     }
 
+    /**
+     * Checks that the person string includes unset religion fields.
+     */
     @Test
     public void gender_affectsEqualityButNotIdentity() {
         Person specified = new PersonBuilder(ALICE).withGender("w").build();

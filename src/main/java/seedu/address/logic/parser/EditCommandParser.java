@@ -36,7 +36,8 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
      * and returns an EditCommand object for execution.
-     * @throws ParseException if the user input does not conform to the expected format
+     *
+     * @throws ParseException If the user input does not conform to the expected format.
      */
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
@@ -89,11 +90,13 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         if (argMultimap.getValue(PREFIX_PREFERRED_RELIGION).isPresent()) {
             String value = argMultimap.getValue(PREFIX_PREFERRED_RELIGION).get();
-            editPersonDescriptor.setPreferredReligion(value.isEmpty() ? null : ParserUtil.parseReligion(value));
+            editPersonDescriptor.setPreferredReligion(
+                    value.isEmpty() ? null : ParserUtil.parseReligion(value));
         }
         if (argMultimap.getValue(PREFIX_REQUIRED_RELIGION).isPresent()) {
             String value = argMultimap.getValue(PREFIX_REQUIRED_RELIGION).get();
-            editPersonDescriptor.setRequiredReligion(value.isEmpty() ? null : ParserUtil.parseReligion(value));
+            editPersonDescriptor.setRequiredReligion(
+                    value.isEmpty() ? null : ParserUtil.parseReligion(value));
         }
         parseExcludedReligionsForEdit(argMultimap.getAllValues(PREFIX_EXCLUDED_RELIGION))
                 .ifPresent(editPersonDescriptor::setExcludedReligions);
@@ -112,7 +115,7 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Parses excluded religions for edit, including a sole empty prefix to clear the set.
      *
-     * @throws ParseException if any exclusion is invalid or repeated
+     * @throws ParseException If any exclusion is invalid or repeated.
      */
     private Optional<Set<Religion>> parseExcludedReligionsForEdit(
             Collection<String> values) throws ParseException {
