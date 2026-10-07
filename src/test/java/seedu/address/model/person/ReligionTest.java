@@ -25,12 +25,12 @@ public class ReligionTest {
         assertEquals(religion.hashCode(), new Religion("jainism").hashCode());
     }
 
-    /** Common spellings of the Baha'i Faith use the same stored category. */
+    /** The listed Baha'i Faith category is accepted without alternate spellings. */
     @Test
-    public void constructor_bahaiAliases_canonicalizes() {
-        Religion religion = new Religion("Bahá’í Faith");
+    public void constructor_bahaiCategory_canonicalizes() {
+        Religion religion = new Religion("Baha'i Faith");
         assertEquals("Baha'i Faith", religion.toString());
-        assertEquals(new Religion("Bahá'í Faith"), religion);
+        assertEquals(new Religion("baha'i faith"), religion);
     }
 
     /** Free text and the former Other syntax are rejected. */
@@ -39,5 +39,6 @@ public class ReligionTest {
         String message = Religion.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalArgumentException.class, message, () -> new Religion("Unlisted faith"));
         assertThrows(IllegalArgumentException.class, message, () -> new Religion("Other: Jainism"));
+        assertThrows(IllegalArgumentException.class, message, () -> new Religion("Bahá’í Faith"));
     }
 }
