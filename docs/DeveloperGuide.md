@@ -257,75 +257,178 @@ _{Explain here how the data archiving feature will be implemented}_
 
 ## **Appendix: Requirements**
 
+These are requirements for the planned CupidMaxxing product. They do not imply that every feature is implemented in the current release. The product will be evolved incrementally from AB3.
+
 ### Product scope
 
-**Target user profile**:
+**Target user profile**: An independent professional matchmaker who manages a small pool of clients and potential matches, types quickly, and prefers a keyboard-driven desktop application. The matchmaker needs to record client details, retrieve relevant contacts, assess possible introductions, and organise follow-ups.
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+**Value proposition**: CupidMaxxing helps matchmakers organise and retrieve client information quickly, narrow down potential matches using relevant criteria, and assess whether two clients are suitable for an introduction.
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Minimum viable product (MVP)**:
 
+* Record a client's own characteristics, dating preferences, and dealbreakers. The initially planned attributes are age, smoking habit, and religion.
+* Search and filter clients using those attributes, and compare two clients against each other's preferences and dealbreakers.
+* Categorise clients using labels (the existing AB3 tags) and named groups.
+
+Other ideas, such as fuzzy search, command aliases, archiving, profile sharing, reminders, and match history, are candidates for later iterations rather than MVP commitments.
 
 ### User stories
 
-Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
+Priorities: High (MVP) - `* * *`, Medium (useful extension) - `* *`, Low (possible future enhancement) - `*`.
 
-| Priority | As a …​                                    | I want to …​                     | So that I can…​                                                        |
-| -------- | ------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------- |
-| `* * *`  | new user                                   | see usage instructions         | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person               |                                                                        |
-| `* * *`  | user                                       | delete a person                | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find persons by age            | locate persons in a desired age range without going through the entire list |
-| `* *`    | user                                       | hide private contact details   | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name           | locate a person easily                                                 |
-
-*{More to be added}*
+| Priority | As a … | I want to … | So that I can … |
+| -------- | ------ | ----------- | --------------- |
+| `* * *` | matchmaker | add and update a client's contact details | keep an accurate way to reach the client |
+| `* * *` | matchmaker | record a client's age, smoking habit, religion, preferences, and dealbreakers | have the information needed to filter and assess candidates |
+| `* * *` | matchmaker | find clients by relevant characteristics | identify possible candidates without scanning every record |
+| `* * *` | matchmaker | filter clients by several criteria at once | narrow a shortlist to clients who satisfy all criteria |
+| `* * *` | matchmaker | compare two clients against each other's preferences and dealbreakers | avoid an introduction that violates a stated requirement |
+| `* * *` | matchmaker | attach labels to clients | categorise and retrieve them easily |
+| `* * *` | matchmaker | create named groups and assign clients to them | manage different sets of clients |
+| `* *` | matchmaker | identify clients needing attention | prioritise follow-ups |
+| `* *` | matchmaker | mark a client's current status | know who is available for introductions |
+| `* *` | matchmaker | copy a client's contact details quickly | contact or share details with minimal effort |
+| `* *` | matchmaker | archive inactive clients | keep the active list uncluttered |
+| `*` | matchmaker | search despite a misspelled name or tag | find records during hurried entry |
+| `*` | matchmaker | share a summary without contact details or private notes | show prospective profiles without exposing private information |
+| `*` | matchmaker | record previous pairings and post-date feedback | avoid repeated unsuitable introductions |
+| `*` | matchmaker | set follow-up reminders | remember to check in after an introduction |
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+For the use cases below, the **System** is CupidMaxxing and the **Actor** is an independent matchmaker. Client indexes refer to the currently displayed list.
 
-**Use case: Delete a person**
+**Use case: Record a client's matchmaking details**
 
-**MSS**
+**Main success scenario (MSS)**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. The matchmaker requests to add a client with contact details and optional age, smoking habit, religion, preferences, and dealbreakers.
+2. CupidMaxxing validates the supplied values and checks for repeated attributes within the command.
+3. CupidMaxxing creates the client record and shows the stored information.
+4. At a later visit, the matchmaker requests to edit that client with a new preference or characteristic.
+5. CupidMaxxing validates the update, replaces the specified existing values, and refreshes the client display.
 
-    Use case ends.
+   Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 2a. A supplied value is invalid, an attribute is repeated, or a preference conflicts with a dealbreaker in the same command.
+    * 2a1. CupidMaxxing explains the invalid input and changes no data.
 
-  Use case ends.
+      Use case ends.
+* 5a. The requested client index is not in the displayed list.
+    * 5a1. CupidMaxxing reports the invalid index and leaves all records unchanged.
 
-* 3a. The given index is invalid.
+      Use case ends.
 
-    * 3a1. AddressBook shows an error message.
+**Use case: Filter a shortlist of clients**
 
-      Use case resumes at step 2.
+**MSS**
 
-*{More to be added}*
+1. The matchmaker requests `filter` with at least one criterion, such as an age range and smoking status.
+2. CupidMaxxing checks that each criterion is supported and has a valid value.
+3. CupidMaxxing searches the entire address book and shows each client who satisfies **all** supplied criteria exactly once.
+4. CupidMaxxing reports how many clients matched. The displayed indexes are updated to match the filtered list.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. No criterion is supplied, or a criterion is invalid or repeated.
+    * 2a1. CupidMaxxing reports the problem and keeps the previously displayed list unchanged.
+
+      Use case ends.
+* 3a. No client satisfies every criterion.
+    * 3a1. CupidMaxxing shows an empty list and reports that no clients match.
+
+      Use case ends.
+
+A missing client attribute does not satisfy a filter criterion. Separate client records with the same name remain separate results.
+
+**Use case: Assess a pair of clients**
+
+**MSS**
+
+1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
+2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
+3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
+4. The displayed list and stored client records remain unchanged.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. An index is invalid, missing, repeated, or outside the displayed list.
+    * 1a1. CupidMaxxing explains the problem and leaves the previous comparison and list unchanged.
+
+      Use case ends.
+* 2a. At least one dealbreaker is violated.
+    * 2a1. CupidMaxxing reports the pair as incompatible and identifies the violated requirement.
+
+      Use case resumes at step 4.
+* 2b. No known dealbreaker is violated, but required information is missing.
+    * 2b1. CupidMaxxing reports insufficient information rather than claiming compatibility.
+
+      Use case resumes at step 4.
+
+**Use case: Organise clients in a named group**
+
+**MSS**
+
+1. The matchmaker requests `group create g/VIP`.
+2. CupidMaxxing creates an empty group named VIP.
+3. The matchmaker requests `group add g/VIP 2 5` using indexes in the displayed list.
+4. CupidMaxxing adds the two distinct clients and confirms the number added.
+5. The matchmaker requests `group show g/VIP`.
+6. CupidMaxxing shows only the group's clients without changing their records.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. A group with the same name already exists, ignoring letter case.
+    * 2a1. CupidMaxxing reports the duplicate and creates no group.
+
+      Use case ends.
+* 4a. An index is invalid, repeated, or already belongs to the group.
+    * 4a1. CupidMaxxing reports the problem and makes no partial membership change.
+
+      Use case ends.
+
+A client may belong to several different groups. Renaming or deleting a group does not delete its clients.
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+1. CupidMaxxing should run on Windows, Linux, and macOS with Java 25, without requiring another Java version, an installer, or the team's own remote server.
+2. The application should support a single matchmaker working with local data. Client records should remain in a human-editable text file, with at least the data-editing support of AB3; no DBMS should be required.
+3. The product should be distributable as one JAR file, or as one ZIP if additional files are unavoidable, and the distributed product should not exceed 100 MB.
+4. A matchmaker who prefers typing should be able to perform the main client-management, filtering, matching, and grouping workflows using commands without a mouse.
+5. Typical operations on an address book containing up to 1000 clients should not feel noticeably sluggish.
+6. Validation failures should not partially change stored client records or group membership.
+7. The GUI should work well at 1920×1080 or higher with 100% or 125% scaling, and remain usable at 1280×720 or higher with 150% scaling.
+8. Any proposed third-party library or service should satisfy the course's external-software rules and receive teaching-team approval before use.
 
 ### Glossary
 
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Client**: A person whose contact details and matchmaking information are recorded by the matchmaker.
+* **Characteristic**: A value describing a client, initially age, smoking habit, or religion.
+* **Preference**: A characteristic the client would like a potential partner to have; an unmet preference need not make a pair incompatible.
+* **Dealbreaker**: A requirement that excludes a potential partner when violated.
+* **Filter criterion**: A condition that a client must satisfy to appear in an AND-filtered shortlist.
+* **Pairwise matching**: Comparing two clients' recorded criteria in both directions without creating or modifying a relationship record.
+* **Unknown**: An assessment made when a required characteristic has not been recorded; it is not equivalent to a match.
+* **Label**: A categorisation attached to a client using the existing AB3 tag mechanism.
+* **Group**: A named collection of client records; membership does not create duplicate client records.
+
+### Details to confirm with the team
+
+The draft feature notes disagree on some validation rules. Resolve these before implementing or publishing precise command specifications:
+
+* Data collection gives client ages as 18–99, while filtering allows search ages up to 120; the mockup also displays age ranges where the proposed `add`/`edit` syntax describes one age.
+* Data collection accepts free-text religions, while filtering lists a fixed set of religions. The two commands need one consistent stored and searchable representation.
+* The proposed `find` command uses OR logic for characteristics, but AB3 already uses `find` for name search. Decide how to preserve or replace the inherited behavior.
+* Group-list output is described, but the command format for listing all groups is not yet specified.
 
 --------------------------------------------------------------------------------------------------------------------
 
