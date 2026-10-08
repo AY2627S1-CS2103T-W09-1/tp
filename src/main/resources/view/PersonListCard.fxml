@@ -36,6 +36,7 @@
       <Label fx:id="age" styleClass="cell_small_label" text="\$age" />
       <Label fx:id="religion" styleClass="cell_small_label" text="\$religion" />
       <Label fx:id="religionCriteria" styleClass="cell_small_label" wrapText="true" />
+      <Label fx:id="relationshipGoal" styleClass="cell_small_label" text="\$relationshipGoal" />
     </VBox>
   </GridPane>
 </HBox>
