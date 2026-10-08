@@ -66,7 +66,7 @@ public class JsonAddressBookStorageTest {
     public void readAndSaveAddressBook_legacySmokingStatus_preservesOtherData() throws Exception {
         Path file = testFolder.resolve("legacy.json");
         String json = "{\"persons\":[{\"name\":\"Alice\",\"phone\":\"12345678\","
-                + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"tags\":[]%s}]}";
+                + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"age\":\"25\",\"tags\":[]%s}]}";
         for (String field : new String[] {"", ",\"smokingStatus\":null", ",\"smokingStatus\":\"\""}) {
             Files.writeString(file, String.format(json, field));
             JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
@@ -81,7 +81,8 @@ public class JsonAddressBookStorageTest {
     public void readAddressBook_invalidSmokingStatus_doesNotOverwriteFile() throws Exception {
         Path file = testFolder.resolve("invalidSmoking.json");
         String json = "{\"persons\":[{\"name\":\"Alice\",\"phone\":\"12345678\","
-                + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"tags\":[],\"smokingStatus\":%s}]}";
+                + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"age\":\"25\","
+                + "\"tags\":[],\"smokingStatus\":%s}]}";
         for (String value : new String[] {"\"sometimes\"", "\"ye\u017f\"", "true", "42", "{}", "[]"}) {
             String contents = String.format(json, value);
             Files.writeString(file, contents);

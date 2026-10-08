@@ -31,13 +31,14 @@ public class Person {
      * Creates a person whose smoking status has not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags) {
-        this(name, phone, email, address, tags, SmokingStatus.UNSPECIFIED);
+        this(name, phone, email, address, age, tags, SmokingStatus.UNSPECIFIED);
     }
 
     /**
      * Creates a person with the given details. Every field must be present and not null.
      */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, SmokingStatus smokingStatus) {
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+                  SmokingStatus smokingStatus) {
         requireAllNonNull(name, phone, email, address, age, tags, smokingStatus);
         this.name = name;
         this.phone = phone;

@@ -77,7 +77,8 @@ public class SmokingStatusParserTest {
 
     @Test
     public void parse_smokingStatusInAnyPosition_acceptsEveryCaseCombination() {
-        String[] fields = {"n/Amy Bee", "p/85355255", "e/amy@gmail.com", "a/123, Jurong West Ave 6, #08-111"};
+        String[] fields = {"n/Amy Bee", "p/85355255", "e/amy@gmail.com", "a/123, Jurong West Ave 6, #08-111",
+            "age/25"};
         for (String value : new String[] {"yes", "yeS", "yEs", "yES", "Yes", "YeS", "YEs", "YES",
             "no", "nO", "No", "NO"}) {
             for (int position = 0; position <= fields.length; position++) {

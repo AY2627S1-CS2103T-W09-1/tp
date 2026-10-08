@@ -110,7 +110,8 @@ public class EditCommand extends Command {
         SmokingStatus updatedSmokingStatus = editPersonDescriptor.getSmokingStatus()
                 .orElse(personToEdit.getSmokingStatus());
 
-        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags, updatedSmokingStatus);
+        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
+                updatedSmokingStatus);
     }
 
     @Override
