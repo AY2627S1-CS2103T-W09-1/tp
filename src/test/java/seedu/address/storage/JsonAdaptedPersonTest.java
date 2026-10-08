@@ -20,6 +20,7 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.testutil.PersonBuilder;
@@ -215,6 +216,39 @@ public class JsonAdaptedPersonTest {
                 null, VALID_TAGS, null, null);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Age.class.getSimpleName());
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_validRelationshipGoal_returnsPerson() throws Exception {
+        Person bensonWithGoal = new PersonBuilder(BENSON).withRelationshipGoal("Life partner").build();
+        assertEquals(bensonWithGoal, new JsonAdaptedPerson(bensonWithGoal).toModelType());
+    }
+
+    @Test
+    public void fromJson_relationshipGoalValues_loadSuccessfully() throws Exception {
+        String json = "{\"name\":\"Benson Meier\",\"phone\":\"98765432\",\"email\":\"benson@example.com\","
+                + "\"address\":\"New Road\",\"age\":\"25\",\"tags\":[]%s}";
+        Person personWithoutGoal = new PersonBuilder().withName("Benson Meier").withPhone("98765432")
+                .withEmail("benson@example.com").withAddress("New Road").build();
+        Person personWithGoal = new PersonBuilder(personWithoutGoal).withRelationshipGoal("Life partner").build();
+
+        // missing or null goal -> not recorded
+        assertEquals(personWithoutGoal,
+                JsonUtil.fromJsonString(String.format(json, ""), JsonAdaptedPerson.class).toModelType());
+        assertEquals(personWithoutGoal, JsonUtil.fromJsonString(String.format(json, ",\"relationshipGoal\":null"),
+                JsonAdaptedPerson.class).toModelType());
+
+        // stored value in a different letter case is still accepted
+        assertEquals(personWithGoal, JsonUtil.fromJsonString(
+                String.format(json, ",\"relationshipGoal\":\"life PARTNER\""), JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidRelationshipGoal_throwsIllegalValueException() throws Exception {
+        String json = "{\"name\":\"Benson Meier\",\"phone\":\"98765432\",\"email\":\"benson@example.com\","
+                + "\"address\":\"New Road\",\"age\":\"25\",\"tags\":[],\"relationshipGoal\":\"Marriage\"}";
+        JsonAdaptedPerson person = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class);
+        assertThrows(IllegalValueException.class, RelationshipGoal.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
 }

@@ -8,6 +8,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_AGE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_RELATIONSHIP_GOAL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
@@ -130,12 +131,33 @@ public class PersonTest {
     }
 
     @Test
+    public void relationshipGoal() {
+        // not recorded -> empty
+        assertTrue(ALICE.getRelationshipGoal().isEmpty());
+
+        // recorded -> present
+        Person aliceWithGoal = new PersonBuilder(ALICE).withRelationshipGoal(VALID_RELATIONSHIP_GOAL_BOB).build();
+        assertEquals(RelationshipGoal.fromString(VALID_RELATIONSHIP_GOAL_BOB),
+                aliceWithGoal.getRelationshipGoal().get());
+
+        // different relationship goal -> returns false
+        assertFalse(ALICE.equals(aliceWithGoal));
+
+        // same relationship goal in a different letter case -> returns true
+        Person aliceWithSameGoal = new PersonBuilder(ALICE)
+                .withRelationshipGoal(VALID_RELATIONSHIP_GOAL_BOB.toUpperCase()).build();
+        assertTrue(aliceWithGoal.equals(aliceWithSameGoal));
+        assertEquals(aliceWithGoal.hashCode(), aliceWithSameGoal.hashCode());
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
                 + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", smokingStatus="
                 + ALICE.getSmokingStatus() + ", age=" + ALICE.getAge()
                 + ", tags=" + ALICE.getTags() + ", gender=" + ALICE.getGender()
-                + ", religion=null, preferredReligion=null, requiredReligion=null, excludedReligions=[]}";
+                + ", religion=null, preferredReligion=null, requiredReligion=null, excludedReligions=[]"
+                + ", relationshipGoal=" + ALICE.getRelationshipGoal().orElse(null) + "}";
         assertEquals(expected, ALICE.toString());
     }
 }
