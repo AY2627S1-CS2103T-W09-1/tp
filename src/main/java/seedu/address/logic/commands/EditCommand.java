@@ -2,10 +2,12 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
@@ -23,11 +25,13 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -46,6 +50,8 @@ public class EditCommand extends Command {
             + "[" + PREFIX_EMAIL + "EMAIL] "
             + "[" + PREFIX_ADDRESS + "ADDRESS] "
             + "[" + PREFIX_GENDER + "GENDER] "
+            + "[" + PREFIX_SMOKING + "yes|no] "
+            + "[" + PREFIX_AGE + "AGE] "
             + "[" + PREFIX_TAG + "TAG]...\n"
             + "Gender: m, w, nb, or empty for unspecified.\n"
             + "Example: " + COMMAND_WORD + " 1 "
@@ -103,10 +109,14 @@ public class EditCommand extends Command {
         Phone updatedPhone = editPersonDescriptor.getPhone().orElse(personToEdit.getPhone());
         Email updatedEmail = editPersonDescriptor.getEmail().orElse(personToEdit.getEmail());
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
+        Age updatedAge = editPersonDescriptor.getAge().orElse(personToEdit.getAge());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
         Gender updatedGender = editPersonDescriptor.getGender().orElse(personToEdit.getGender());
+        SmokingStatus updatedSmokingStatus = editPersonDescriptor.getSmokingStatus()
+                .orElse(personToEdit.getSmokingStatus());
 
-        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedTags, updatedGender);
+        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
+                updatedSmokingStatus, updatedGender);
     }
 
     @Override
@@ -142,6 +152,8 @@ public class EditCommand extends Command {
         private Email email;
         private Address address;
         private Gender gender;
+        private SmokingStatus smokingStatus;
+        private Age age;
         private Set<Tag> tags;
 
         public EditPersonDescriptor() {}
@@ -156,6 +168,8 @@ public class EditCommand extends Command {
             setEmail(toCopy.email);
             setAddress(toCopy.address);
             setGender(toCopy.gender);
+            setSmokingStatus(toCopy.smokingStatus);
+            setAge(toCopy.age);
             setTags(toCopy.tags);
         }
 
@@ -163,7 +177,7 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, address, tags, gender);
+            return CollectionUtil.isAnyNonNull(name, phone, email, address, age, tags, smokingStatus, gender);
         }
 
         public void setName(Name name) {
@@ -206,6 +220,22 @@ public class EditCommand extends Command {
             return Optional.ofNullable(address);
         }
 
+        public void setSmokingStatus(SmokingStatus smokingStatus) {
+            this.smokingStatus = smokingStatus;
+        }
+
+        public Optional<SmokingStatus> getSmokingStatus() {
+            return Optional.ofNullable(smokingStatus);
+        }
+
+        public void setAge(Age age) {
+            this.age = age;
+        }
+
+        public Optional<Age> getAge() {
+            return Optional.ofNullable(age);
+        }
+
         /**
          * Sets {@code tags} to this object's {@code tags}.
          * A defensive copy of {@code tags} is used internally.
@@ -240,6 +270,9 @@ public class EditCommand extends Command {
                     && Objects.equals(address, otherEditPersonDescriptor.address)
                     && Objects.equals(tags, otherEditPersonDescriptor.tags)
                     && Objects.equals(gender, otherEditPersonDescriptor.gender);
+                    && Objects.equals(smokingStatus, otherEditPersonDescriptor.smokingStatus)
+                    && Objects.equals(age, otherEditPersonDescriptor.age)
+                    && Objects.equals(tags, otherEditPersonDescriptor.tags);
         }
 
         @Override
@@ -249,6 +282,8 @@ public class EditCommand extends Command {
                     .add("phone", phone)
                     .add("email", email)
                     .add("address", address)
+                    .add("smokingStatus", smokingStatus)
+                    .add("age", age)
                     .add("tags", tags)
                     .add("gender", gender)
                     .toString();

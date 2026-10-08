@@ -12,6 +12,10 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
+
+import seedu.address.model.person.Age;
+import seedu.address.model.person.AgeMatchesPredicate;
 
 /**
  * Parses input arguments and creates a new FindCommand object
@@ -27,10 +31,17 @@ public class FindCommandParser implements Parser<FindCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public FindCommand parse(String args) throws ParseException {
-        String trimmedArgs = args.trim();
-        if (trimmedArgs.isEmpty()) {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + args.trim(), PREFIX_AGE);
+        if (!argMultimap.getPreamble().isEmpty() || argMultimap.getValue(PREFIX_AGE).isEmpty()) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_AGE);
+
+        String[] bounds = argMultimap.getValue(PREFIX_AGE).get().trim().split("-", -1);
+        if (bounds.length == 0 || bounds.length > 2 || !Age.isValidAge(bounds[0])
+                || (bounds.length == 2 && !Age.isValidAge(bounds[1]))) {
+            throw new ParseException(Age.MESSAGE_CONSTRAINTS);
         }
 
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + trimmedArgs, PREFIX_GENDER);

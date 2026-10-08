@@ -10,10 +10,12 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -22,6 +24,21 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    /**
+     * Parses a smoking status, ignoring surrounding whitespace and case.
+     * Rejects empty input: an explicitly supplied {@code s/} must have a value.
+     *
+     * @throws ParseException if the status is neither yes nor no.
+     */
+    public static SmokingStatus parseSmokingStatus(String status) throws ParseException {
+        requireNonNull(status);
+        String trimmedStatus = status.trim();
+        if (trimmedStatus.isEmpty() || !SmokingStatus.isValidSmokingStatus(trimmedStatus)) {
+            throw new ParseException(SmokingStatus.MESSAGE_CONSTRAINTS);
+        }
+        return new SmokingStatus(trimmedStatus);
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -79,6 +96,16 @@ public class ParserUtil {
             throw new ParseException(Address.MESSAGE_CONSTRAINTS);
         }
         return new Address(trimmedAddress);
+    }
+
+    /** Parses an age string into an {@code Age}. */
+    public static Age parseAge(String age) throws ParseException {
+        requireNonNull(age);
+        String trimmedAge = age.trim();
+        if (!Age.isValidAge(trimmedAge)) {
+            throw new ParseException(Age.MESSAGE_CONSTRAINTS);
+        }
+        return new Age(Integer.parseInt(trimmedAge));
     }
 
     /**

@@ -14,6 +14,8 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Age;
+import seedu.address.model.person.AgeMatchesPredicate;
 
 public class FindCommandParserTest {
 
@@ -26,13 +28,16 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_validArgs_returnsFindCommand() {
-        // no leading and trailing whitespaces
-        FindCommand expectedFindCommand =
-                new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob")));
-        assertParseSuccess(parser, "Alice Bob", expectedFindCommand);
+        assertParseSuccess(parser, "age/18", new FindCommand(new AgeMatchesPredicate(18, 18)));
+        assertParseSuccess(parser, " age/18-35 ", new FindCommand(new AgeMatchesPredicate(18, 35)));
+    }
 
-        // multiple whitespaces between keywords
-        assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+    @Test
+    public void parse_invalidAge_throwsParseException() {
+        assertParseFailure(parser, "age/17", Age.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "age/100", Age.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "age/18-100", Age.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "age/35-18", "The lower age bound cannot be greater than the upper age bound.");
     }
 
     @Test
