@@ -156,6 +156,20 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Client gender
+
+`Person` stores a `Gender` enum (`MAN`, `WOMAN`, `NON_BINARY`, or `UNSPECIFIED`). Its command and JSON values are `m`, `w`, `nb`, and the empty string respectively. `Gender.parseValue` is the shared validation and normalization method; `ParserUtil.parseGender` translates invalid input into the existing `ParseException` flow. Gender is included in full person equality, but does not change the name-based duplicate-client check.
+
+* `AddCommandParser` accepts optional `g/`; omitted or empty values become `UNSPECIFIED`.
+* `EditPersonDescriptor` uses an absent gender for “keep existing” and `UNSPECIFIED` for “clear”. `EditCommand` preserves gender when another field is edited and uses the displayed client index as before.
+* `FindCommandParser` retains name-only search and parses one `g/` into a set of genders. It rejects repeated prefixes, duplicate normalized values, unknown values and empty list items. Empty `g/` selects all three specified genders. `GenderMatchesPredicate` tests set membership, and `FindCommand` accepts `Predicate<Person>` so name, age and gender searches share the existing execution path. Age searches retain upstream's exact-age and inclusive-range validation.
+* `JsonAdaptedPerson` saves the canonical gender code. Missing, null or empty gender values load as `UNSPECIFIED`, so valid records containing the required age need no gender migration. Invalid non-empty values use the existing storage error handling.
+* `PersonCard` and command feedback display the full gender label, including “Unspecified”.
+
+Name, age and gender are separate search modes. Combined-trait searches remain deferred. The required age and optional smoking fields from upstream are preserved when adding, editing and saving gender.
+
+Tests cover gender value validation, parser rules, full command execution, filtering, editing the correct displayed client, persistence, older JSON records and unchanged data/results after invalid commands. Existing name-search tests are retained. Shared builders and command helpers carry gender so they do not silently discard it.
+
 ### Recording smoking status
 
 The optional `s/` parameter in `add` and `edit` records a client's own smoking habit.
@@ -319,7 +333,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **Main success scenario (MSS)**
 
-1. The matchmaker requests to add a client with contact details and optional age, smoking habit, religion, preferences, and dealbreakers.
+1. The matchmaker requests to add a client with contact details and optional gender, age, smoking habit, religion, preferences, and dealbreakers.
 2. CupidMaxxing validates the supplied values and checks for repeated attributes within the command.
 3. CupidMaxxing creates the client record and shows the stored information.
 4. At a later visit, the matchmaker requests to edit that client with a new preference or characteristic.
@@ -443,7 +457,7 @@ The draft feature notes disagree on some validation rules. Resolve these before 
 
 * Data collection gives client ages as 18–99, while filtering allows search ages up to 120; the mockup also displays age ranges where the proposed `add`/`edit` syntax describes one age.
 * Data collection accepts free-text religions, while filtering lists a fixed set of religions. The two commands need one consistent stored and searchable representation.
-* The proposed `find` command uses OR logic for characteristics, but AB3 already uses `find` for name search. Decide how to preserve or replace the inherited behavior.
+* Name-only `find` is retained alongside gender-only `find g/`. Exact-age and age-range searches are also supported separately. Combining characteristics into an OR search remains pending.
 * Group-list output is described, but the command format for listing all groups is not yet specified.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -451,6 +465,16 @@ The draft feature notes disagree on some validation rules. Resolve these before 
 ## **Appendix: Instructions for manual testing**
 
 Given below are instructions to test the app manually.
+
+### Recording and finding gender
+
+Use a test data file and distinct client names for these checks.
+
+1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be “Unspecified”.
+2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find Gender` still searches names.
+3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
+4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.
+5. Restart the application and verify that recorded and cleared genders persist. An older valid data file containing ages but no gender fields should still load with all clients' genders unspecified.
 
 <div markdown="span" class="alert alert-info">:information_source: **Note:** These instructions only provide a starting point for testers to work on;
 testers are expected to do more *exploratory* testing.

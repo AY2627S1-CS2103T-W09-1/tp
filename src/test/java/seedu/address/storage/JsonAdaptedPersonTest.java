@@ -16,6 +16,7 @@ import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -67,14 +68,14 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_invalidSmokingStatus_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
-                VALID_ADDRESS, VALID_AGE, VALID_TAGS, "sometimes");
+                VALID_ADDRESS, VALID_AGE, VALID_TAGS, "sometimes", null);
         assertThrows(IllegalValueException.class, SmokingStatus.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test
     public void toModelType_mixedCaseSmokingStatus_normalizesValue() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
-                VALID_ADDRESS, VALID_AGE, VALID_TAGS, "YeS");
+                VALID_ADDRESS, VALID_AGE, VALID_TAGS, "YeS", null);
         assertEquals(new SmokingStatus("yes"), person.toModelType().getSmokingStatus());
     }
 
@@ -82,7 +83,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_invalidName_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(INVALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_AGE,
-                        VALID_TAGS, null);
+                        VALID_TAGS, null, null);
         String expectedMessage = Name.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -91,7 +92,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_nullName_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(null, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_AGE,
-                VALID_TAGS, null);
+                VALID_TAGS, null, null);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Name.class.getSimpleName());
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -100,7 +101,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_invalidPhone_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, INVALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_AGE,
-                        VALID_TAGS, null);
+                        VALID_TAGS, null, null);
         String expectedMessage = Phone.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -109,7 +110,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_nullPhone_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, null, VALID_EMAIL, VALID_ADDRESS, VALID_AGE,
-                VALID_TAGS, null);
+                VALID_TAGS, null, null);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName());
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -118,7 +119,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_invalidEmail_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, INVALID_EMAIL, VALID_ADDRESS, VALID_AGE,
-                        VALID_TAGS, null);
+                        VALID_TAGS, null, null);
         String expectedMessage = Email.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -127,7 +128,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_nullEmail_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, null, VALID_ADDRESS, VALID_AGE,
-                VALID_TAGS, null);
+                VALID_TAGS, null, null);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName());
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -136,7 +137,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_invalidAddress_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, INVALID_ADDRESS, VALID_AGE,
-                        VALID_TAGS, null);
+                        VALID_TAGS, null, null);
         String expectedMessage = Address.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -144,7 +145,7 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_nullAddress_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, null, VALID_AGE,
-                VALID_TAGS, null);
+                VALID_TAGS, null, null);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName());
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }
@@ -155,21 +156,43 @@ public class JsonAdaptedPersonTest {
         invalidTags.add(new JsonAdaptedTag(INVALID_TAG));
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_AGE,
-                        invalidTags, null);
+                        invalidTags, null, null);
         assertThrows(IllegalValueException.class, person::toModelType);
     }
 
     @Test
+    public void toModelType_invalidGender_throwsIllegalValueException() {
+        for (String value : new String[] {"other", "m,w"}) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    VALID_ADDRESS, VALID_AGE, VALID_TAGS, null, value);
+            assertThrows(IllegalValueException.class, Gender.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+    }
+
+    @Test
+    public void fromJson_legacyAndOptionalGenderValues_loadSuccessfully() throws Exception {
+        String json = "{\"name\":\"Benson Meier\",\"phone\":\"98765432\",\"email\":\"benson@example.com\","
+                + "\"address\":\"New Road\",\"age\":\"25\",\"tags\":[]%s}";
+        String[] fields = {"", ",\"gender\":null", ",\"gender\":\"\"", ",\"gender\":\" Nb \""};
+        String[] expectedValues = {"", "", "", "nb"};
+        for (int i = 0; i < fields.length; i++) {
+            JsonAdaptedPerson person = JsonUtil.fromJsonString(String.format(json, fields[i]), JsonAdaptedPerson.class);
+            assertEquals(new PersonBuilder().withName("Benson Meier").withPhone("98765432")
+                    .withEmail("benson@example.com").withAddress("New Road").withGender(expectedValues[i]).build(),
+                    person.toModelType());
+        }
+    }
+    @Test
     public void toModelType_invalidAge_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
-                INVALID_AGE, VALID_TAGS, null);
+                INVALID_AGE, VALID_TAGS, null, null);
         assertThrows(IllegalValueException.class, Age.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test
     public void toModelType_nullAge_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
-                null, VALID_TAGS, null);
+                null, VALID_TAGS, null, null);
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Age.class.getSimpleName());
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
     }

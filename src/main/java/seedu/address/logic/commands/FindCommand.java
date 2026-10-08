@@ -10,16 +10,20 @@ import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 
 /**
- * Finds and lists all persons in the address book whose age matches the requested value or range.
+ * Finds and lists all persons in the address book matching the supplied predicate.
  */
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons with an age matching the "
-            + "specified value or inclusive range and displays them as a list with index numbers.\n"
-            + "Parameters: age/AGE or age/LOWER_AGE-UPPER_AGE\n"
-            + "Examples: " + COMMAND_WORD + " age/18, " + COMMAND_WORD + " age/18-35";
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons whose names contain any of "
+            + "the specified keywords (case-insensitive) and displays them as a list with index numbers.\n"
+            + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
+            + "Example: " + COMMAND_WORD + " alice bob charlie\n"
+            + "Or search by gender: find g/m,w (m, w, nb; comma-separated without duplicates).\n"
+            + "Use find g/ to list all persons with a specified gender.\n"
+            + "Or search by age: find age/25 or find age/25-35 (18 to 99, inclusive).\n"
+            + "Use one search mode at a time: name, age, or gender.";
 
     private final Predicate<Person> predicate;
 

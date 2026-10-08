@@ -6,6 +6,7 @@ import java.util.Set;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
@@ -28,6 +29,7 @@ public class PersonBuilder {
     private Phone phone;
     private Email email;
     private Address address;
+    private Gender gender = Gender.UNSPECIFIED;
     private Age age;
     private Set<Tag> tags;
     private SmokingStatus smokingStatus;
@@ -53,6 +55,7 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
+        gender = personToCopy.getGender();
         smokingStatus = personToCopy.getSmokingStatus();
         age = personToCopy.getAge();
         tags = new HashSet<>(personToCopy.getTags());
@@ -105,6 +108,14 @@ public class PersonBuilder {
     }
 
     /**
+     * Sets the gender of the person being built.
+     */
+    public PersonBuilder withGender(String gender) {
+        this.gender = Gender.parseValue(gender);
+        return this;
+    }
+
+    /**
      * Sets the smoking status of the person being built.
      */
     public PersonBuilder withSmokingStatus(String status) {
@@ -113,7 +124,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, address, age, tags, smokingStatus);
+        return new Person(name, phone, email, address, age, tags, smokingStatus, gender);
     }
 
 }

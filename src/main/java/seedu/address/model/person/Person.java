@@ -23,6 +23,7 @@ public class Person {
 
     // Data fields
     private final Address address;
+    private final Gender gender;
     private final SmokingStatus smokingStatus;
     private final Age age;
     private final Set<Tag> tags = new HashSet<>();
@@ -39,11 +40,20 @@ public class Person {
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
                   SmokingStatus smokingStatus) {
-        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus);
+        this(name, phone, email, address, age, tags, smokingStatus, Gender.UNSPECIFIED);
+    }
+
+    /**
+     * Creates a person with the given details. Use {@code Gender.UNSPECIFIED} for an unrecorded gender.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+                  SmokingStatus smokingStatus, Gender gender) {
+        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
+        this.gender = gender;
         this.smokingStatus = smokingStatus;
         this.age = age;
         this.tags.addAll(tags);
@@ -59,6 +69,10 @@ public class Person {
 
     public Email getEmail() {
         return email;
+    }
+
+    public Gender getGender() {
+        return gender;
     }
 
     public Address getAddress() {
@@ -115,13 +129,14 @@ public class Person {
                 && address.equals(otherPerson.address)
                 && smokingStatus.equals(otherPerson.smokingStatus)
                 && age.equals(otherPerson.age)
-                && tags.equals(otherPerson.tags);
+                && tags.equals(otherPerson.tags)
+                && gender == otherPerson.gender;
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, age, tags, smokingStatus);
+        return Objects.hash(name, phone, email, address, age, tags, smokingStatus, gender);
     }
 
     @Override
@@ -134,6 +149,7 @@ public class Person {
                 .add("smokingStatus", smokingStatus)
                 .add("age", age)
                 .add("tags", tags)
+                .add("gender", gender)
                 .toString();
     }
 

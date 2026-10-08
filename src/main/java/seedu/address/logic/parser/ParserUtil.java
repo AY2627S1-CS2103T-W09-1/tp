@@ -12,6 +12,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.SmokingStatus;
@@ -120,6 +121,19 @@ public class ParserUtil {
             throw new ParseException(Email.MESSAGE_CONSTRAINTS);
         }
         return new Email(trimmedEmail);
+    }
+
+    /**
+     * Parses an optional gender. An empty value means unspecified.
+     *
+     * @throws ParseException if the value is not a supported gender.
+     */
+    public static Gender parseGender(String gender) throws ParseException {
+        try {
+            return Gender.parseValue(gender);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException(Gender.MESSAGE_CONSTRAINTS, e);
+        }
     }
 
     /**
