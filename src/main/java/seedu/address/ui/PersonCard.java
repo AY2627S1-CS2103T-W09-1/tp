@@ -40,6 +40,12 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label email;
     @FXML
+    private Label gender;
+    @FXML
+    private Label smokingStatus;
+    @FXML
+    private Label age;
+    @FXML
     private Label religion;
     @FXML
     private Label religionCriteria;
@@ -57,6 +63,9 @@ public class PersonCard extends UiPart<Region> {
         phone.setText(person.getPhone().value);
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);
+        gender.setText("Gender: " + person.getGender());
+        smokingStatus.setText("Smoking: " + person.getSmokingStatus());
+        age.setText("Age: " + person.getAge().value);
         religion.setText("Religion: " + person.getReligion().map(Object::toString).orElse("Not specified"));
         StringBuilder criteria = new StringBuilder();
         person.getPreferredReligion().ifPresent(value -> criteria.append("Preferred: ").append(value));

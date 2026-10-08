@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_AGE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
@@ -14,6 +15,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 
 public class EditPersonDescriptorTest {
@@ -52,6 +54,10 @@ public class EditPersonDescriptorTest {
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withAddress(VALID_ADDRESS_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
+        // different age -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withAge(VALID_AGE_BOB).build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+
         // different tags -> returns false
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(DESC_AMY.equals(editedAmy));
@@ -63,16 +69,45 @@ public class EditPersonDescriptorTest {
     }
 
     @Test
+    public void gender_distinguishesOmittedClearedAndSpecifiedValues() {
+        EditPersonDescriptor omitted = new EditPersonDescriptor();
+        EditPersonDescriptor cleared = new EditPersonDescriptorBuilder().withGender("").build();
+        EditPersonDescriptor specified = new EditPersonDescriptorBuilder().withGender("nb").build();
+        assertFalse(omitted.isAnyFieldEdited());
+        assertTrue(cleared.isAnyFieldEdited());
+        assertTrue(specified.isAnyFieldEdited());
+        assertFalse(omitted.equals(cleared));
+        assertFalse(cleared.equals(specified));
+        assertEquals(cleared, new EditPersonDescriptor(cleared));
+        assertEquals(specified, new EditPersonDescriptor(specified));
+    }
+
+    @Test
     public void toStringMethod() {
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
         String expected = EditPersonDescriptor.class.getCanonicalName() + "{name="
                 + editPersonDescriptor.getName().orElse(null) + ", phone="
                 + editPersonDescriptor.getPhone().orElse(null) + ", email="
                 + editPersonDescriptor.getEmail().orElse(null) + ", address="
-                + editPersonDescriptor.getAddress().orElse(null) + ", tags="
-                + editPersonDescriptor.getTags().orElse(null) + ", religion=null, preferredReligion=null"
+                + editPersonDescriptor.getAddress().orElse(null) + ", smokingStatus="
+                + editPersonDescriptor.getSmokingStatus().orElse(null) + ", age="
+                + editPersonDescriptor.getAge().orElse(null) + ", tags="
+                + editPersonDescriptor.getTags().orElse(null) + ", gender="
+                + editPersonDescriptor.getGender().orElse(null) + ", religion=null, preferredReligion=null"
                 + ", requiredReligion=null, excludedReligions=null, religionEdited=false"
                 + ", preferredReligionEdited=false, requiredReligionEdited=false}";
         assertEquals(expected, editPersonDescriptor.toString());
+    }
+
+    @Test
+    public void copyConstructor_smokingStatus_preservesUpdate() {
+        EditPersonDescriptor original = new EditPersonDescriptor();
+        original.setSmokingStatus(new SmokingStatus("yes"));
+        EditPersonDescriptor copy = new EditPersonDescriptor(original);
+        assertTrue(copy.isAnyFieldEdited());
+        assertEquals(original, copy);
+        original.setSmokingStatus(new SmokingStatus("no"));
+        assertEquals(new SmokingStatus("yes"), copy.getSmokingStatus().orElseThrow());
+        assertFalse(original.equals(copy));
     }
 }

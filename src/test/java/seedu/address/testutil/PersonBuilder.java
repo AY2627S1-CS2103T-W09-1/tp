@@ -4,11 +4,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Religion;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.model.util.SampleDataUtil;
 
@@ -21,12 +24,16 @@ public class PersonBuilder {
     public static final String DEFAULT_PHONE = "85355255";
     public static final String DEFAULT_EMAIL = "amy@gmail.com";
     public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
+    public static final int DEFAULT_AGE = 25;
 
     private Name name;
     private Phone phone;
     private Email email;
     private Address address;
+    private Gender gender = Gender.UNSPECIFIED;
+    private Age age;
     private Set<Tag> tags;
+    private SmokingStatus smokingStatus;
     private Religion religion;
     private Religion preferredReligion;
     private Religion requiredReligion;
@@ -40,7 +47,9 @@ public class PersonBuilder {
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
         address = new Address(DEFAULT_ADDRESS);
+        age = new Age(DEFAULT_AGE);
         tags = new HashSet<>();
+        smokingStatus = SmokingStatus.UNSPECIFIED;
         excludedReligions = new HashSet<>();
     }
 
@@ -52,6 +61,9 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
+        gender = personToCopy.getGender();
+        smokingStatus = personToCopy.getSmokingStatus();
+        age = personToCopy.getAge();
         tags = new HashSet<>(personToCopy.getTags());
         religion = personToCopy.getReligion().orElse(null);
         preferredReligion = personToCopy.getPreferredReligion().orElse(null);
@@ -83,6 +95,12 @@ public class PersonBuilder {
         return this;
     }
 
+    /** Sets the {@code Age} of the {@code Person} that we are building. */
+    public PersonBuilder withAge(int age) {
+        this.age = new Age(age);
+        return this;
+    }
+
     /**
      * Sets the {@code Phone} of the {@code Person} that we are building.
      */
@@ -96,6 +114,22 @@ public class PersonBuilder {
      */
     public PersonBuilder withEmail(String email) {
         this.email = new Email(email);
+        return this;
+    }
+
+    /**
+     * Sets the gender of the person being built.
+     */
+    public PersonBuilder withGender(String gender) {
+        this.gender = Gender.parseValue(gender);
+        return this;
+    }
+
+    /**
+     * Sets the smoking status of the person being built.
+     */
+    public PersonBuilder withSmokingStatus(String status) {
+        smokingStatus = new SmokingStatus(status);
         return this;
     }
 
@@ -128,8 +162,8 @@ public class PersonBuilder {
 
     /** Builds an immutable person with the selected details. */
     public Person build() {
-        return new Person(name, phone, email, address, tags, religion, preferredReligion, requiredReligion,
-                excludedReligions);
+        return new Person(name, phone, email, address, age, tags, smokingStatus, gender, religion,
+                preferredReligion, requiredReligion, excludedReligions);
     }
 
 }
