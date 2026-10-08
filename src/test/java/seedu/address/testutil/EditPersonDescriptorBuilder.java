@@ -10,6 +10,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -36,6 +37,9 @@ public class EditPersonDescriptorBuilder {
         descriptor.setPhone(person.getPhone());
         descriptor.setEmail(person.getEmail());
         descriptor.setAddress(person.getAddress());
+        if (!person.getSmokingStatus().value.isEmpty()) {
+            descriptor.setSmokingStatus(person.getSmokingStatus());
+        }
         descriptor.setTags(person.getTags());
     }
 
@@ -68,6 +72,14 @@ public class EditPersonDescriptorBuilder {
      */
     public EditPersonDescriptorBuilder withAddress(String address) {
         descriptor.setAddress(new Address(address));
+        return this;
+    }
+
+    /**
+     * Sets the smoking status in the edit descriptor being built.
+     */
+    public EditPersonDescriptorBuilder withSmokingStatus(String status) {
+        descriptor.setSmokingStatus(new SmokingStatus(status));
         return this;
     }
 

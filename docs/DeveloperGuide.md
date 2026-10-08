@@ -10,6 +10,7 @@ title: Developer Guide
 ## **Acknowledgements**
 
 * _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* The smoking-status increment follows the model, storage, and UI integration approach in the [SE-EDU Adding a Command tutorial](https://se-education.org/guides/tutorials/ab3AddRemark.html), adapted to the existing `add` and `edit` commands.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -154,6 +155,21 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Recording smoking status
+
+The optional `s/` parameter in `add` and `edit` records a client's own smoking habit.
+`SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
+not a non-smoker. The parsers reject empty, invalid, and repeated `s/` parameters.
+
+`Person` includes smoking status in full equality and hashing, while its existing name-based identity rule is unchanged.
+`EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
+`JsonAdaptedPerson` saves the `smokingStatus` string and reads absent or null fields in older JSON files as unspecified.
+An empty stored string also means unspecified. Other invalid stored values are rejected using the existing storage-error path.
+The person card and command feedback display the status, including `Not specified` for missing information.
+
+This increment supplies personal-characteristic data for later filtering and matching work.
+It does not yet implement smoking preferences, dealbreakers, matching, or a command to clear a recorded status.
 
 ### \[Proposed\] Undo/redo feature
 

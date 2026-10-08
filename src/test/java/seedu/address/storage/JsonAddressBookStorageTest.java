@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.person.SmokingStatus;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -58,6 +60,35 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_legacySmokingStatus_preservesOtherData() throws Exception {
+        Path file = testFolder.resolve("legacy.json");
+        String json = "{\"persons\":[{\"name\":\"Alice\",\"phone\":\"12345678\","
+                + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"tags\":[]%s}]}";
+        for (String field : new String[] {"", ",\"smokingStatus\":null", ",\"smokingStatus\":\"\""}) {
+            Files.writeString(file, String.format(json, field));
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+            ReadOnlyAddressBook loaded = storage.readAddressBook().orElseThrow();
+            assertEquals(SmokingStatus.UNSPECIFIED, loaded.getPersonList().get(0).getSmokingStatus());
+            storage.saveAddressBook(loaded);
+            assertEquals(loaded, storage.readAddressBook().orElseThrow());
+        }
+    }
+
+    @Test
+    public void readAddressBook_invalidSmokingStatus_doesNotOverwriteFile() throws Exception {
+        Path file = testFolder.resolve("invalidSmoking.json");
+        String json = "{\"persons\":[{\"name\":\"Alice\",\"phone\":\"12345678\","
+                + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"tags\":[],\"smokingStatus\":%s}]}";
+        for (String value : new String[] {"\"sometimes\"", "\"ye\u017f\"", "true", "42", "{}", "[]"}) {
+            String contents = String.format(json, value);
+            Files.writeString(file, contents);
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(file);
+            assertThrows(DataLoadingException.class, () -> storage.readAddressBook());
+            assertEquals(contents, Files.readString(file));
+        }
     }
 
     @Test

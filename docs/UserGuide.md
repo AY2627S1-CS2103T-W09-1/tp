@@ -77,7 +77,7 @@ Format: `help`
 
 Adds a client to CupidMaxxing. In addition to the usual contact fields, you can record the client's own attributes, partner preferences, and dealbreakers. All matchmaking fields are optional.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/SMOKING] [t/TAG]…​`
 
 * `r/RELIGION` is the client's religion. It contains letters and spaces only, and is 1-30 characters long after trimming.
 * `s/SMOKING` is `yes` or `no` (case-insensitive).
@@ -86,6 +86,17 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]… [r/RELIGION] [s/
 * Each preference attribute and each dealbreaker attribute may appear once per command. Supplying an existing attribute later overwrites its stored value.
 
 Examples:
+* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
+* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi s/no` Records Alice as a non-smoker.
+
+The optional `s/SMOKING` field records the client's **own smoking habit**:
+
+* Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
+* Omit the field if the status is unknown. The person card displays `Smoking: Not specified`.
+* A supplied `s/` must have a value, and may appear only once per command. Blank, invalid, or repeated values reject the command without changing any records.
+* Smoking status is saved between sessions. Older records without this field remain usable and display `Not specified`.
+* This field does not record a partner preference or dealbreaker. Smoking-based searching and matching are not implemented in this increment.
 
 * `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd`
 * `add n/Wei Ming p/98765432 e/wm@example.com a/5 Bedok Ave age/34 r/christian pref/age:28-36 db/smoking:yes`
@@ -100,11 +111,19 @@ Format: `list`
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/SMOKING] [t/TAG]…​`
 
-The matchmaking fields follow the same rules as [`add`](#adding-a-client-add). Existing values are overwritten. When editing tags, existing tags are replaced; use `t/` to clear all tags.
+* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
+* At least one of the optional fields must be provided.
+* Existing values will be updated to the input values.
+* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
+* To remove all of a person's tags, enter `t/` without a tag after it.
+* Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
 
 Examples:
+*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
+*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+*  `edit 1 s/yes` Records the 1st displayed person as a smoker, preserving their other details.
 
 * `edit 1 r/christian s/no age/28`
 * `edit 1 pref/age:25-35`
@@ -244,20 +263,11 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
-**Add client** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`<br>e.g., `add n/Wei Ming p/98765432 e/wm@example.com a/5 Bedok Ave age/34 r/christian pref/age:28-36 db/smoking:yes`
+**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/SMOKING] [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 s/no t/friend t/colleague`
 **Clear** | `clear`
-**Delete client** | `delete INDEX`<br>e.g., `delete 3`
-**Edit client** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`<br>e.g., `edit 2 age/34 pref/religion:hindu db/smoking:yes`
-**Find clients (OR)** | `find [age/MIN-MAX] [s/STATUS] [r/RELIGION]`<br>e.g., `find age/25-35 r/buddhist`
-**Filter clients (AND)** | `filter [age/MIN-MAX] [s/STATUS] [r/RELIGION]`<br>e.g., `filter age/25-35 s/no r/buddhist`
-**Match clients** | `match INDEX_A INDEX_B`<br>e.g., `match 2 5`
-**Create group** | `group create g/GROUP_NAME`<br>e.g., `group create g/VIP`
-**Rename group** | `group rename g/GROUP_NAME ng/NEW_GROUP_NAME`<br>e.g., `group rename g/VIP ng/Priority Clients`
-**Delete group** | `group delete g/GROUP_NAME`<br>e.g., `group delete g/Priority Clients`
-**Add clients to group** | `group add g/GROUP_NAME INDEX [INDEX]…`<br>e.g., `group add g/VIP 2 5`
-**Remove clients from group** | `group remove g/GROUP_NAME INDEX [INDEX]…`<br>e.g., `group remove g/VIP 2`
-**Show group** | `group show g/GROUP_NAME`<br>e.g., `group show g/VIP`
-**List groups** | `group list`
-**List clients** | `list`
+**Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/SMOKING] [t/TAG]…​`<br> e.g., `edit 2 s/no`
+**Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**List** | `list`
 **Help** | `help`
 **Exit** | `exit`

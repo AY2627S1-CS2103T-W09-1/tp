@@ -8,6 +8,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 import seedu.address.model.util.SampleDataUtil;
 
@@ -26,6 +27,7 @@ public class PersonBuilder {
     private Email email;
     private Address address;
     private Set<Tag> tags;
+    private SmokingStatus smokingStatus;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -36,6 +38,7 @@ public class PersonBuilder {
         email = new Email(DEFAULT_EMAIL);
         address = new Address(DEFAULT_ADDRESS);
         tags = new HashSet<>();
+        smokingStatus = SmokingStatus.UNSPECIFIED;
     }
 
     /**
@@ -46,6 +49,7 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
+        smokingStatus = personToCopy.getSmokingStatus();
         tags = new HashSet<>(personToCopy.getTags());
     }
 
@@ -89,8 +93,16 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the smoking status of the person being built.
+     */
+    public PersonBuilder withSmokingStatus(String status) {
+        smokingStatus = new SmokingStatus(status);
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, email, address, tags);
+        return new Person(name, phone, email, address, tags, smokingStatus);
     }
 
 }
