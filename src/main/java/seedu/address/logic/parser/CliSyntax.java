@@ -18,5 +18,6 @@ public class CliSyntax {
     public static final Prefix PREFIX_PREFERRED_RELIGION = new Prefix("rp/");
     public static final Prefix PREFIX_REQUIRED_RELIGION = new Prefix("rr/");
     public static final Prefix PREFIX_EXCLUDED_RELIGION = new Prefix("rx/");
+    public static final Prefix PREFIX_RELATIONSHIP_GOAL = new Prefix("rg/");
 
 }

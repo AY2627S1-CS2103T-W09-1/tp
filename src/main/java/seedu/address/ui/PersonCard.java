@@ -9,6 +9,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.RelationshipGoal;
 
 /**
  * A UI component that displays information of a {@code Person}.
@@ -51,6 +52,8 @@ public class PersonCard extends UiPart<Region> {
     private Label religionCriteria;
     @FXML
     private FlowPane tags;
+    @FXML
+    private Label relationshipGoal;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -89,5 +92,7 @@ public class PersonCard extends UiPart<Region> {
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+        relationshipGoal.setText("Relationship goal: "
+                + person.getRelationshipGoal().map(Object::toString).orElse(RelationshipGoal.NOT_SPECIFIED_LABEL));
     }
 }

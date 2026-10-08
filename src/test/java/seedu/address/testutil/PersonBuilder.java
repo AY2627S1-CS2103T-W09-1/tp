@@ -10,6 +10,7 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -38,6 +39,7 @@ public class PersonBuilder {
     private Religion preferredReligion;
     private Religion requiredReligion;
     private Set<Religion> excludedReligions;
+    private RelationshipGoal relationshipGoal;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -69,6 +71,7 @@ public class PersonBuilder {
         preferredReligion = personToCopy.getPreferredReligion().orElse(null);
         requiredReligion = personToCopy.getRequiredReligion().orElse(null);
         excludedReligions = new HashSet<>(personToCopy.getExcludedReligions());
+        relationshipGoal = personToCopy.getRelationshipGoal().orElse(null);
     }
 
     /**
@@ -160,10 +163,18 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the {@code RelationshipGoal} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withRelationshipGoal(String relationshipGoal) {
+        this.relationshipGoal = RelationshipGoal.fromString(relationshipGoal);
+        return this;
+    }
+
     /** Builds an immutable person with the selected details. */
     public Person build() {
         return new Person(name, phone, email, address, age, tags, smokingStatus, gender, religion,
-                preferredReligion, requiredReligion, excludedReligions);
+                preferredReligion, requiredReligion, excludedReligions, relationshipGoal);
     }
 
 }

@@ -10,6 +10,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_AGE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_RELATIONSHIP_GOAL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 
 import org.junit.jupiter.api.Test;
@@ -66,6 +67,14 @@ public class EditPersonDescriptorTest {
         assertFalse(DESC_AMY.equals(editedAmy));
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withExcludedReligions("No religion").build();
         assertFalse(DESC_AMY.equals(editedAmy));
+
+        // different relationship goal -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withRelationshipGoal(VALID_RELATIONSHIP_GOAL_BOB).build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+
+        // relationship goal cleared versus not edited -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withoutRelationshipGoal().build();
+        assertFalse(DESC_AMY.equals(editedAmy));
     }
 
     @Test
@@ -83,6 +92,13 @@ public class EditPersonDescriptorTest {
     }
 
     @Test
+    public void isAnyFieldEdited_relationshipGoalCleared_returnsTrue() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutRelationshipGoal().build();
+        assertTrue(descriptor.isAnyFieldEdited());
+        assertTrue(new EditPersonDescriptor(descriptor).isRelationshipGoalEdited());
+    }
+
+    @Test
     public void toStringMethod() {
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
         String expected = EditPersonDescriptor.class.getCanonicalName() + "{name="
@@ -95,7 +111,8 @@ public class EditPersonDescriptorTest {
                 + editPersonDescriptor.getTags().orElse(null) + ", gender="
                 + editPersonDescriptor.getGender().orElse(null) + ", religion=null, preferredReligion=null"
                 + ", requiredReligion=null, excludedReligions=null, religionEdited=false"
-                + ", preferredReligionEdited=false, requiredReligionEdited=false}";
+                + ", preferredReligionEdited=false, requiredReligionEdited=false"
+                + ", relationshipGoal=" + editPersonDescriptor.getRelationshipGoal().orElse(null) + "}";
         assertEquals(expected, editPersonDescriptor.toString());
     }
 

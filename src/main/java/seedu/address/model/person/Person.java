@@ -13,7 +13,7 @@ import seedu.address.model.tag.Tag;
 
 /**
  * Represents a Person in the address book.
- * Required contact details are non-null; religion details may be absent.
+ * Required contact details are non-null; religion details and the relationship goal may be absent.
  * Recorded values are validated, and person details are immutable.
  */
 public class Person {
@@ -33,16 +33,17 @@ public class Person {
     private final Religion preferredReligion;
     private final Religion requiredReligion;
     private final Set<Religion> excludedReligions = new HashSet<>();
+    private final RelationshipGoal relationshipGoal;
 
     /**
-     * Creates a person whose smoking status has not been recorded.
+     * Creates a person whose smoking status and relationship goal have not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags) {
         this(name, phone, email, address, age, tags, SmokingStatus.UNSPECIFIED);
     }
 
     /**
-     * Creates a person with the given details. Every field must be present and not null.
+     * Creates a person whose relationship goal has not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
                   SmokingStatus smokingStatus) {
@@ -62,10 +63,21 @@ public class Person {
         this(name, phone, email, address, new Age(18), tags);
     }
 
-    /** Creates a person with all supported client characteristics. */
+    /** Creates a person with all supported client characteristics except a relationship goal. */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus, Gender gender, Religion religion, Religion preferredReligion,
             Religion requiredReligion, Set<Religion> excludedReligions) {
+        this(name, phone, email, address, age, tags, smokingStatus, gender, religion, preferredReligion,
+                requiredReligion, excludedReligions, null);
+    }
+
+    /**
+     * Creates a person with all supported client characteristics.
+     * A null relationship goal means it has not been recorded.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+            SmokingStatus smokingStatus, Gender gender, Religion religion, Religion preferredReligion,
+            Religion requiredReligion, Set<Religion> excludedReligions, RelationshipGoal relationshipGoal) {
         requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender, excludedReligions);
         if ((preferredReligion != null && requiredReligion != null
                 && !preferredReligion.equals(requiredReligion))
@@ -85,6 +97,7 @@ public class Person {
         this.preferredReligion = preferredReligion;
         this.requiredReligion = requiredReligion;
         this.excludedReligions.addAll(excludedReligions);
+        this.relationshipGoal = relationshipGoal;
     }
 
     public Name getName() {
@@ -135,6 +148,11 @@ public class Person {
         return Collections.unmodifiableSet(excludedReligions);
     }
 
+    /** Returns the client's recorded relationship goal, if known. */
+    public Optional<RelationshipGoal> getRelationshipGoal() {
+        return Optional.ofNullable(relationshipGoal);
+    }
+
     /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
@@ -182,14 +200,15 @@ public class Person {
                 && Objects.equals(religion, otherPerson.religion)
                 && Objects.equals(preferredReligion, otherPerson.preferredReligion)
                 && Objects.equals(requiredReligion, otherPerson.requiredReligion)
-                && excludedReligions.equals(otherPerson.excludedReligions);
+                && excludedReligions.equals(otherPerson.excludedReligions)
+                && Objects.equals(relationshipGoal, otherPerson.relationshipGoal);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
         return Objects.hash(name, phone, email, address, tags, religion, preferredReligion, requiredReligion,
-                excludedReligions, age, smokingStatus, gender);
+                excludedReligions, age, smokingStatus, gender, relationshipGoal);
     }
 
     @Override
@@ -207,6 +226,7 @@ public class Person {
                 .add("preferredReligion", preferredReligion)
                 .add("requiredReligion", requiredReligion)
                 .add("excludedReligions", excludedReligions)
+                .add("relationshipGoal", relationshipGoal)
                 .toString();
     }
 

@@ -11,6 +11,7 @@ title: Developer Guide
 
 * _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
 * The smoking-status increment follows the model, storage, and UI integration approach in the [SE-EDU Adding a Command tutorial](https://se-education.org/guides/tutorials/ab3AddRemark.html), adapted to the existing `add` and `edit` commands.
+* The relationship-goal increment follows the model, storage, and UI integration approach in the [SE-EDU Adding a Command tutorial](https://se-education.org/guides/tutorials/ab3AddRemark.html), adapted to the existing `add` and `edit` commands. Its goal categories are adapted from the relationship types offered by the Hinge dating app.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -203,6 +204,31 @@ religion fields mean **unknown**, not `No religion`, which is an explicit catego
 `JsonAdaptedPerson` saves the canonical names and treats missing religion properties in older
 data as unknown. `PersonCard` displays the recorded values. Name-only `find` and pairwise
 compatibility do not yet use these fields; they are separate increments.
+
+### Recording relationship goals
+
+The optional `rg/` parameter in `add` and `edit` records a client's own relationship goal.
+`RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge.
+Each enum value holds its short keyword (for example, `long-open`) and its full name, so a goal can
+be entered either way; keywords exist because fast typing is a core goal of the product.
+`RelationshipGoal#fromString` strips the input, collapses repeated internal whitespace, and ignores
+case when matching. Each goal is stored and displayed using its full name: for example, `rg/LONG`
+becomes `Long-term relationship`.
+
+`AddCommandParser` and `EditCommandParser` reject invalid and repeated `rg/` parameters.
+`Person` exposes the goal as an `Optional`, because an absent goal means **unknown**, not
+`Figuring out my goals`, which is an explicit category. `Person` includes the goal in full equality
+and hashing, while its existing name-based identity rule is unchanged. `EditPersonDescriptor`
+records whether `rg/` was supplied separately from its value, so `rg/` with no value clears the goal
+and edits to other fields preserve it.
+
+`JsonAdaptedPerson` saves the full category name as the `relationshipGoal` string and reads absent
+or null fields in older JSON files as unknown. Other invalid stored values are rejected using the
+existing storage-error path. The person card and command feedback display the goal, including
+`Not specified` for missing information.
+
+This increment supplies personal-characteristic data for later filtering and matching work.
+It does not yet implement relationship-goal preferences, dealbreakers, searching, or matching.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -563,6 +589,34 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases …​ }_
+
+### Relationship goals
+
+1. Adding and retaining a relationship goal
+
+   1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 rg/LONG`.<br>
+      Expected: The contact card shows `Relationship goal: Long-term relationship`. The keyword
+      is converted to the goal's full name.
+
+   1. Enter `find Rae`, then `edit 1 rg/short-open`.<br>
+      Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
+
+   1. Enter `edit 1 p/99999999`.<br>
+      Expected: The phone number changes and the relationship goal is unchanged.
+
+   1. Close and relaunch the app.<br>
+      Expected: Rae's relationship goal is still `Short-term relationship, open to long`.
+
+   1. Enter `find Rae`, then `edit 1 rg/`.<br>
+      Expected: The contact card shows `Relationship goal: Not specified`.
+
+1. Rejecting unsupported and repeated values
+
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/marriage`.<br>
+      Expected: The command is rejected with the list of accepted keywords and goals. No contact is added.
+
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/short rg/life`.<br>
+      Expected: The command is rejected because `rg/` is repeated. No contact is added.
 
 ### Saving data
 

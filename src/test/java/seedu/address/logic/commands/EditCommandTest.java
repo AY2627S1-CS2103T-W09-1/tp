@@ -7,6 +7,7 @@ import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_RELATIONSHIP_GOAL_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
@@ -206,4 +207,55 @@ public class EditCommandTest {
         assertEquals(expected, editCommand.toString());
     }
 
+    @Test
+    public void execute_relationshipGoalSpecifiedUnfilteredList_success() {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person editedPerson = new PersonBuilder(firstPerson).withRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY).build();
+
+        assertFirstPersonEditSuccess(descriptor, editedPerson);
+    }
+
+    @Test
+    public void execute_otherFieldEdited_relationshipGoalPreserved() {
+        Person personWithGoal = setFirstPersonRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY);
+        Person editedPerson = new PersonBuilder(personWithGoal).withName(VALID_NAME_BOB).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();
+
+        assertFirstPersonEditSuccess(descriptor, editedPerson);
+    }
+
+    @Test
+    public void execute_emptyRelationshipGoal_relationshipGoalCleared() {
+        Person personWithoutGoal = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        setFirstPersonRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutRelationshipGoal().build();
+
+        assertFirstPersonEditSuccess(descriptor, personWithoutGoal);
+    }
+
+    /**
+     * Gives the first person in {@code model} the relationship goal {@code relationshipGoal}
+     * and returns the updated person.
+     */
+    private Person setFirstPersonRelationshipGoal(String relationshipGoal) {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person personWithGoal = new PersonBuilder(firstPerson).withRelationshipGoal(relationshipGoal).build();
+        model.setPerson(firstPerson, personWithGoal);
+        return personWithGoal;
+    }
+
+    /**
+     * Asserts that editing the first person with {@code descriptor} succeeds and results in {@code editedPerson}.
+     */
+    private void assertFirstPersonEditSuccess(EditPersonDescriptor descriptor, Person editedPerson) {
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()), editedPerson);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
 }

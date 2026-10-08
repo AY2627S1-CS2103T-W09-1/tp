@@ -17,6 +17,7 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -40,6 +41,7 @@ class JsonAdaptedPerson {
     private final String preferredReligion;
     private final String requiredReligion;
     private final List<String> excludedReligions = new ArrayList<>();
+    private final String relationshipGoal;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -53,7 +55,8 @@ class JsonAdaptedPerson {
             @JsonProperty("religion") String religion,
             @JsonProperty("preferredReligion") String preferredReligion,
             @JsonProperty("requiredReligion") String requiredReligion,
-            @JsonProperty("excludedReligions") List<String> excludedReligions) {
+            @JsonProperty("excludedReligions") List<String> excludedReligions,
+            @JsonProperty("relationshipGoal") String relationshipGoal) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -70,11 +73,12 @@ class JsonAdaptedPerson {
         if (excludedReligions != null) {
             this.excludedReligions.addAll(excludedReligions);
         }
+        this.relationshipGoal = relationshipGoal;
     }
 
     /** Creates an adapted legacy person with no recorded religion details. */
     public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, null, tags, null, null, null, null, null, null);
+        this(name, phone, email, address, null, tags, null, null, null, null, null, null, null);
     }
 
     /**
@@ -82,7 +86,7 @@ class JsonAdaptedPerson {
      */
     public JsonAdaptedPerson(String name, String phone, String email, String address, String age,
             List<JsonAdaptedTag> tags, String smokingStatus, String gender) {
-        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null, null, null);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null, null, null, null);
     }
 
     /**
@@ -91,7 +95,7 @@ class JsonAdaptedPerson {
     public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags,
             String religion, String preferredReligion, String requiredReligion, List<String> excludedReligions) {
         this(name, phone, email, address, "18", tags, null, null, religion, preferredReligion,
-                requiredReligion, excludedReligions);
+                requiredReligion, excludedReligions, null);
     }
 
     /**
@@ -115,6 +119,7 @@ class JsonAdaptedPerson {
                 .map(Religion::toString)
                 .sorted()
                 .collect(Collectors.toList()));
+        relationshipGoal = source.getRelationshipGoal().map(RelationshipGoal::toString).orElse(null);
     }
 
     /**
@@ -183,6 +188,13 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Gender.MESSAGE_CONSTRAINTS);
         }
 
+        final RelationshipGoal modelRelationshipGoal;
+        try {
+            modelRelationshipGoal = relationshipGoal == null ? null : RelationshipGoal.fromString(relationshipGoal);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalValueException(RelationshipGoal.MESSAGE_CONSTRAINTS);
+        }
+
         try {
             Religion modelReligion = religion == null ? null : new Religion(religion);
             Religion modelPreferred = preferredReligion == null ? null : new Religion(preferredReligion);
@@ -194,7 +206,8 @@ class JsonAdaptedPerson {
                 }
             }
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags,
-                    modelSmokingStatus, modelGender, modelReligion, modelPreferred, modelRequired, modelExcluded);
+                    modelSmokingStatus, modelGender, modelReligion, modelPreferred, modelRequired, modelExcluded,
+                    modelRelationshipGoal);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(exception.getMessage());
         }

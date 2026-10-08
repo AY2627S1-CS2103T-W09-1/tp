@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.RelationshipGoal;
 
 /**
  * Container for user visible messages.
@@ -58,6 +59,9 @@ public class Messages {
             builder.append(person.getExcludedReligions().stream().map(Object::toString)
                     .sorted(Comparator.naturalOrder()).collect(Collectors.joining(", ")));
         }
+        String relationshipGoal = person.getRelationshipGoal().map(Object::toString)
+                .orElse(RelationshipGoal.NOT_SPECIFIED_LABEL);
+        builder.append("; Relationship goal: ").append(relationshipGoal);
         return builder.toString();
     }
 
