@@ -25,6 +25,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Religion;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -97,6 +98,30 @@ public class EditCommandTest {
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    /** Edits religion criteria while preserving other client details. */
+    @Test
+    public void execute_religionFields_success() {
+        Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person edited = new PersonBuilder(original).withReligion("Jainism")
+                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
+                .withExcludedReligions("Islam").build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withReligion("Jainism")
+                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
+                .withExcludedReligions("Islam").build();
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(original, edited);
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(edited)), expectedModel);
+    }
+
+    /** A conflicting edit fails without changing the model. */
+    @Test
+    public void execute_conflictingReligionFields_failure() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withRequiredReligion("Islam").withExcludedReligions("Islam").build();
+        assertCommandFailure(new EditCommand(INDEX_FIRST_PERSON, descriptor), model, Religion.MESSAGE_CONFLICT);
     }
 
     @Test

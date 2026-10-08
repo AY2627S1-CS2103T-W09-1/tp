@@ -20,6 +20,7 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.testutil.PersonBuilder;
 
@@ -44,6 +45,25 @@ public class JsonAdaptedPersonTest {
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(BENSON);
         assertEquals(BENSON, person.toModelType());
+    }
+
+    /** New religion fields survive JSON serialization while legacy fields remain readable. */
+    @Test
+    public void jsonRoundTrip_religionFieldsPreserved() throws Exception {
+        var original = new PersonBuilder(BENSON).withReligion("Jainism")
+                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
+                .withExcludedReligions("Islam", "No religion").build();
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(original));
+        JsonAdaptedPerson restored = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class);
+        assertEquals(original, restored.toModelType());
+    }
+
+    /** Invalid persisted religion values are rejected instead of silently becoming unknown. */
+    @Test
+    public void toModelType_invalidReligion_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_TAGS, "Other: Jainism", null, null, List.of());
+        assertThrows(IllegalValueException.class, Religion.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test

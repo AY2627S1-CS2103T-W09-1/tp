@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -12,7 +13,8 @@ import seedu.address.model.tag.Tag;
 
 /**
  * Represents a Person in the address book.
- * Guarantees: details are present and not null, field values are validated, immutable.
+ * Required contact details are non-null; religion details may be absent.
+ * Recorded values are validated, and person details are immutable.
  */
 public class Person {
 
@@ -27,6 +29,10 @@ public class Person {
     private final SmokingStatus smokingStatus;
     private final Age age;
     private final Set<Tag> tags = new HashSet<>();
+    private final Religion religion;
+    private final Religion preferredReligion;
+    private final Religion requiredReligion;
+    private final Set<Religion> excludedReligions = new HashSet<>();
 
     /**
      * Creates a person whose smoking status has not been recorded.
@@ -48,7 +54,25 @@ public class Person {
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
                   SmokingStatus smokingStatus, Gender gender) {
-        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null, null, Set.of());
+    }
+
+    /** Creates a person with required contact details and no religion details. */
+    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
+        this(name, phone, email, address, new Age(18), tags);
+    }
+
+    /** Creates a person with all supported client characteristics. */
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+            SmokingStatus smokingStatus, Gender gender, Religion religion, Religion preferredReligion,
+            Religion requiredReligion, Set<Religion> excludedReligions) {
+        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender, excludedReligions);
+        if ((preferredReligion != null && requiredReligion != null
+                && !preferredReligion.equals(requiredReligion))
+                || (preferredReligion != null && excludedReligions.contains(preferredReligion))
+                || (requiredReligion != null && excludedReligions.contains(requiredReligion))) {
+            throw new IllegalArgumentException(Religion.MESSAGE_CONFLICT);
+        }
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -57,6 +81,10 @@ public class Person {
         this.smokingStatus = smokingStatus;
         this.age = age;
         this.tags.addAll(tags);
+        this.religion = religion;
+        this.preferredReligion = preferredReligion;
+        this.requiredReligion = requiredReligion;
+        this.excludedReligions.addAll(excludedReligions);
     }
 
     public Name getName() {
@@ -85,6 +113,26 @@ public class Person {
 
     public Age getAge() {
         return age;
+    }
+
+    /** Returns the client's recorded religion, if known. */
+    public Optional<Religion> getReligion() {
+        return Optional.ofNullable(religion);
+    }
+
+    /** Returns the religion the client would prefer in a partner, if specified. */
+    public Optional<Religion> getPreferredReligion() {
+        return Optional.ofNullable(preferredReligion);
+    }
+
+    /** Returns the religion the client requires in a partner, if specified. */
+    public Optional<Religion> getRequiredReligion() {
+        return Optional.ofNullable(requiredReligion);
+    }
+
+    /** Returns religions the client excludes in a partner. */
+    public Set<Religion> getExcludedReligions() {
+        return Collections.unmodifiableSet(excludedReligions);
     }
 
     /**
@@ -130,13 +178,18 @@ public class Person {
                 && smokingStatus.equals(otherPerson.smokingStatus)
                 && age.equals(otherPerson.age)
                 && tags.equals(otherPerson.tags)
-                && gender == otherPerson.gender;
+                && gender == otherPerson.gender
+                && Objects.equals(religion, otherPerson.religion)
+                && Objects.equals(preferredReligion, otherPerson.preferredReligion)
+                && Objects.equals(requiredReligion, otherPerson.requiredReligion)
+                && excludedReligions.equals(otherPerson.excludedReligions);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, age, tags, smokingStatus, gender);
+        return Objects.hash(name, phone, email, address, tags, religion, preferredReligion, requiredReligion,
+                excludedReligions, age, smokingStatus, gender);
     }
 
     @Override
@@ -150,6 +203,10 @@ public class Person {
                 .add("age", age)
                 .add("tags", tags)
                 .add("gender", gender)
+                .add("religion", religion)
+                .add("preferredReligion", preferredReligion)
+                .add("requiredReligion", requiredReligion)
+                .add("excludedReligions", excludedReligions)
                 .toString();
     }
 

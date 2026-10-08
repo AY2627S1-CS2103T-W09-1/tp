@@ -78,6 +78,7 @@ Format: `help`
 Adds a client to CupidMaxxing with contact details and age. Gender, smoking status and tags are optional.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​`
 
 * `AGE` is compulsory and must be an integer from 18 to 99 (inclusive).
 * `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one `g/` prefix are allowed per command.
@@ -98,6 +99,32 @@ Examples:
 * `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd age/28 g/w` Records Sarah as a woman.
 * `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi age/30 s/no` Records Alice as a non-smoker.
 
+* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
+* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/Amy Bee p/85355255 e/amy@example.com a/Jurong West r/Jainism rp/Buddhism rr/Buddhism rx/Islam`
+
+#### Religion fields
+
+Religion is optional. Omit `r/` when a client's religion is not known; this is different from
+`r/No religion`, which records an explicit answer. The accepted categories are
+`Christianity`, `Islam`, `Hinduism`, `Buddhism`, `Sikhism`, `Judaism`, `Jainism`,
+`Baha'i Faith`, `Shinto`, `Taoism`, `Confucianism`, `Zoroastrianism`, `Rastafari`,
+`Wicca`, `Paganism`, `Tenrikyo`, `Cao Dai`, `Druze`, `Atheism`, `Agnosticism`, and
+`No religion`. Use one of these names for any of `r/`, `rp/`, `rr/`, or `rx/`.
+Names are matched without regard to letter case or repeated spaces: for example,
+`r/jAiNiSm` is accepted and displayed as `Jainism`. A misspelled name is not accepted;
+use the listed spelling, although its letter case can vary. There is no free-text or
+`Other` category. If none applies, leave the field unset rather than selecting
+`No religion`, which means the client explicitly has no religion.
+
+* `rp/RELIGION` records a **soft preference** for a partner's religion.
+* `rr/RELIGION` records a **required** partner religion (a dealbreaker if unmet).
+* Repeat `rx/RELIGION` to **exclude** one or more partner religions (dealbreakers if met).
+
+A preference and a requirement must name the same religion if both are set.
+Neither may also be excluded. All of these values are saved with the contact and
+shown on the client card. Searching and pairwise compatibility using these fields
+are planned separately; this increment records the information needed for them.
 
 ### Listing all clients: `list`
 
@@ -110,6 +137,7 @@ Format: `list`
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
 * At least one of the optional fields must be provided.
@@ -119,10 +147,17 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
+* `r/`, `rp/`, and `rr/` with no value clear that individual religion field.
+* Enter `rx/` alone to clear all excluded religions; otherwise, supplied `rx/`
+  values replace the entire exclusion set rather than adding to it.
+* An edit that would make the preference, requirement, and exclusion values
+  contradictory is rejected without changing the contact.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+*  `edit 1 r/Christianity rp/Christianity rx/No religion` Sets a client's religion and partner criteria.
+*  `edit 1 rp/ rx/` Clears the partner preference and all excluded religions.
 
 * `edit 1 g/nb` changes the first displayed client's gender to non-binary.
 * `edit 1 g/` clears that client's gender.
@@ -217,6 +252,11 @@ Action | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, or `find g/`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`
+**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Clear** | `clear`
+**Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
 **Help** | `help`
 **Exit** | `exit`

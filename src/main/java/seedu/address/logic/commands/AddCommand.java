@@ -4,9 +4,13 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -34,6 +38,11 @@ public class AddCommand extends Command {
             + PREFIX_AGE + "AGE "
             + "[" + PREFIX_TAG + "TAG]...\n"
             + "Gender: m, w, nb, or empty for unspecified.\n"
+            + "[" + PREFIX_TAG + "TAG]... "
+            + "[" + PREFIX_RELIGION + "RELIGION] "
+            + "[" + PREFIX_PREFERRED_RELIGION + "PREFERRED_RELIGION] "
+            + "[" + PREFIX_REQUIRED_RELIGION + "REQUIRED_RELIGION] "
+            + "[" + PREFIX_EXCLUDED_RELIGION + "EXCLUDED_RELIGION]...\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + "John Doe "
             + PREFIX_PHONE + "98765432 "

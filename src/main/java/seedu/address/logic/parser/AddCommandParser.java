@@ -4,9 +4,13 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -22,6 +26,7 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 
@@ -37,8 +42,10 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                        PREFIX_TAG, PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING);
+                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
+                        PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING,
+                        PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION, PREFIX_REQUIRED_RELIGION,
+                        PREFIX_EXCLUDED_RELIGION);
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_AGE)
                 || !argMultimap.getPreamble().isEmpty()) {
@@ -46,7 +53,8 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE);
+                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE, PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION,
+                PREFIX_REQUIRED_RELIGION);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
         Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
         Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
@@ -57,9 +65,19 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ? ParserUtil.parseSmokingStatus(argMultimap.getValue(PREFIX_SMOKING).get()) : SmokingStatus.UNSPECIFIED;
         Gender gender = ParserUtil.parseGender(argMultimap.getValue(PREFIX_GENDER).orElse(""));
 
-        Person person = new Person(name, phone, email, address, age, tagList, smokingStatus, gender);
+        Religion religion = parseOptionalReligion(argMultimap, PREFIX_RELIGION);
+        Religion preferred = parseOptionalReligion(argMultimap, PREFIX_PREFERRED_RELIGION);
+        Religion required = parseOptionalReligion(argMultimap, PREFIX_REQUIRED_RELIGION);
+        Set<Religion> excluded = ParserUtil.parseExcludedReligions(
+                argMultimap.getAllValues(PREFIX_EXCLUDED_RELIGION));
 
-        return new AddCommand(person);
+        try {
+            Person person = new Person(name, phone, email, address, age, tagList, smokingStatus, gender,
+                    religion, preferred, required, excluded);
+            return new AddCommand(person);
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(exception.getMessage());
+        }
     }
 
     /**
@@ -68,6 +86,14 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     private static boolean arePrefixesPresent(ArgumentMultimap argumentMultimap, Prefix... prefixes) {
         return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
+    }
+
+    /** Parses a single optional religion field, leaving an absent field unknown. */
+    private static Religion parseOptionalReligion(ArgumentMultimap arguments, Prefix prefix) throws ParseException {
+        if (arguments.getValue(prefix).isEmpty()) {
+            return null;
+        }
+        return ParserUtil.parseReligion(arguments.getValue(prefix).get());
     }
 
 }

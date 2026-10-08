@@ -5,9 +5,13 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -20,6 +24,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.Religion;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -35,8 +40,10 @@ public class EditCommandParser implements Parser<EditCommand> {
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                        PREFIX_TAG, PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING);
+                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
+                        PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING,
+                        PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION, PREFIX_REQUIRED_RELIGION,
+                        PREFIX_EXCLUDED_RELIGION);
 
         Index index;
 
@@ -47,7 +54,8 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE);
+                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE, PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION,
+                PREFIX_REQUIRED_RELIGION);
 
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
 
@@ -74,6 +82,20 @@ public class EditCommandParser implements Parser<EditCommand> {
             editPersonDescriptor.setSmokingStatus(ParserUtil.parseSmokingStatus(argMultimap.getValue(PREFIX_SMOKING)
                     .get()));
         }
+        if (argMultimap.getValue(PREFIX_RELIGION).isPresent()) {
+            String value = argMultimap.getValue(PREFIX_RELIGION).get();
+            editPersonDescriptor.setReligion(value.isEmpty() ? null : ParserUtil.parseReligion(value));
+        }
+        if (argMultimap.getValue(PREFIX_PREFERRED_RELIGION).isPresent()) {
+            String value = argMultimap.getValue(PREFIX_PREFERRED_RELIGION).get();
+            editPersonDescriptor.setPreferredReligion(value.isEmpty() ? null : ParserUtil.parseReligion(value));
+        }
+        if (argMultimap.getValue(PREFIX_REQUIRED_RELIGION).isPresent()) {
+            String value = argMultimap.getValue(PREFIX_REQUIRED_RELIGION).get();
+            editPersonDescriptor.setRequiredReligion(value.isEmpty() ? null : ParserUtil.parseReligion(value));
+        }
+        parseExcludedReligionsForEdit(argMultimap.getAllValues(PREFIX_EXCLUDED_RELIGION))
+                .ifPresent(editPersonDescriptor::setExcludedReligions);
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {
             throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);
@@ -83,9 +105,24 @@ public class EditCommandParser implements Parser<EditCommand> {
     }
 
     /**
+     * Parses excluded religions for edit, including a sole empty prefix to clear the set.
+     *
+     * @throws ParseException if any exclusion is invalid or repeated
+     */
+    private Optional<Set<Religion>> parseExcludedReligionsForEdit(
+            Collection<String> values) throws ParseException {
+        if (values.isEmpty()) {
+            return Optional.empty();
+        }
+        if (values.size() == 1 && values.contains("")) {
+            return Optional.of(Collections.emptySet());
+        }
+        return Optional.of(ParserUtil.parseExcludedReligions(values));
+    }
+
+    /**
      * Parses {@code Collection<String> tags} into a {@code Set<Tag>} if {@code tags} is non-empty.
-     * If {@code tags} contains only one element which is an empty string, it will be parsed into a
-     * {@code Set<Tag>} containing zero tags.
+     * If {@code tags} contains only one empty element, it resets the person's tags.
      */
     private Optional<Set<Tag>> parseTagsForEdit(Collection<String> tags) throws ParseException {
         assert tags != null;

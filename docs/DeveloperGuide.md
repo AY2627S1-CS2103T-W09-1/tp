@@ -184,6 +184,25 @@ The person card and command feedback display the status, including `Not specifie
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 It does not yet implement smoking preferences, dealbreakers, matching, or a command to clear a recorded status.
+### Religion attributes
+
+`Religion` accepts only the categories listed in the User Guide. It strips leading and trailing
+whitespace, collapses repeated internal whitespace, and compares names without regard to case.
+Each valid input is stored and displayed using the category's canonical spelling: for example,
+`r/jAiNiSm` becomes `Jainism`. Other spellings (such as a misspelling or a different apostrophe)
+and an `Other` category are not accepted. A finite list makes values directly comparable for
+future search and matching without inventing a meaning for arbitrary free text.
+
+`AddCommandParser` and `EditCommandParser` parse the client's own religion (`r/`), a soft partner
+preference (`rp/`), a required partner religion (`rr/`), and excluded partner religions (`rx/`).
+`Person` rejects a preference that differs from the requirement or appears in the exclusions;
+it also rejects a required religion that appears in the exclusions. `edit` can clear individual
+fields with an empty prefix, while repeated `rx/` values replace the exclusion set. Absent
+religion fields mean **unknown**, not `No religion`, which is an explicit category.
+
+`JsonAdaptedPerson` saves the canonical names and treats missing religion properties in older
+data as unknown. `PersonCard` displays the recorded values. Name-only `find` and pairwise
+compatibility do not yet use these fields; they are separate increments.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -458,6 +477,7 @@ The draft feature notes disagree on some validation rules. Resolve these before 
 * Data collection gives client ages as 18–99, while filtering allows search ages up to 120; the mockup also displays age ranges where the proposed `add`/`edit` syntax describes one age.
 * Data collection accepts free-text religions, while filtering lists a fixed set of religions. The two commands need one consistent stored and searchable representation.
 * Name-only `find` is retained alongside gender-only `find g/`. Exact-age and age-range searches are also supported separately. Combining characteristics into an OR search remains pending.
+* The proposed `find` command uses OR logic for characteristics, but AB3 already uses `find` for name search. Decide how to preserve or replace the inherited behavior.
 * Group-list output is described, but the command format for listing all groups is not yet specified.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -498,6 +518,34 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases …​ }_
+
+### Religion attributes
+
+1. Adding and retaining religion values
+
+   1. Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane r/jAiNiSm rp/Buddhism rr/Buddhism rx/Islam`.<br>
+      Expected: The contact card shows `Religion: Jainism`, `Preferred: Buddhism`,
+      `Required: Buddhism`, and `Excluded: Islam`. Mixed case is converted to the
+      category's canonical spelling.
+
+   1. Enter `find Nia`.<br>
+      Expected: The contact appears. `find` searches the name, not religion fields.
+
+   1. Enter `edit 1 rr/Islam rx/Islam`.<br>
+      Expected: The edit is rejected because a required religion cannot also be
+      excluded. The contact's previous values are unchanged.
+
+   1. Enter `edit 1 rp/ rr/ rx/`.<br>
+      Expected: The partner criteria are cleared, but the client's religion remains `Jainism`.
+
+   1. Close and relaunch the app.<br>
+      Expected: Nia's religion is still `Jainism`; the cleared partner criteria stay empty.
+
+1. Rejecting unsupported categories
+
+   1. Enter `edit 1 r/Other` after locating Nia with `find Nia` again.<br>
+      Expected: The edit is rejected with the supported-category list; `Other` is not
+      stored as a religion.
 
 ### Deleting a person
 

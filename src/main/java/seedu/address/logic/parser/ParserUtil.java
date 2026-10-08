@@ -15,6 +15,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 
@@ -161,5 +162,36 @@ public class ParserUtil {
             tagSet.add(parseTag(tagName));
         }
         return tagSet;
+    }
+
+    /**
+     * Parses a supported religion category.
+     *
+     * @throws ParseException if the value is unsupported or incomplete
+     */
+    public static Religion parseReligion(String value) throws ParseException {
+        requireNonNull(value);
+        try {
+            return new Religion(value);
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(Religion.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    /**
+     * Parses repeated excluded-religion values, rejecting duplicates.
+     *
+     * @throws ParseException if a value is invalid or repeated
+     */
+    public static Set<Religion> parseExcludedReligions(Collection<String> values) throws ParseException {
+        requireNonNull(values);
+        Set<Religion> religions = new HashSet<>();
+        for (String value : values) {
+            Religion religion = parseReligion(value);
+            if (!religions.add(religion)) {
+                throw new ParseException("Duplicate excluded religion: " + religion);
+            }
+        }
+        return religions;
     }
 }
