@@ -27,7 +27,8 @@ import seedu.address.testutil.PersonUtil;
 public class GenderIntegrationTest {
     private static final Person MAN = new PersonBuilder().withName("John").withGender("m").build();
     private static final Person WOMAN = new PersonBuilder().withName("Mary").withGender("w").build();
-    private static final Person NON_BINARY = new PersonBuilder().withName("Alex").withGender("nb").build();
+    private static final Person NON_BINARY = new PersonBuilder().withName("Alex").withGender("nb")
+            .withAge(32).withSmokingStatus("yes").build();
     private static final Person UNSPECIFIED = new PersonBuilder().withName("Sam").build();
 
     @TempDir
@@ -91,6 +92,17 @@ public class GenderIntegrationTest {
     }
 
     @Test
+    public void edit_ageAndSmoking_preservesGenderAndSearchesByAge() throws Exception {
+        logic.execute("find g/nb");
+        logic.execute("edit 1 age/40 s/no");
+        Person edited = new PersonBuilder(NON_BINARY).withAge(40).withSmokingStatus("no").build();
+        assertEquals(edited, model.getAddressBook().getPersonList().get(2));
+        logic.execute("find age/40");
+        assertEquals(List.of(edited), model.getFilteredPersonList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void add_genderPersistsTogetherWithAllExistingRecords() throws Exception {
         Person added = new PersonBuilder().withName("Taylor").withGender("nb").withTags("friend").build();
         String feedback = logic.execute(PersonUtil.getAddCommand(added)).getFeedbackToUser();
@@ -105,7 +117,7 @@ public class GenderIntegrationTest {
         AddressBook before = new AddressBook(model.getAddressBook());
         String savedBefore = Files.readString(dataPath);
         for (String command : List.of("find g/m,M", "edit 1 g/m,w",
-                "add n/New Client p/98765432 e/new@example.com a/New Road g/x")) {
+                "add n/New Client p/98765432 e/new@example.com a/New Road age/25 g/x")) {
             assertThrows(ParseException.class, () -> logic.execute(command), command);
             assertEquals(before, model.getAddressBook());
             assertEquals(List.of(WOMAN), model.getFilteredPersonList());

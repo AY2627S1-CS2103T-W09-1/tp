@@ -40,6 +40,7 @@ public class PersonCard extends UiPart<Region> {
     private Label email;
     @FXML
     private Label gender;
+    @FXML
     private Label smokingStatus;
     @FXML
     private Label age;

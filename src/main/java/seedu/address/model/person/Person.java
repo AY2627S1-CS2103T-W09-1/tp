@@ -31,15 +31,24 @@ public class Person {
     /**
      * Creates a person whose smoking status has not been recorded.
      */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        this(name, phone, email, address, tags, Gender.UNSPECIFIED, SmokingStatus.UNSPECIFIED);
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags) {
+        this(name, phone, email, address, age, tags, SmokingStatus.UNSPECIFIED);
     }
 
     /**
-     * Every field must be present and not null; use {@code Gender.UNSPECIFIED} for an unrecorded gender.
+     * Creates a person with the given details. Every field must be present and not null.
      */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Gender gender, Age age, SmokingStatus smokingStatus) {
-        requireAllNonNull(name, phone, email, address, tags, gender, age, smokingStatus);
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+                  SmokingStatus smokingStatus) {
+        this(name, phone, email, address, age, tags, smokingStatus, Gender.UNSPECIFIED);
+    }
+
+    /**
+     * Creates a person with the given details. Use {@code Gender.UNSPECIFIED} for an unrecorded gender.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+                  SmokingStatus smokingStatus, Gender gender) {
+        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender);
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -118,10 +127,10 @@ public class Person {
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
+                && smokingStatus.equals(otherPerson.smokingStatus)
+                && age.equals(otherPerson.age)
                 && tags.equals(otherPerson.tags)
                 && gender == otherPerson.gender;
-                && smokingStatus.equals(otherPerson.smokingStatus)
-                && age.equals(otherPerson.age);
     }
 
     @Override

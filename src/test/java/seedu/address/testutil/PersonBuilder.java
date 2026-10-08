@@ -112,6 +112,10 @@ public class PersonBuilder {
      */
     public PersonBuilder withGender(String gender) {
         this.gender = Gender.parseValue(gender);
+        return this;
+    }
+
+    /**
      * Sets the smoking status of the person being built.
      */
     public PersonBuilder withSmokingStatus(String status) {
@@ -120,7 +124,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, address, tags, gender, smokingStatus);
+        return new Person(name, phone, email, address, age, tags, smokingStatus, gender);
     }
 
 }

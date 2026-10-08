@@ -21,7 +21,9 @@ public class FindCommand extends Command {
             + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
             + "Example: " + COMMAND_WORD + " alice bob charlie\n"
             + "Or search by gender: find g/m,w (m, w, nb; comma-separated without duplicates).\n"
-            + "Use find g/ to list all persons with a specified gender.";
+            + "Use find g/ to list all persons with a specified gender.\n"
+            + "Or search by age: find age/25 or find age/25-35 (18 to 99, inclusive).\n"
+            + "Use one search mode at a time: name, age, or gender.";
 
     private final Predicate<Person> predicate;
 

@@ -11,11 +11,11 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.model.person.Age;
+import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
-import seedu.address.model.person.Age;
-import seedu.address.model.person.AgeMatchesPredicate;
 
 public class FindCommandParserTest {
 
@@ -38,6 +38,12 @@ public class FindCommandParserTest {
         assertParseFailure(parser, "age/100", Age.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "age/18-100", Age.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "age/35-18", "The lower age bound cannot be greater than the upper age bound.");
+    }
+
+    @Test
+    public void parse_nameKeywords_returnsNameSearch() {
+        assertParseSuccess(parser, " Alice Bob ",
+                new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob"))));
     }
 
     @Test
@@ -79,5 +85,11 @@ public class FindCommandParserTest {
             assertParseFailure(parser, args, usage);
         }
         assertParseFailure(parser, "g/m Alice", Gender.MESSAGE_CONSTRAINTS);
+    }
+    @Test
+    public void parse_combinedAgeAndGender_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "age/25-35 g/m", message);
+        assertParseFailure(parser, "g/m age/25-35", message);
     }
 }

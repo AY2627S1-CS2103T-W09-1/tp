@@ -31,7 +31,7 @@ public class AddCommand extends Command {
             + PREFIX_ADDRESS + "ADDRESS "
             + "[" + PREFIX_GENDER + "GENDER] "
             + "[" + PREFIX_SMOKING + "yes|no] "
-            + "[" + PREFIX_AGE + "AGE] "
+            + PREFIX_AGE + "AGE "
             + "[" + PREFIX_TAG + "TAG]...\n"
             + "Gender: m, w, nb, or empty for unspecified.\n"
             + "Example: " + COMMAND_WORD + " "

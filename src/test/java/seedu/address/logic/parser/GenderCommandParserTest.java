@@ -18,7 +18,7 @@ import seedu.address.testutil.PersonUtil;
 
 public class GenderCommandParserTest {
     private static final String CONTACT_DETAILS =
-            " n/Amy Bee p/85355255 e/amy@gmail.com a/123, Jurong West Ave 6, #08-111";
+            " n/Amy Bee p/85355255 e/amy@gmail.com a/123, Jurong West Ave 6, #08-111 age/25";
     private final AddCommandParser addParser = new AddCommandParser();
     private final EditCommandParser editParser = new EditCommandParser();
 

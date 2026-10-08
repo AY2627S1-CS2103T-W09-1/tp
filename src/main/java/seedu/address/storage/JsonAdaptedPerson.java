@@ -42,10 +42,9 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("tags") List<JsonAdaptedTag> tags, 
-            @JsonProperty("gender") String gender, 
-            @JsonProperty("age") String age, 
-            @JsonProperty("smokingStatus") String smokingStatus) {
+            @JsonProperty("age") String age,
+            @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("smokingStatus") String smokingStatus, @JsonProperty("gender") String gender) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -117,15 +116,6 @@ class JsonAdaptedPerson {
         }
         final Address modelAddress = new Address(address);
 
-        final Gender modelGender;
-        try {
-            modelGender = gender == null ? Gender.UNSPECIFIED : Gender.parseValue(gender);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalValueException(Gender.MESSAGE_CONSTRAINTS);
-        }
-
-        final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags, modelGender);
         if (age == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Age.class.getSimpleName()));
         }
@@ -142,7 +132,15 @@ class JsonAdaptedPerson {
         final SmokingStatus modelSmokingStatus = smokingStatus == null
                 ? SmokingStatus.UNSPECIFIED : new SmokingStatus(smokingStatus);
 
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags, modelSmokingStatus);
+        final Gender modelGender;
+        try {
+            modelGender = gender == null ? Gender.UNSPECIFIED : Gender.parseValue(gender);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(Gender.MESSAGE_CONSTRAINTS);
+        }
+
+        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags,
+                modelSmokingStatus, modelGender);
     }
 
 }
