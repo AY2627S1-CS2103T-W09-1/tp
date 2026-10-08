@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -40,6 +41,7 @@ public class EditPersonDescriptorBuilder {
         if (!person.getSmokingStatus().value.isEmpty()) {
             descriptor.setSmokingStatus(person.getSmokingStatus());
         }
+        descriptor.setAge(person.getAge());
         descriptor.setTags(person.getTags());
     }
 
@@ -80,6 +82,12 @@ public class EditPersonDescriptorBuilder {
      */
     public EditPersonDescriptorBuilder withSmokingStatus(String status) {
         descriptor.setSmokingStatus(new SmokingStatus(status));
+        return this;
+    }
+
+    /** Sets the {@code Age} of the {@code EditPersonDescriptor} that we are building. */
+    public EditPersonDescriptorBuilder withAge(int age) {
+        descriptor.setAge(new Age(age));
         return this;
     }
 

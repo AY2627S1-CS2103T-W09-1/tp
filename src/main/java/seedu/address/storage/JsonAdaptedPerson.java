@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.Age;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -30,6 +31,7 @@ class JsonAdaptedPerson {
     private final String email;
     private final String address;
     private final String smokingStatus;
+    private final String age;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
@@ -38,6 +40,7 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
+            @JsonProperty("age") String age,
             @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("smokingStatus") String smokingStatus) {
         this.name = name;
@@ -45,6 +48,7 @@ class JsonAdaptedPerson {
         this.email = email;
         this.address = address;
         this.smokingStatus = smokingStatus;
+        this.age = age;
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -59,6 +63,7 @@ class JsonAdaptedPerson {
         email = source.getEmail().value;
         address = source.getAddress().value;
         smokingStatus = source.getSmokingStatus().value;
+        age = source.getAge().toString();
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -107,14 +112,23 @@ class JsonAdaptedPerson {
         }
         final Address modelAddress = new Address(address);
 
+        if (age == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Age.class.getSimpleName()));
+        }
+        if (!Age.isValidAge(age)) {
+            throw new IllegalValueException(Age.MESSAGE_CONSTRAINTS);
+        }
+        final Age modelAge = new Age(Integer.parseInt(age));
+
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        // Older address books have no smokingStatus field; do not assume those clients are non-smokers.
+
         if (smokingStatus != null && !SmokingStatus.isValidSmokingStatus(smokingStatus)) {
             throw new IllegalValueException(SmokingStatus.MESSAGE_CONSTRAINTS);
         }
         final SmokingStatus modelSmokingStatus = smokingStatus == null
                 ? SmokingStatus.UNSPECIFIED : new SmokingStatus(smokingStatus);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags, modelSmokingStatus);
+
+        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags, modelSmokingStatus);
     }
 
 }

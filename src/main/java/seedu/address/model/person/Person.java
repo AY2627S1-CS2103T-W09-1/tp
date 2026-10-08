@@ -24,25 +24,28 @@ public class Person {
     // Data fields
     private final Address address;
     private final SmokingStatus smokingStatus;
+    private final Age age;
     private final Set<Tag> tags = new HashSet<>();
 
     /**
      * Creates a person whose smoking status has not been recorded.
      */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        this(name, phone, email, address, tags, SmokingStatus.UNSPECIFIED);
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags) {
+        this(name, phone, email, address, age, tags, SmokingStatus.UNSPECIFIED);
     }
 
     /**
      * Creates a person with the given details. Every field must be present and not null.
      */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, SmokingStatus smokingStatus) {
-        requireAllNonNull(name, phone, email, address, tags, smokingStatus);
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+                  SmokingStatus smokingStatus) {
+        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
         this.smokingStatus = smokingStatus;
+        this.age = age;
         this.tags.addAll(tags);
     }
 
@@ -66,6 +69,10 @@ public class Person {
         return smokingStatus;
     }
 
+    public Age getAge() {
+        return age;
+    }
+
     /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
@@ -84,7 +91,7 @@ public class Person {
         }
 
         return otherPerson != null
-                && otherPerson.getName().equals(getName());
+                && Objects.equals(otherPerson.getName(), getName());
     }
 
     /**
@@ -107,13 +114,14 @@ public class Person {
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
                 && smokingStatus.equals(otherPerson.smokingStatus)
+                && age.equals(otherPerson.age)
                 && tags.equals(otherPerson.tags);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, tags, smokingStatus);
+        return Objects.hash(name, phone, email, address, age, tags, smokingStatus);
     }
 
     @Override
@@ -124,6 +132,7 @@ public class Person {
                 .add("email", email)
                 .add("address", address)
                 .add("smokingStatus", smokingStatus)
+                .add("age", age)
                 .add("tags", tags)
                 .toString();
     }

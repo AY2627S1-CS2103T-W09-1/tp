@@ -28,7 +28,7 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 
    * `list` : Lists all contacts.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 age/25` : Adds a contact named `John Doe` to the Address Book.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -77,29 +77,25 @@ Format: `help`
 
 Adds a client to CupidMaxxing. In addition to the usual contact fields, you can record the client's own attributes, partner preferences, and dealbreakers. All matchmaking fields are optional.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/SMOKING] [t/TAG]…​`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [t/TAG]…​`
 
-* `r/RELIGION` is the client's religion. It contains letters and spaces only, and is 1-30 characters long after trimming.
-* `s/SMOKING` is `yes` or `no` (case-insensitive).
-* `age/AGE` is a whole number from 18 to 99.
-* `pref/ATTRIBUTE:VALUE` records a preferred partner attribute; `db/ATTRIBUTE:VALUE` records an attribute that excludes a partner. `ATTRIBUTE` is `age`, `religion`, or `smoking` (case-insensitive). Use `age:MIN-MAX`, a valid religion value, or `yes`/`no` respectively.
-* Each preference attribute and each dealbreaker attribute may appear once per command. Supplying an existing attribute later overwrites its stored value.
-
-Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
-* `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi s/no` Records Alice as a non-smoker.
+* `AGE` is compulsory and must be an integer from 18 to 99 (inclusive).
 
 The optional `s/SMOKING` field records the client's **own smoking habit**:
-
 * Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
 * Omit the field if the status is unknown. The person card displays `Smoking: Not specified`.
 * A supplied `s/` must have a value, and may appear only once per command. Blank, invalid, or repeated values reject the command without changing any records.
 * Smoking status is saved between sessions. Older records without this field remain usable and display `Not specified`.
 * This field does not record a partner preference or dealbreaker. Smoking-based searching and matching are not implemented in this increment.
+<div markdown="span" class="alert alert-primary">:bulb: **Tip:**
+A person can have any number of tags, including zero.
+</div>
 
-* `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd`
-* `add n/Wei Ming p/98765432 e/wm@example.com a/5 Bedok Ave age/34 r/christian pref/age:28-36 db/smoking:yes`
+Examples:
+* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
+* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi age/30 s/no` Records Alice as a non-smoker.
+
 
 ### Listing all clients: `list`
 
@@ -111,11 +107,12 @@ Format: `list`
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/SMOKING] [t/TAG]…​`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [t/TAG]…​`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* If supplied, `AGE` must be an integer from 18 to 99 (inclusive).
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
@@ -123,84 +120,27 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/SMOKING] [t/TAG]
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
-*  `edit 1 s/yes` Records the 1st displayed person as a smoker, preserving their other details.
 
-* `edit 1 r/christian s/no age/28`
-* `edit 1 pref/age:25-35`
-* `edit 2 age/34 pref/religion:hindu db/smoking:yes`
+### Locating persons by name: `find`
 
-### Finding clients by attributes: `find`
+Finds persons whose names contain any of the given keywords.
 
-Returns clients that satisfy at least one supplied criterion (OR logic).
+Format: `find KEYWORD [MORE_KEYWORDS]`
 
-Format: `find [age/MIN-MAX] [s/STATUS] [r/RELIGION]`
-
-At least one criterion is required. A client whose relevant attribute is unknown does not satisfy that criterion, but can still be returned when it satisfies another one. Each search examines the full client list and replaces the current displayed results; criteria never accumulate.
-
-Examples:
-
-* `find age/25-35 r/buddhist` returns clients aged 25-35 or clients whose religion is Buddhist.
-* `find s/no` returns non-smoking clients.
-
-### Filtering clients by attributes: `filter`
-
-Returns clients that satisfy every supplied criterion (AND logic).
-
-Format: `filter [age/MIN-MAX] [s/STATUS] [r/RELIGION]`
-
-At least one criterion is required. The parameter requirements are the same as for [`find`](#finding-clients-by-attributes-find), but a client with an unknown attribute is excluded.
-
-Example: `filter age/25-35 s/no r/buddhist` returns only Buddhist, non-smoking clients aged 25-35.
-
-For `find` and `filter`:
-
-* `age/MIN-MAX` uses two whole numbers from 18 to 120, inclusive, with no spaces and `MIN` no greater than `MAX`. Use `age/30-30` for an exact age.
-* `s/STATUS` is `yes` or `no`, case-insensitive.
-* `r/RELIGION` is `buddhist`, `christian`, `hindu`, `muslim`, `sikh`, `taoist`, `other`, or `none`, case-insensitive. `other` does not mean that two clients share the same religion.
-* Each parameter may be supplied once and in any order. Prefixes and command names must be lowercase.
-
-### Checking compatibility: `match`
-
-Compares two different clients from the currently displayed list. It does not change client data or the displayed list.
-
-Format: `match INDEX_A INDEX_B`
-
-Both indexes must be positive whole numbers in the current list. The result names both clients and shows each directional preference/dealbreaker comparison as **Met**, **Unmet**, or **Unknown**. Missing information is **Unknown**, while an unspecified preference or dealbreaker creates no restriction.
-
-The overall result is determined in this order:
-
-1. **Incompatible** - a dealbreaker is violated in either direction.
-1. **Insufficient information** - no known dealbreaker is violated, but needed comparison data is missing.
-1. **Potential match - preference differences** - dealbreakers pass but at least one preference is unmet.
-1. **Potential match - all recorded criteria met** - all checks pass and at least one preference or dealbreaker exists.
-1. **No criteria recorded** - neither client has preferences or dealbreakers.
-
-Example: `match 2 5`
-
-### Organising clients into groups: `group`
-
-Creates and manages named client groups. Group names contain letters, numbers, and spaces only, and are 1-30 characters long after trimming. Names are case-insensitive for duplicate checking. A client may belong to many groups, but cannot appear twice in the same group.
-
-Formats:
-
-* `group create g/GROUP_NAME`
-* `group rename g/GROUP_NAME ng/NEW_GROUP_NAME`
-* `group delete g/GROUP_NAME`
-* `group add g/GROUP_NAME INDEX [INDEX]…`
-* `group remove g/GROUP_NAME INDEX [INDEX]…`
-* `group show g/GROUP_NAME`
-* `group list`
-
-`INDEX` values must be different positive whole numbers in the currently displayed list. `group show` replaces the displayed list with that group's clients. Deleting a group does not delete its clients, and renaming one keeps its members. `group list` shows every group with its member count.
+* The search is case-insensitive; for example, `hans` matches `Hans`.
+* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
+* The search considers only names.
+* Only full words match; for example, `Han` does not match `Hans`.
+* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* For age, both an exact age (for example, `age/18`) and an inclusive range (for example, `age/18-35`) are accepted.
+* Every age value must be an integer from 18 to 99 (inclusive).
 
 Examples:
+* `find John` returns `john` and `John Doe`
+* `find alex david` returns `Alex Yeoh`, `David Li`<br>
+  ![result for 'find alex david'](images/findAlexDavidResult.png)
 
-* `group create g/VIP`
-* `group add g/VIP 2 5`
-* `group rename g/VIP ng/Priority Clients`
-* `group show g/Priority Clients`
-
-### Deleting a client: `delete`
+### Deleting a person: `delete'
 
 Deletes the specified client from CupidMaxxing.
 
@@ -263,10 +203,10 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/SMOKING] [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 s/no t/friend t/colleague`
+**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/SMOKING] [t/TAG]…​`<br> e.g., `edit 2 s/no`
+**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
 **Help** | `help`
