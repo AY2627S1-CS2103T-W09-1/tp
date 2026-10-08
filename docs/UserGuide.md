@@ -3,7 +3,7 @@ layout: page
 title: User Guide
 ---
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+CupidMaxxing is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). CupidMaxxing helps independent matchmakers efficiently organize and retrieve client contact information, making it faster to identify relevant contacts and coordinate introductions between suitable clients.
 
 * Table of Contents
 {:toc}
@@ -73,15 +73,17 @@ Shows a message explaining how to access the help page.
 Format: `help`
 
 
-### Adding a person: `add`
+### Adding a client: `add`
 
-Adds a person to the address book.
+Adds a client to CupidMaxxing. In addition to the usual contact fields, you can record the client's own attributes, partner preferences, and dealbreakers. All matchmaking fields are optional.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/SMOKING] [t/TAG]…​`
 
-<div markdown="span" class="alert alert-primary">:bulb: **Tip:**
-A person can have any number of tags, including zero.
-</div>
+* `r/RELIGION` is the client's religion. It contains letters and spaces only, and is 1-30 characters long after trimming.
+* `s/SMOKING` is `yes` or `no` (case-insensitive).
+* `age/AGE` is a whole number from 18 to 99.
+* `pref/ATTRIBUTE:VALUE` records a preferred partner attribute; `db/ATTRIBUTE:VALUE` records an attribute that excludes a partner. `ATTRIBUTE` is `age`, `religion`, or `smoking` (case-insensitive). Use `age:MIN-MAX`, a valid religion value, or `yes`/`no` respectively.
+* Each preference attribute and each dealbreaker attribute may appear once per command. Supplying an existing attribute later overwrites its stored value.
 
 Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
@@ -96,15 +98,18 @@ The optional `s/SMOKING` field records the client's **own smoking habit**:
 * Smoking status is saved between sessions. Older records without this field remain usable and display `Not specified`.
 * This field does not record a partner preference or dealbreaker. Smoking-based searching and matching are not implemented in this increment.
 
-### Listing all persons: `list`
+* `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd`
+* `add n/Wei Ming p/98765432 e/wm@example.com a/5 Bedok Ave age/34 r/christian pref/age:28-36 db/smoking:yes`
 
-Shows a list of all persons in the address book.
+### Listing all clients: `list`
+
+Shows a list of all clients in CupidMaxxing.
 
 Format: `list`
 
-### Editing a person: `edit`
+### Editing a client: `edit`
 
-Edits an existing person in the address book.
+Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/SMOKING] [t/TAG]…​`
 
@@ -120,36 +125,94 @@ Examples:
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 s/yes` Records the 1st displayed person as a smoker, preserving their other details.
 
-### Locating persons by name: `find`
+* `edit 1 r/christian s/no age/28`
+* `edit 1 pref/age:25-35`
+* `edit 2 age/34 pref/religion:hindu db/smoking:yes`
 
-Finds persons whose names contain any of the given keywords.
+### Finding clients by attributes: `find`
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Returns clients that satisfy at least one supplied criterion (OR logic).
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+Format: `find [age/MIN-MAX] [s/STATUS] [r/RELIGION]`
+
+At least one criterion is required. A client whose relevant attribute is unknown does not satisfy that criterion, but can still be returned when it satisfies another one. Each search examines the full client list and replaces the current displayed results; criteria never accumulate.
 
 Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
 
-### Deleting a person: `delete`
+* `find age/25-35 r/buddhist` returns clients aged 25-35 or clients whose religion is Buddhist.
+* `find s/no` returns non-smoking clients.
 
-Deletes the specified person from the address book.
+### Filtering clients by attributes: `filter`
+
+Returns clients that satisfy every supplied criterion (AND logic).
+
+Format: `filter [age/MIN-MAX] [s/STATUS] [r/RELIGION]`
+
+At least one criterion is required. The parameter requirements are the same as for [`find`](#finding-clients-by-attributes-find), but a client with an unknown attribute is excluded.
+
+Example: `filter age/25-35 s/no r/buddhist` returns only Buddhist, non-smoking clients aged 25-35.
+
+For `find` and `filter`:
+
+* `age/MIN-MAX` uses two whole numbers from 18 to 120, inclusive, with no spaces and `MIN` no greater than `MAX`. Use `age/30-30` for an exact age.
+* `s/STATUS` is `yes` or `no`, case-insensitive.
+* `r/RELIGION` is `buddhist`, `christian`, `hindu`, `muslim`, `sikh`, `taoist`, `other`, or `none`, case-insensitive. `other` does not mean that two clients share the same religion.
+* Each parameter may be supplied once and in any order. Prefixes and command names must be lowercase.
+
+### Checking compatibility: `match`
+
+Compares two different clients from the currently displayed list. It does not change client data or the displayed list.
+
+Format: `match INDEX_A INDEX_B`
+
+Both indexes must be positive whole numbers in the current list. The result names both clients and shows each directional preference/dealbreaker comparison as **Met**, **Unmet**, or **Unknown**. Missing information is **Unknown**, while an unspecified preference or dealbreaker creates no restriction.
+
+The overall result is determined in this order:
+
+1. **Incompatible** - a dealbreaker is violated in either direction.
+1. **Insufficient information** - no known dealbreaker is violated, but needed comparison data is missing.
+1. **Potential match - preference differences** - dealbreakers pass but at least one preference is unmet.
+1. **Potential match - all recorded criteria met** - all checks pass and at least one preference or dealbreaker exists.
+1. **No criteria recorded** - neither client has preferences or dealbreakers.
+
+Example: `match 2 5`
+
+### Organising clients into groups: `group`
+
+Creates and manages named client groups. Group names contain letters, numbers, and spaces only, and are 1-30 characters long after trimming. Names are case-insensitive for duplicate checking. A client may belong to many groups, but cannot appear twice in the same group.
+
+Formats:
+
+* `group create g/GROUP_NAME`
+* `group rename g/GROUP_NAME ng/NEW_GROUP_NAME`
+* `group delete g/GROUP_NAME`
+* `group add g/GROUP_NAME INDEX [INDEX]…`
+* `group remove g/GROUP_NAME INDEX [INDEX]…`
+* `group show g/GROUP_NAME`
+* `group list`
+
+`INDEX` values must be different positive whole numbers in the currently displayed list. `group show` replaces the displayed list with that group's clients. Deleting a group does not delete its clients, and renaming one keeps its members. `group list` shows every group with its member count.
+
+Examples:
+
+* `group create g/VIP`
+* `group add g/VIP 2 5`
+* `group rename g/VIP ng/Priority Clients`
+* `group show g/Priority Clients`
+
+### Deleting a client: `delete`
+
+Deletes the specified client from CupidMaxxing.
 
 Format: `delete INDEX`
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
+* Deletes the client at the specified `INDEX`.
+* The index refers to the index number shown in the displayed client list.
 * The index **must be a positive integer** 1, 2, 3, …​
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `list` followed by `delete 2` deletes the 2nd client in CupidMaxxing.
+* `filter s/no` followed by `delete 1` deletes the 1st client in the filtered results.
 
 ### Clearing all entries: `clear`
 
@@ -207,3 +270,4 @@ Action | Format, Examples
 **Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
 **Help** | `help`
+**Exit** | `exit`
