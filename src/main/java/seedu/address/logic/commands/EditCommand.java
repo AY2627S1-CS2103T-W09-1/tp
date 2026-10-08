@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
@@ -35,6 +36,7 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -63,7 +65,8 @@ public class EditCommand extends Command {
             + "[" + PREFIX_RELIGION + "RELIGION] "
             + "[" + PREFIX_PREFERRED_RELIGION + "PREFERRED_RELIGION] "
             + "[" + PREFIX_REQUIRED_RELIGION + "REQUIRED_RELIGION] "
-            + "[" + PREFIX_EXCLUDED_RELIGION + "EXCLUDED_RELIGION]...\n"
+            + "[" + PREFIX_EXCLUDED_RELIGION + "EXCLUDED_RELIGION]... "
+            + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL]\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
@@ -129,6 +132,9 @@ public class EditCommand extends Command {
         Gender updatedGender = editPersonDescriptor.getGender().orElse(personToEdit.getGender());
         SmokingStatus updatedSmokingStatus = editPersonDescriptor.getSmokingStatus()
                 .orElse(personToEdit.getSmokingStatus());
+        RelationshipGoal updatedRelationshipGoal = editPersonDescriptor.isRelationshipGoalEdited()
+                ? editPersonDescriptor.getRelationshipGoal().orElse(null)
+                : personToEdit.getRelationshipGoal().orElse(null);
 
         Religion updatedReligion = editPersonDescriptor.isReligionEdited()
                 ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
@@ -143,7 +149,7 @@ public class EditCommand extends Command {
 
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
                 updatedSmokingStatus, updatedGender, updatedReligion, updatedPreferred, updatedRequired,
-                updatedExcluded);
+                updatedExcluded, updatedRelationshipGoal);
     }
 
     @Override
@@ -189,6 +195,8 @@ public class EditCommand extends Command {
         private boolean religionEdited;
         private boolean preferredReligionEdited;
         private boolean requiredReligionEdited;
+        private RelationshipGoal relationshipGoal;
+        private boolean relationshipGoalEdited;
 
         public EditPersonDescriptor() {}
 
@@ -217,6 +225,9 @@ public class EditCommand extends Command {
             if (toCopy.excludedReligions != null) {
                 setExcludedReligions(toCopy.excludedReligions);
             }
+            if (toCopy.relationshipGoalEdited) {
+                setRelationshipGoal(toCopy.relationshipGoal);
+            }
         }
 
         /**
@@ -225,7 +236,8 @@ public class EditCommand extends Command {
         public boolean isAnyFieldEdited() {
             return CollectionUtil.isAnyNonNull(name, phone, email, address, age, tags, smokingStatus, gender,
                     excludedReligions)
-                    || religionEdited || preferredReligionEdited || requiredReligionEdited;
+                    || religionEdited || preferredReligionEdited || requiredReligionEdited
+                    || relationshipGoalEdited;
         }
 
         public void setName(Name name) {
@@ -360,6 +372,22 @@ public class EditCommand extends Command {
                     : Optional.of(Collections.unmodifiableSet(excludedReligions));
         }
 
+        /** Sets or clears the client's relationship goal; null explicitly clears it. */
+        public void setRelationshipGoal(RelationshipGoal relationshipGoal) {
+            this.relationshipGoal = relationshipGoal;
+            relationshipGoalEdited = true;
+        }
+
+        /** Returns the new relationship goal, if one was supplied rather than cleared. */
+        public Optional<RelationshipGoal> getRelationshipGoal() {
+            return Optional.ofNullable(relationshipGoal);
+        }
+
+        /** Returns whether the relationship goal was supplied, including an explicit clear. */
+        public boolean isRelationshipGoalEdited() {
+            return relationshipGoalEdited;
+        }
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -385,7 +413,9 @@ public class EditCommand extends Command {
                     && Objects.equals(excludedReligions, otherEditPersonDescriptor.excludedReligions)
                     && religionEdited == otherEditPersonDescriptor.religionEdited
                     && preferredReligionEdited == otherEditPersonDescriptor.preferredReligionEdited
-                    && requiredReligionEdited == otherEditPersonDescriptor.requiredReligionEdited;
+                    && requiredReligionEdited == otherEditPersonDescriptor.requiredReligionEdited
+                    && Objects.equals(relationshipGoal, otherEditPersonDescriptor.relationshipGoal)
+                    && relationshipGoalEdited == otherEditPersonDescriptor.relationshipGoalEdited;
         }
 
         @Override
@@ -406,6 +436,7 @@ public class EditCommand extends Command {
                     .add("religionEdited", religionEdited)
                     .add("preferredReligionEdited", preferredReligionEdited)
                     .add("requiredReligionEdited", requiredReligionEdited)
+                    .add("relationshipGoal", relationshipGoal)
                     .toString();
         }
     }

@@ -15,6 +15,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -193,5 +194,19 @@ public class ParserUtil {
             }
         }
         return religions;
+    }
+
+    /**
+     * Parses a supported relationship goal category.
+     *
+     * @throws ParseException if the value is not a supported category
+     */
+    public static RelationshipGoal parseRelationshipGoal(String value) throws ParseException {
+        requireNonNull(value);
+        try {
+            return RelationshipGoal.fromString(value);
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(RelationshipGoal.MESSAGE_CONSTRAINTS);
+        }
     }
 }

@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -45,6 +46,7 @@ public class PersonUtil {
         person.getTags().stream().forEach(
             s -> sb.append(PREFIX_TAG + s.tagName + " ")
         );
+        person.getRelationshipGoal().ifPresent(goal -> sb.append(PREFIX_RELATIONSHIP_GOAL + goal.toString() + " "));
         return sb.toString();
     }
 
@@ -67,6 +69,10 @@ public class PersonUtil {
             } else {
                 tags.forEach(s -> sb.append(PREFIX_TAG).append(s.tagName).append(" "));
             }
+        }
+        if (descriptor.isRelationshipGoalEdited()) {
+            sb.append(" ").append(PREFIX_RELATIONSHIP_GOAL);
+            descriptor.getRelationshipGoal().ifPresent(goal -> sb.append(goal).append(" "));
         }
         return sb.toString();
     }

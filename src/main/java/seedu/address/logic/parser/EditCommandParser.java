@@ -10,6 +10,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
@@ -43,7 +44,7 @@ public class EditCommandParser implements Parser<EditCommand> {
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
                         PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING,
                         PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION, PREFIX_REQUIRED_RELIGION,
-                        PREFIX_EXCLUDED_RELIGION);
+                        PREFIX_EXCLUDED_RELIGION, PREFIX_RELATIONSHIP_GOAL);
 
         Index index;
 
@@ -55,7 +56,7 @@ public class EditCommandParser implements Parser<EditCommand> {
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                 PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE, PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION,
-                PREFIX_REQUIRED_RELIGION);
+                PREFIX_REQUIRED_RELIGION, PREFIX_RELATIONSHIP_GOAL);
 
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
 
@@ -96,6 +97,10 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         parseExcludedReligionsForEdit(argMultimap.getAllValues(PREFIX_EXCLUDED_RELIGION))
                 .ifPresent(editPersonDescriptor::setExcludedReligions);
+        if (argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).isPresent()) {
+            String value = argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).get();
+            editPersonDescriptor.setRelationshipGoal(value.isEmpty() ? null : ParserUtil.parseRelationshipGoal(value));
+        }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {
             throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);

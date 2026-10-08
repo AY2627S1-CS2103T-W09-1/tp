@@ -7,6 +7,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -53,6 +54,10 @@ public class CommandTestUtil {
     public static final String AGE_DESC_BOB = " " + PREFIX_AGE + VALID_AGE_BOB;
     public static final String TAG_DESC_FRIEND = " " + PREFIX_TAG + VALID_TAG_FRIEND;
     public static final String TAG_DESC_HUSBAND = " " + PREFIX_TAG + VALID_TAG_HUSBAND;
+    public static final String RELATIONSHIP_GOAL_DESC_AMY =
+            " " + PREFIX_RELATIONSHIP_GOAL + VALID_RELATIONSHIP_GOAL_AMY;
+    public static final String RELATIONSHIP_GOAL_DESC_BOB =
+            " " + PREFIX_RELATIONSHIP_GOAL + VALID_RELATIONSHIP_GOAL_BOB;
 
     public static final String INVALID_NAME_DESC = " " + PREFIX_NAME + "James&"; // '&' not allowed in names
     public static final String INVALID_PHONE_DESC = " " + PREFIX_PHONE + "911a"; // 'a' not allowed in phones
@@ -60,6 +65,8 @@ public class CommandTestUtil {
     public static final String INVALID_ADDRESS_DESC = " " + PREFIX_ADDRESS; // empty string not allowed for addresses
     public static final String INVALID_AGE_DESC = " " + PREFIX_AGE + "17"; // age must be at least 18
     public static final String INVALID_TAG_DESC = " " + PREFIX_TAG + "hubby*"; // '*' not allowed in tags
+    public static final String INVALID_RELATIONSHIP_GOAL_DESC =
+            " " + PREFIX_RELATIONSHIP_GOAL + "Marriage"; // not a supported category
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";
