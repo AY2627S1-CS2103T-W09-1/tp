@@ -91,9 +91,21 @@ public class PersonTest {
     }
 
     @Test
+    public void gender_affectsEqualityButNotIdentity() {
+        Person specified = new PersonBuilder(ALICE).withGender("w").build();
+        Person copy = new PersonBuilder(specified).build();
+        assertEquals(Gender.UNSPECIFIED, ALICE.getGender());
+        assertFalse(ALICE.equals(specified));
+        assertTrue(ALICE.isSamePerson(specified));
+        assertEquals(specified, copy);
+        assertEquals(specified.hashCode(), copy.hashCode());
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
+                + ", gender=" + ALICE.getGender() + "}";
         assertEquals(expected, ALICE.toString());
     }
 }

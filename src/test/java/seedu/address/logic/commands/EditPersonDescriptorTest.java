@@ -58,6 +58,20 @@ public class EditPersonDescriptorTest {
     }
 
     @Test
+    public void gender_distinguishesOmittedClearedAndSpecifiedValues() {
+        EditPersonDescriptor omitted = new EditPersonDescriptor();
+        EditPersonDescriptor cleared = new EditPersonDescriptorBuilder().withGender("").build();
+        EditPersonDescriptor specified = new EditPersonDescriptorBuilder().withGender("nb").build();
+        assertFalse(omitted.isAnyFieldEdited());
+        assertTrue(cleared.isAnyFieldEdited());
+        assertTrue(specified.isAnyFieldEdited());
+        assertFalse(omitted.equals(cleared));
+        assertFalse(cleared.equals(specified));
+        assertEquals(cleared, new EditPersonDescriptor(cleared));
+        assertEquals(specified, new EditPersonDescriptor(specified));
+    }
+
+    @Test
     public void toStringMethod() {
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
         String expected = EditPersonDescriptor.class.getCanonicalName() + "{name="
@@ -65,7 +79,8 @@ public class EditPersonDescriptorTest {
                 + editPersonDescriptor.getPhone().orElse(null) + ", email="
                 + editPersonDescriptor.getEmail().orElse(null) + ", address="
                 + editPersonDescriptor.getAddress().orElse(null) + ", tags="
-                + editPersonDescriptor.getTags().orElse(null) + "}";
+                + editPersonDescriptor.getTags().orElse(null) + ", gender="
+                + editPersonDescriptor.getGender().orElse(null) + "}";
         assertEquals(expected, editPersonDescriptor.toString());
     }
 }

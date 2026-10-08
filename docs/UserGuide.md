@@ -77,8 +77,9 @@ Format: `help`
 
 Adds a client to CupidMaxxing. In addition to the usual contact fields, you can record the client's own attributes, partner preferences, and dealbreakers. All matchmaking fields are optional.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [g/GENDER] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`
 
+* `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty to record an unspecified gender. Only one value and one `g/` prefix are allowed per command.
 * `r/RELIGION` is the client's religion. It contains letters and spaces only, and is 1-30 characters long after trimming.
 * `s/SMOKING` is `yes` or `no` (case-insensitive).
 * `age/AGE` is a whole number from 18 to 99.
@@ -87,7 +88,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]… [r/RELIGION] [s/
 
 Examples:
 
-* `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd`
+* `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd g/w`
 * `add n/Wei Ming p/98765432 e/wm@example.com a/5 Bedok Ave age/34 r/christian pref/age:28-36 db/smoking:yes`
 
 ### Listing all clients: `list`
@@ -100,19 +101,41 @@ Format: `list`
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [g/GENDER] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`
 
-The matchmaking fields follow the same rules as [`add`](#adding-a-client-add). Existing values are overwritten. When editing tags, existing tags are replaced; use `t/` to clear all tags.
+The matchmaking fields follow the same rules as [`add`](#adding-a-client-add). Existing values are overwritten. When editing tags, existing tags are replaced; use `t/` to clear all tags. For gender, use `g/m`, `g/w`, or `g/nb` to replace the value, use empty `g/` to clear it, or omit `g/` to keep the existing value. Gender can be edited together with other supported contact fields.
 
 Examples:
 
+* `edit 1 g/nb` changes the first displayed client's gender to non-binary.
+* `edit 1 g/` clears that client's gender.
 * `edit 1 r/christian s/no age/28`
 * `edit 1 pref/age:25-35`
 * `edit 2 age/34 pref/religion:hindu db/smoking:yes`
 
 ### Finding clients by attributes: `find`
 
-Returns clients that satisfy at least one supplied criterion (OR logic).
+Search by name or by the client's own gender. Each search examines the full client list and replaces the displayed results.
+
+Formats:
+
+* `find KEYWORD [MORE_KEYWORDS]…` retains name search: case-insensitive, whole-word matching, returning clients whose names contain any supplied keyword.
+* `find g/GENDER[,GENDER]…` returns clients matching any listed gender. Valid values are `m`, `w`, and `nb`, in any order, ignoring case and surrounding whitespace.
+* `find g/` returns every client with a specified gender, equivalent to `find g/m,w,nb`. Clients with an unspecified gender are excluded from gender searches.
+
+Examples:
+
+* `find Alex Sam` finds clients whose names contain Alex or Sam.
+* `find g/w` finds women.
+* `find g/m,nb` finds men or non-binary clients.
+
+Use `g/` only once. Duplicate values (including `m,M`), unsupported values, and empty items such as `m,` or `m,,w` are rejected. Comma lists are supported only by `find`, not by `add` or `edit`. Commands and prefixes must be lowercase. Separate each prefix from preceding text with a space.
+
+Name keywords cannot be combined with `g/`. Gender searches combined with age, smoking or religion are not supported in this increment. Invalid gender commands show an error and leave records and the displayed results unchanged.
+
+#### Planned searches across other attributes
+
+The following combined search is planned and is not implemented in this increment. It returns clients that satisfy at least one supplied criterion (OR logic).
 
 Format: `find [age/MIN-MAX] [s/STATUS] [r/RELIGION]`
 
@@ -209,7 +232,7 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+AddressBook automatically saves data after every command. You do not need to save manually. Gender is saved with each client; older records without a gender load as unspecified.
 
 ### Editing the data file
 
@@ -244,11 +267,12 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
-**Add client** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`<br>e.g., `add n/Wei Ming p/98765432 e/wm@example.com a/5 Bedok Ave age/34 r/christian pref/age:28-36 db/smoking:yes`
+**Add client** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [g/GENDER] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`<br>e.g., `add n/Wei Ming p/98765432 e/wm@example.com a/5 Bedok Ave age/34 r/christian pref/age:28-36 db/smoking:yes`
 **Clear** | `clear`
 **Delete client** | `delete INDEX`<br>e.g., `delete 3`
-**Edit client** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`<br>e.g., `edit 2 age/34 pref/religion:hindu db/smoking:yes`
-**Find clients (OR)** | `find [age/MIN-MAX] [s/STATUS] [r/RELIGION]`<br>e.g., `find age/25-35 r/buddhist`
+**Edit client** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [g/GENDER] [t/TAG]… [r/RELIGION] [s/SMOKING] [age/AGE] [pref/ATTRIBUTE:VALUE]… [db/ATTRIBUTE:VALUE]…`<br>e.g., `edit 2 age/34 pref/religion:hindu db/smoking:yes`
+**Find clients** | `find KEYWORD [MORE_KEYWORDS]…` or `find g/GENDER[,GENDER]…` or `find g/`<br>e.g., `find g/m,nb`
+**Find clients by other attributes (planned, OR)** | `find [age/MIN-MAX] [s/STATUS] [r/RELIGION]`<br>e.g., `find age/25-35 r/buddhist`
 **Filter clients (AND)** | `filter [age/MIN-MAX] [s/STATUS] [r/RELIGION]`<br>e.g., `filter age/25-35 s/no r/buddhist`
 **Match clients** | `match INDEX_A INDEX_B`<br>e.g., `match 2 5`
 **Create group** | `group create g/GROUP_NAME`<br>e.g., `group create g/VIP`
