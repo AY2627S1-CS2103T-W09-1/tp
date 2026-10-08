@@ -1,19 +1,31 @@
 ---
 layout: page
-title: AddressBook Level 3
+title: CupidMaxxing
 ---
 
-[![CI Status](https://github.com/se-edu/addressbook-level3/workflows/Java%20CI/badge.svg)](https://github.com/se-edu/addressbook-level3/actions)
-[![codecov](https://codecov.io/gh/se-edu/addressbook-level3/branch/master/graph/badge.svg)](https://codecov.io/gh/se-edu/addressbook-level3)
+[![CI Status](https://github.com/AY2627S1-CS2103T-W09-1/tp/actions/workflows/gradle.yml/badge.svg)](https://github.com/AY2627S1-CS2103T-W09-1/tp/actions/workflows/gradle.yml)
 
-![Ui](images/Ui.png)
+CupidMaxxing is a desktop address book for independent professional matchmakers managing a small pool of clients and potential matches. Its command-line interface helps matchmakers organise and retrieve client information quickly to identify suitable introductions.
 
-**AddressBook is a desktop application for managing your contact details.** While it has a GUI, most of the user interactions happen using a CLI (Command Line Interface).
+![CupidMaxxing UI mockup](images/Ui.png)
 
-* If you are interested in using AddressBook, head over to the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start).
-* If you are interested in developing AddressBook, the [**Developer Guide**](DeveloperGuide.html) is a good place to start.
+*Mockup of the intended interface; the features below are planned and under development.*
 
+## Planned features
 
-**Acknowledgements**
+* Record client contact details, traits, dating preferences, and dealbreakers.
+* Find and filter clients using multiple criteria based on preferences and dealbreakers.
+* Check compatibility between two clients against their preferences and dealbreakers.
+* Label clients by their traits and organise them into named groups that can be created, renamed, or deleted.
+
+## Documentation
+
+* [User Guide](UserGuide.html)
+* [Developer Guide](DeveloperGuide.html)
+* [About Us](AboutUs.html)
+
+## Acknowledgements
+
+This project is based on the AddressBook-Level3 project created by the [SE-EDU initiative](https://se-education.org).
 
 * Libraries used: [JavaFX](https://openjfx.io/), [Jackson](https://github.com/FasterXML/jackson), [JUnit5](https://github.com/junit-team/junit5)
