@@ -15,9 +15,9 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-W09-1/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the _home folder_ for CupidMaxxing.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
@@ -77,8 +77,7 @@ Format: `help`
 
 Adds a client to CupidMaxxing with contact details and age. Gender, smoking status and tags are optional.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​`
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​ [rg/RELATIONSHIP_GOAL]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​`
 
 * `AGE` is compulsory and must be an integer from 18 to 99 (inclusive).
 * `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one `g/` prefix are allowed per command.
@@ -101,9 +100,7 @@ Examples:
 * `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi age/30 s/no` Records Alice as a non-smoker.
 * `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 rg/long` Records Priya as looking for a long-term relationship.
 
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
-* `add n/Amy Bee p/85355255 e/amy@example.com a/Jurong West r/Jainism rp/Buddhism rr/Buddhism rx/Islam`
+* `add n/Amy Bee p/85355255 e/amy@example.com a/Jurong West age/25 r/Jainism rp/Buddhism rr/Buddhism rx/Islam`
 
 #### Religion fields
 
@@ -122,6 +119,9 @@ use the listed spelling, although its letter case can vary. There is no free-tex
 * `rp/RELIGION` records a **soft preference** for a partner's religion.
 * `rr/RELIGION` records a **required** partner religion (a dealbreaker if unmet).
 * Repeat `rx/RELIGION` to **exclude** one or more partner religions (dealbreakers if met).
+* Each of `r/`, `rp/`, and `rr/` may appear only once per command. Supplied religion
+  fields in `add` must be non-empty. Repeated exclusions must be distinct after
+  normalization: `rx/Islam rx/islam` is rejected without changing any records.
 
 A preference and a requirement must name the same religion if both are set.
 Neither may also be excluded. All of these values are saved with the contact and
@@ -159,8 +159,7 @@ Format: `list`
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​`
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​ [rg/RELATIONSHIP_GOAL]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
 * At least one of the optional fields must be provided.
@@ -172,7 +171,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]…​ [r/RE
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
 * `r/`, `rp/`, and `rr/` with no value clear that individual religion field.
 * Enter `rx/` alone to clear all excluded religions; otherwise, supplied `rx/`
-  values replace the entire exclusion set rather than adding to it.
+  values replace the entire exclusion set rather than adding to it. Do not combine
+  an empty `rx/` with another `rx/` value; that command is rejected.
 * An edit that would make the preference, requirement, and exclusion values
   contradictory is rejected without changing the contact.
 * Use `rg/RELATIONSHIP_GOAL` to update the relationship goal. Omitting `rg/` preserves the existing goal, and `rg/` with no value clears it.
@@ -238,11 +238,25 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually. Gender is saved with each client; valid existing records without a gender load as unspecified. The existing required-age rule still applies.
+CupidMaxxing automatically saves data after every successful command. You do not need to save manually. Gender is saved with each client; valid existing records without a gender load as unspecified. The existing required-age rule still applies.
+
+The app's **home folder** is the folder containing its JAR, even if you launch it
+from a different working folder. Keep that folder writable. Client data is stored
+in `data/addressbook.json`, window preferences in `preferences.json`, and rotating
+logs in `addressbook.log.*`, all inside that home folder. JavaFX runtime caches and
+temporary files also stay there, in `.javafx/` and `.tmp/`. The app does not change
+OS-level settings. Paths and symbolic links leading outside the home folder are
+not supported for application data; move the data itself into the home folder instead.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+CupidMaxxing data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+
+Records with valid required fields but no religion properties load with unknown
+religion details, not `No religion`. Invalid stored religions or contradictory
+partner criteria reject the data file. Back up older development data before
+migrating it; replace an obsolete `Other` religion only with an accurate supported
+category, or remove that optional property if the religion is unknown.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
@@ -273,16 +287,11 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 rg/long t/friend t/colleague`
+**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 rg/long t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, or `find g/`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​ [rg/RELATIONSHIP_GOAL]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
-**Clear** | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​ [rg/RELATIONSHIP_GOAL]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List** | `list`
 **Help** | `help`
 **Exit** | `exit`

@@ -185,6 +185,22 @@ The person card and command feedback display the status, including `Not specifie
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 It does not yet implement smoking preferences, dealbreakers, matching, or a command to clear a recorded status.
+### Application data sandbox
+
+`AppPaths` derives the packaged application's home folder from its JAR code source,
+not the working directory. `MainApp` resolves preferences and client data under this
+folder; `LogsCenter` confines rotating logs there and escapes log-pattern characters.
+`FileUtil` and `JsonUtil` validate packaged data paths before reading or writing,
+rejecting traversal and existing symbolic links that lead outside the home folder.
+Unsafe log destinations fall back to console logging rather than another directory.
+
+`Main` configures JavaFX's native-library cache and temporary-file directory inside
+that same home before starting JavaFX. These settings are JVM-process properties,
+not persistent OS configuration changes. An unsafe or unwritable runtime-cache
+folder prevents startup instead of falling back outside the sandbox. Class-directory
+runs have no JAR home and retain working-directory behavior for development and
+JUnit fixtures; the sandbox must also be verified against the packaged JAR.
+
 ### Religion attributes
 
 `Religion` accepts only the categories listed in the User Guide. It strips leading and trailing
@@ -200,10 +216,13 @@ preference (`rp/`), a required partner religion (`rr/`), and excluded partner re
 it also rejects a required religion that appears in the exclusions. `edit` can clear individual
 fields with an empty prefix, while repeated `rx/` values replace the exclusion set. Absent
 religion fields mean **unknown**, not `No religion`, which is an explicit category.
+The parsers reject repeated `r/`, `rp/`, and `rr/` prefixes, duplicate normalized
+exclusions, and an empty `rx/` combined with another exclusion. Supplied religion
+fields in `add` must be non-empty; a failed command leaves the record unchanged.
 
 `JsonAdaptedPerson` saves the canonical names and treats missing religion properties in older
-data as unknown. `PersonCard` displays the recorded values. Name-only `find` and pairwise
-compatibility do not yet use these fields; they are separate increments.
+data as unknown. `PersonCard` displays the recorded values. The supported name, age and gender searches and pairwise
+compatibility do not yet use religion fields; they are separate increments.
 
 ### Recording relationship goals
 
@@ -483,6 +502,7 @@ A client may belong to several different groups. Renaming or deleting a group do
 6. Validation failures should not partially change stored client records or group membership.
 7. The GUI should work well at 1920×1080 or higher with 100% or 125% scaling, and remain usable at 1280×720 or higher with 150% scaling.
 8. Any proposed third-party library or service should satisfy the course's external-software rules and receive teaching-team approval before use.
+9. The packaged app must read and write application files only inside the folder containing its JAR or its subfolders, and must not change OS-level configuration settings (Constraint-Data-Sandbox).
 
 ### Glossary
 
@@ -500,8 +520,8 @@ A client may belong to several different groups. Renaming or deleting a group do
 
 The draft feature notes disagree on some validation rules. Resolve these before implementing or publishing precise command specifications:
 
-* Data collection gives client ages as 18–99, while filtering allows search ages up to 120; the mockup also displays age ranges where the proposed `add`/`edit` syntax describes one age.
-* Data collection accepts free-text religions, while filtering lists a fixed set of religions. The two commands need one consistent stored and searchable representation.
+* The implemented age range is 18–99 for client data and age searches. Draft ranges up to 120 and age-range client records are not supported.
+* Religion data uses the 21 fixed categories in the User Guide, with no free-text or `Other` value. Future filtering must use the same canonical representation.
 * Name-only `find` is retained alongside gender-only `find g/`. Exact-age and age-range searches are also supported separately. Combining characteristics into an OR search remains pending.
 * The proposed `find` command uses OR logic for characteristics, but AB3 already uses `find` for name search. Decide how to preserve or replace the inherited behavior.
 * Group-list output is described, but the command format for listing all groups is not yet specified.
@@ -545,11 +565,30 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases …​ }_
 
+### Application data sandbox
+
+1. Launch from another working folder
+
+   1. Put the packaged JAR in a new writable home folder. From a different empty
+      folder, run `java -jar /path/to/home/addressbook.jar` using Java 25. Add a
+      test contact, then exit.<br>
+      Expected: Preferences, logs, caches, and `data/addressbook.json` are created
+      only in the JAR home folder; the working folder remains empty. Relaunching
+      from either folder retains the contact.
+
+1. Reject outward symbolic links (where supported by the OS)
+
+   1. Back up the isolated test data. With the app closed, replace its `data`
+      subfolder with a symbolic link to a separate folder containing a sentinel
+      data file. Launch and try adding a contact.<br>
+      Expected: External data is not loaded or overwritten. Saving is rejected;
+      the sentinel file is unchanged. Restore the real in-home data folder afterward.
+
 ### Religion attributes
 
 1. Adding and retaining religion values
 
-   1. Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane r/jAiNiSm rp/Buddhism rr/Buddhism rx/Islam`.<br>
+   1. Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 r/jAiNiSm rp/Buddhism rr/Buddhism rx/Islam`.<br>
       Expected: The contact card shows `Religion: Jainism`, `Preferred: Buddhism`,
       `Required: Buddhism`, and `Excluded: Islam`. Mixed case is converted to the
       category's canonical spelling.
