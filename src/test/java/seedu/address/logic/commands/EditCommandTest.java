@@ -26,7 +26,6 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.Religion;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -101,35 +100,34 @@ public class EditCommandTest {
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
 
-    /**
-     * Checks that religion criteria can be edited without changing other details.
-     */
     @Test
-    public void execute_religionFields_success() {
+    public void execute_religion_success() {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        Person edited = new PersonBuilder(original).withReligion("Jainism")
-                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
-                .withExcludedReligions("Islam").build();
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withReligion("Jainism")
-                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
-                .withExcludedReligions("Islam").build();
+        Person edited = new PersonBuilder(original).withReligion("Jainism").build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withReligion("Jainism").build();
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(original, edited);
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS,
-                Messages.format(edited));
-        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
-                expectedMessage, expectedModel);
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(edited));
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model, expectedMessage, expectedModel);
     }
 
-    /**
-     * Checks that a conflicting edit fails without changing the model.
-     */
     @Test
-    public void execute_conflictingReligionFields_failure() {
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
-                .withRequiredReligion("Islam").withExcludedReligions("Islam").build();
-        assertCommandFailure(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
-                Religion.MESSAGE_CONFLICT);
+    public void execute_clearReligion_preservesOtherFields() throws Exception {
+        Person original = new PersonBuilder(model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()))
+                .withReligion("Jainism").withSmokingStatus("no").withGender("nb").withRelationshipGoal("long").build();
+        model.setPerson(model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()), original);
+        Person cleared = new PersonBuilder(original).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withReligion(null).build();
+        EditCommand command = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+        command.execute(model);
+        Person actual = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertTrue(actual.getReligion().isEmpty());
+        assertEquals(cleared.getName(), actual.getName());
+        assertEquals(cleared.getAge(), actual.getAge());
+        assertEquals(cleared.getGender(), actual.getGender());
+        assertEquals(cleared.getSmokingStatus(), actual.getSmokingStatus());
+        assertEquals(cleared.getRelationshipGoal(), actual.getRelationshipGoal());
+        assertEquals(cleared.getTags(), actual.getTags());
     }
 
     @Test

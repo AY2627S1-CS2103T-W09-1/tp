@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -53,9 +54,7 @@ public class JsonAdaptedPersonTest {
      */
     @Test
     public void jsonRoundTrip_religionFieldsPreserved() throws Exception {
-        var original = new PersonBuilder(BENSON).withReligion("Jainism")
-                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
-                .withExcludedReligions("Islam", "No religion").build();
+        var original = new PersonBuilder(BENSON).withReligion("Jainism").build();
         String json = JsonUtil.toJsonString(new JsonAdaptedPerson(original));
         JsonAdaptedPerson restored = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class);
         assertEquals(original, restored.toModelType());
@@ -67,8 +66,25 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_invalidReligion_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
-                VALID_TAGS, "Other: Jainism", null, null, List.of());
+                VALID_TAGS, "Other: Jainism");
         assertThrows(IllegalValueException.class, Religion.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void jsonRoundTrip_obsoleteCriteriaIgnored_preservesOwnAttributes() throws Exception {
+        Person original = new PersonBuilder(BENSON).withReligion("Jainism").withSmokingStatus("no")
+                .withGender("nb").withRelationshipGoal("long").build();
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(original));
+        var node = JsonUtil.fromJsonString(json, com.fasterxml.jackson.databind.node.ObjectNode.class);
+        node.put("preferredReligion", "Unlisted former preference");
+        node.put("requiredReligion", "Islam");
+        node.putArray("excludedReligions").add("Islam").add("Islam");
+        JsonAdaptedPerson restored = JsonUtil.fromJsonString(node.toString(), JsonAdaptedPerson.class);
+        assertEquals(original, restored.toModelType());
+        String saved = JsonUtil.toJsonString(restored);
+        assertFalse(saved.contains("preferredReligion"));
+        assertFalse(saved.contains("requiredReligion"));
+        assertFalse(saved.contains("excludedReligions"));
     }
 
     @Test

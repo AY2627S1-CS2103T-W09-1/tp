@@ -4,14 +4,11 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -44,11 +41,11 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException If the user input does not conform to the expected format.
      */
     public AddCommand parse(String args) throws ParseException {
+        ParserUtil.rejectRemovedReligionCriteria(args);
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
                         PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING,
-                        PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION, PREFIX_REQUIRED_RELIGION,
-                        PREFIX_EXCLUDED_RELIGION, PREFIX_RELATIONSHIP_GOAL);
+                        PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_AGE)
                 || !argMultimap.getPreamble().isEmpty()) {
@@ -56,8 +53,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE, PREFIX_RELIGION, PREFIX_PREFERRED_RELIGION,
-                PREFIX_REQUIRED_RELIGION, PREFIX_RELATIONSHIP_GOAL);
+                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
         Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
         Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
@@ -69,15 +65,11 @@ public class AddCommandParser implements Parser<AddCommand> {
         Gender gender = ParserUtil.parseGender(argMultimap.getValue(PREFIX_GENDER).orElse(""));
 
         Religion religion = parseOptionalReligion(argMultimap, PREFIX_RELIGION);
-        Religion preferred = parseOptionalReligion(argMultimap, PREFIX_PREFERRED_RELIGION);
-        Religion required = parseOptionalReligion(argMultimap, PREFIX_REQUIRED_RELIGION);
-        Set<Religion> excluded = ParserUtil.parseExcludedReligions(
-                argMultimap.getAllValues(PREFIX_EXCLUDED_RELIGION));
         RelationshipGoal relationshipGoal = parseOptionalRelationshipGoal(argMultimap);
 
         try {
             Person person = new Person(name, phone, email, address, age, tagList, smokingStatus, gender,
-                    religion, preferred, required, excluded, relationshipGoal);
+                    religion, relationshipGoal);
             return new AddCommand(person);
         } catch (IllegalArgumentException exception) {
             throw new ParseException(exception.getMessage());

@@ -22,8 +22,6 @@ public final class Religion {
 
     public static final String MESSAGE_CONSTRAINTS = "Religion must be one of: "
             + String.join(", ", CATEGORIES) + ".";
-    public static final String MESSAGE_CONFLICT = "Preferred and required religions must agree, "
-            + "and neither can be an excluded religion.";
 
     private final String displayValue;
 

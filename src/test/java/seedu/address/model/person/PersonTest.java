@@ -98,32 +98,9 @@ public class PersonTest {
         editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
 
-        // different religion or partner criteria -> returns false
+        // different religion -> returns false
         editedAlice = new PersonBuilder(ALICE).withReligion("Islam").build();
         assertFalse(ALICE.equals(editedAlice));
-        editedAlice = new PersonBuilder(ALICE).withExcludedReligions("No religion").build();
-        assertFalse(ALICE.equals(editedAlice));
-    }
-
-    /**
-     * Checks that religion criteria cannot contradict each other.
-     */
-    @Test
-    public void constructor_conflictingReligionCriteria_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, Religion.MESSAGE_CONFLICT, () -> new PersonBuilder()
-                .withPreferredReligion("Islam").withRequiredReligion("Buddhism").build());
-        assertThrows(IllegalArgumentException.class, Religion.MESSAGE_CONFLICT, () -> new PersonBuilder()
-                .withRequiredReligion("Islam").withExcludedReligions("Islam").build());
-    }
-
-    /**
-     * Checks that the exclusion getter returns an unmodifiable set.
-     */
-    @Test
-    public void getExcludedReligions_unmodifiable() {
-        Person person = new PersonBuilder().withExcludedReligions("Islam").build();
-        assertThrows(UnsupportedOperationException.class, () -> person.getExcludedReligions()
-                .add(new Religion("Buddhism")));
     }
 
     /**
@@ -166,7 +143,7 @@ public class PersonTest {
                 + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", smokingStatus="
                 + ALICE.getSmokingStatus() + ", age=" + ALICE.getAge()
                 + ", tags=" + ALICE.getTags() + ", gender=" + ALICE.getGender()
-                + ", religion=null, preferredReligion=null, requiredReligion=null, excludedReligions=[]"
+                + ", religion=null"
                 + ", relationshipGoal=" + ALICE.getRelationshipGoal().orElse(null) + "}";
         assertEquals(expected, ALICE.toString());
     }

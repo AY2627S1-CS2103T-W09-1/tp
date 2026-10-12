@@ -4,14 +4,11 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_EXCLUDED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_PREFERRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_REQUIRED_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
@@ -63,9 +60,6 @@ public class EditCommand extends Command {
             + "Gender: m, w, nb, or empty for unspecified.\n"
             + "[" + PREFIX_TAG + "TAG]... "
             + "[" + PREFIX_RELIGION + "RELIGION] "
-            + "[" + PREFIX_PREFERRED_RELIGION + "PREFERRED_RELIGION] "
-            + "[" + PREFIX_REQUIRED_RELIGION + "REQUIRED_RELIGION] "
-            + "[" + PREFIX_EXCLUDED_RELIGION + "EXCLUDED_RELIGION]... "
             + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL]\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
@@ -145,18 +139,9 @@ public class EditCommand extends Command {
 
         Religion updatedReligion = editPersonDescriptor.isReligionEdited()
                 ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
-        Religion updatedPreferred = editPersonDescriptor.isPreferredReligionEdited()
-                ? editPersonDescriptor.getPreferredReligion().orElse(null)
-                : personToEdit.getPreferredReligion().orElse(null);
-        Religion updatedRequired = editPersonDescriptor.isRequiredReligionEdited()
-                ? editPersonDescriptor.getRequiredReligion().orElse(null)
-                : personToEdit.getRequiredReligion().orElse(null);
-        Set<Religion> updatedExcluded = editPersonDescriptor.getExcludedReligions()
-                .orElse(personToEdit.getExcludedReligions());
 
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
-                updatedSmokingStatus, updatedGender, updatedReligion, updatedPreferred, updatedRequired,
-                updatedExcluded, updatedRelationshipGoal);
+                updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal);
     }
 
     @Override
@@ -184,7 +169,7 @@ public class EditCommand extends Command {
 
     /**
      * Stores the details to edit a person. Supplied fields replace existing values;
-     * explicitly empty religion fields clear their corresponding values.
+     * an explicitly empty religion field clears the recorded religion.
      */
     public static class EditPersonDescriptor {
         private Name name;
@@ -196,13 +181,8 @@ public class EditCommand extends Command {
         private Age age;
         private Set<Tag> tags;
         private Religion religion;
-        private Religion preferredReligion;
-        private Religion requiredReligion;
-        private Set<Religion> excludedReligions;
         // Track supplied fields separately so null can mean an explicit clear.
         private boolean religionEdited;
-        private boolean preferredReligionEdited;
-        private boolean requiredReligionEdited;
         private RelationshipGoal relationshipGoal;
         private boolean relationshipGoalEdited;
 
@@ -224,15 +204,6 @@ public class EditCommand extends Command {
             if (toCopy.religionEdited) {
                 setReligion(toCopy.religion);
             }
-            if (toCopy.preferredReligionEdited) {
-                setPreferredReligion(toCopy.preferredReligion);
-            }
-            if (toCopy.requiredReligionEdited) {
-                setRequiredReligion(toCopy.requiredReligion);
-            }
-            if (toCopy.excludedReligions != null) {
-                setExcludedReligions(toCopy.excludedReligions);
-            }
             if (toCopy.relationshipGoalEdited) {
                 setRelationshipGoal(toCopy.relationshipGoal);
             }
@@ -242,10 +213,8 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, address, age, tags, smokingStatus, gender,
-                    excludedReligions)
-                    || religionEdited || preferredReligionEdited || requiredReligionEdited
-                    || relationshipGoalEdited;
+            return CollectionUtil.isAnyNonNull(name, phone, email, address, age, tags, smokingStatus, gender)
+                    || religionEdited || relationshipGoalEdited;
         }
 
         public void setName(Name name) {
@@ -344,65 +313,6 @@ public class EditCommand extends Command {
         }
 
         /**
-         * Sets or clears the soft religion preference.
-         */
-        public void setPreferredReligion(Religion religion) {
-            preferredReligion = religion;
-            preferredReligionEdited = true;
-        }
-
-        /**
-         * Returns the new soft religion preference, if present.
-         */
-        public Optional<Religion> getPreferredReligion() {
-            return Optional.ofNullable(preferredReligion);
-        }
-
-        /**
-         * Returns whether the soft religion preference was supplied.
-         */
-        public boolean isPreferredReligionEdited() {
-            return preferredReligionEdited;
-        }
-
-        /**
-         * Sets or clears the required partner religion.
-         */
-        public void setRequiredReligion(Religion religion) {
-            requiredReligion = religion;
-            requiredReligionEdited = true;
-        }
-
-        /**
-         * Returns the new required partner religion, if present.
-         */
-        public Optional<Religion> getRequiredReligion() {
-            return Optional.ofNullable(requiredReligion);
-        }
-
-        /**
-         * Returns whether the required partner religion was supplied.
-         */
-        public boolean isRequiredReligionEdited() {
-            return requiredReligionEdited;
-        }
-
-        /**
-         * Replaces the excluded religions with a defensive copy, possibly empty to clear them.
-         */
-        public void setExcludedReligions(Set<Religion> religions) {
-            excludedReligions = new HashSet<>(religions);
-        }
-
-        /**
-         * Returns the replacement exclusion set, if supplied.
-         */
-        public Optional<Set<Religion>> getExcludedReligions() {
-            return excludedReligions == null ? Optional.empty()
-                    : Optional.of(Collections.unmodifiableSet(excludedReligions));
-        }
-
-        /**
          * Sets or clears the client's relationship goal; null explicitly clears it.
          */
         public void setRelationshipGoal(RelationshipGoal relationshipGoal) {
@@ -444,12 +354,7 @@ public class EditCommand extends Command {
                     && Objects.equals(age, otherEditPersonDescriptor.age)
                     && Objects.equals(tags, otherEditPersonDescriptor.tags)
                     && Objects.equals(religion, otherEditPersonDescriptor.religion)
-                    && Objects.equals(preferredReligion, otherEditPersonDescriptor.preferredReligion)
-                    && Objects.equals(requiredReligion, otherEditPersonDescriptor.requiredReligion)
-                    && Objects.equals(excludedReligions, otherEditPersonDescriptor.excludedReligions)
                     && religionEdited == otherEditPersonDescriptor.religionEdited
-                    && preferredReligionEdited == otherEditPersonDescriptor.preferredReligionEdited
-                    && requiredReligionEdited == otherEditPersonDescriptor.requiredReligionEdited
                     && Objects.equals(relationshipGoal, otherEditPersonDescriptor.relationshipGoal)
                     && relationshipGoalEdited == otherEditPersonDescriptor.relationshipGoalEdited;
         }
@@ -469,12 +374,7 @@ public class EditCommand extends Command {
                     .add("tags", tags)
                     .add("gender", gender)
                     .add("religion", religion)
-                    .add("preferredReligion", preferredReligion)
-                    .add("requiredReligion", requiredReligion)
-                    .add("excludedReligions", excludedReligions)
                     .add("religionEdited", religionEdited)
-                    .add("preferredReligionEdited", preferredReligionEdited)
-                    .add("requiredReligionEdited", requiredReligionEdited)
                     .add("relationshipGoal", relationshipGoal)
                     .toString();
         }

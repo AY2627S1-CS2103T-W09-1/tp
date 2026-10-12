@@ -68,8 +68,6 @@ public class EditPersonDescriptorTest {
 
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withReligion("Islam").build();
         assertFalse(DESC_AMY.equals(editedAmy));
-        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withExcludedReligions("No religion").build();
-        assertFalse(DESC_AMY.equals(editedAmy));
 
         // different relationship goal -> returns false
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withRelationshipGoal(VALID_RELATIONSHIP_GOAL_BOB).build();
@@ -115,9 +113,7 @@ public class EditPersonDescriptorTest {
                 + editPersonDescriptor.getSmokingStatus().orElse(null) + ", age="
                 + editPersonDescriptor.getAge().orElse(null) + ", tags="
                 + editPersonDescriptor.getTags().orElse(null) + ", gender="
-                + editPersonDescriptor.getGender().orElse(null) + ", religion=null, preferredReligion=null"
-                + ", requiredReligion=null, excludedReligions=null, religionEdited=false"
-                + ", preferredReligionEdited=false, requiredReligionEdited=false"
+                + editPersonDescriptor.getGender().orElse(null) + ", religion=null, religionEdited=false"
                 + ", relationshipGoal=" + editPersonDescriptor.getRelationshipGoal().orElse(null) + "}";
         assertEquals(expected, editPersonDescriptor.toString());
     }

@@ -196,32 +196,26 @@ public class AddCommandParserTest {
                 expectedMessage);
     }
 
-    /**
-     * Checks parsing of own religion and all three partner criteria.
-     */
     @Test
-    public void parse_religionFields_success() {
+    public void parse_religion_success() {
         String base = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB;
-        Person expected = new PersonBuilder(BOB).withAge(VALID_AGE_BOB).withTags().withReligion("Jainism")
-                .withPreferredReligion("Buddhism").withRequiredReligion("Buddhism")
-                .withExcludedReligions("Islam", "No religion").build();
-        assertParseSuccess(parser, base + " r/Jainism rp/Buddhism rr/Buddhism"
-                + " rx/Islam rx/No religion", new AddCommand(expected));
+        Person expected = new PersonBuilder(BOB).withAge(VALID_AGE_BOB).withTags().withReligion("Jainism").build();
+        assertParseSuccess(parser, base + " r/jAiNiSm", new AddCommand(expected));
     }
 
-    /**
-     * Checks rejection of invalid, repeated, and conflicting religion fields.
-     */
     @Test
-    public void parse_invalidReligionFields_failure() {
+    public void parse_invalidReligion_failure() {
         String base = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB;
         assertParseFailure(parser, base + " r/Other: Jainism", Religion.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, base + " rp/Unlisted faith", Religion.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, base + " r/", Religion.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, base + " r/Islam r/Buddhism",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_RELIGION));
-        assertParseFailure(parser, base + " rx/Islam rx/islam", "Duplicate excluded religion: Islam");
-        assertParseFailure(parser, base + " rp/Islam rr/Buddhism", Religion.MESSAGE_CONFLICT);
-        assertParseFailure(parser, base + " rr/Islam rx/Islam", Religion.MESSAGE_CONFLICT);
+        for (String prefix : new String[] {"rp/", "rr/", "rx/"}) {
+            assertParseFailure(parser, base + " " + prefix + "Buddhism",
+                    ParserUtil.MESSAGE_REMOVED_RELIGION_CRITERIA);
+            assertParseFailure(parser, base.replace(ADDRESS_DESC_BOB, ADDRESS_DESC_BOB + " " + prefix),
+                    ParserUtil.MESSAGE_REMOVED_RELIGION_CRITERIA);
+        }
     }
 
     @Test

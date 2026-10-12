@@ -125,31 +125,6 @@ public class EditPersonDescriptorBuilder {
     }
 
     /**
-     * Sets or clears the preferred partner religion.
-     */
-    public EditPersonDescriptorBuilder withPreferredReligion(String value) {
-        descriptor.setPreferredReligion(value == null ? null : new Religion(value));
-        return this;
-    }
-
-    /**
-     * Sets or clears the required partner religion.
-     */
-    public EditPersonDescriptorBuilder withRequiredReligion(String value) {
-        descriptor.setRequiredReligion(value == null ? null : new Religion(value));
-        return this;
-    }
-
-    /**
-     * Replaces excluded partner religions, clearing them for zero values.
-     */
-    public EditPersonDescriptorBuilder withExcludedReligions(String... values) {
-        Set<Religion> religions = Stream.of(values).map(Religion::new).collect(Collectors.toSet());
-        descriptor.setExcludedReligions(religions);
-        return this;
-    }
-
-    /**
      * Sets the {@code RelationshipGoal} of the {@code EditPersonDescriptor} that we are building.
      */
     public EditPersonDescriptorBuilder withRelationshipGoal(String relationshipGoal) {
