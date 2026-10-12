@@ -190,7 +190,7 @@ Examples:
 
 ### Finding clients: `find`
 
-Search by name, age, or the client's own gender. Each search examines the full client list and replaces the displayed results.
+Search by name, age, or the client's own gender or religion. Each search examines the full client list and replaces the displayed results.
 
 Formats:
 
@@ -198,8 +198,11 @@ Formats:
 * `find age/AGE` or `find age/MIN-MAX` searches an exact age or an inclusive range. Ages must be integers from 18 to 99, with no spaces within the range and `MIN` no greater than `MAX`.
 * `find g/GENDER[,GENDER]…` returns clients matching any listed gender: `m`, `w`, or `nb`, in any order, ignoring case and surrounding whitespace.
 * `find g/` returns every client with a specified gender, equivalent to `find g/m,w,nb`. Unspecified genders are excluded from gender searches.
+* `find r/RELIGION` searches one of the supported [religion categories](#religion-fields), using the same case and whitespace normalization as `add` and `edit`. It matches the client's **own religion**, not partner criteria.
+* A client with unknown religion does not match any religion search. `find r/No religion` matches only clients explicitly recorded as `No religion`, not those with an unset `r/`.
+* A blank `r/`, an unsupported category, repeated `r/` prefixes or a list of religions are rejected. Partial category names do not match.
 
-Use one search mode at a time. Name keywords, age criteria and gender criteria cannot be combined. Searches by smoking or religion and combined-trait searches are not supported in this increment.
+Use one search mode at a time. Name keywords, age, gender and religion criteria cannot be combined. Searches by smoking and combined-trait searches are not supported in this increment.
 
 Use each prefix only once. Duplicate gender values (including `m,M`), unsupported values, and empty items such as `m,` or `m,,w` are rejected. Gender lists are supported only by `find`, not by `add` or `edit`. Commands and prefixes must be lowercase; separate each prefix from preceding text with a space. Invalid commands leave records and displayed results unchanged.
 
@@ -209,6 +212,12 @@ Examples:
 * `find age/25-35` finds clients aged 25 to 35, inclusive.
 * `find g/w` finds women.
 * `find g/m,nb` finds men or non-binary clients.
+* `find r/jAiNiSm` finds clients whose own religion is Jainism.
+* `find r/Baha'i   Faith` finds clients recorded as Baha'i Faith, ignoring repeated spaces.
+* `find r/No religion` finds clients who explicitly have no religion.
+
+A valid search with no matches displays an empty result list and a count of zero.
+Use `list` to show every client again; searching does not modify the stored records.
 
 ### Deleting a person: `delete'
 
@@ -277,7 +286,7 @@ Action | Format, Examples
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, or `find g/`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`
+**Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, or `find r/RELIGION`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`
 **Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]…​ [r/RELIGION] [rp/PREFERRED] [rr/REQUIRED] [rx/EXCLUDED]…​ [rg/RELATIONSHIP_GOAL]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
