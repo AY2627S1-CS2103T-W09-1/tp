@@ -30,6 +30,8 @@ public final class DatingCriteriaParser {
     public static final String MESSAGE_EMPTY_CRITERION_VALUE = "A dating criterion must have a value.";
     public static final String MESSAGE_INVALID_AGE_RANGE =
             "The lower age bound cannot be greater than the upper age bound.";
+    public static final String MESSAGE_CRITERIA_NOT_YET_STORED =
+            "Preferences and dealbreakers are not yet stored by this command.";
 
     private static final Set<Prefix> SUPPORTED_PREFIXES = Set.of(
             PREFIX_AGE, PREFIX_SMOKING, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);

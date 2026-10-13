@@ -37,6 +37,9 @@ public class EditCommandParser implements Parser<EditCommand> {
      */
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
+        DatingCriteriaParser.ParsedCriteria parsedCriteria = DatingCriteriaParser.parse(args);
+        rejectUnstoredCriteria(parsedCriteria);
+        args = parsedCriteria.outsideArguments();
         ParserUtil.rejectRemovedReligionCriteria(args);
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
@@ -107,6 +110,13 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         Collection<String> tagSet = tags.size() == 1 && tags.contains("") ? Collections.emptySet() : tags;
         return Optional.of(ParserUtil.parseTags(tagSet));
+    }
+
+    /** Prevents criteria from being accepted until the person model can retain them. */
+    private static void rejectUnstoredCriteria(DatingCriteriaParser.ParsedCriteria criteria) throws ParseException {
+        if (criteria.hasCriteria()) {
+            throw new ParseException(DatingCriteriaParser.MESSAGE_CRITERIA_NOT_YET_STORED);
+        }
     }
 
 }

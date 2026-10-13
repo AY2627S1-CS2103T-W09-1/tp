@@ -41,6 +41,9 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException If the user input does not conform to the expected format.
      */
     public AddCommand parse(String args) throws ParseException {
+        DatingCriteriaParser.ParsedCriteria parsedCriteria = DatingCriteriaParser.parse(args);
+        rejectUnstoredCriteria(parsedCriteria);
+        args = parsedCriteria.outsideArguments();
         ParserUtil.rejectRemovedReligionCriteria(args);
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
@@ -82,6 +85,13 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     private static boolean arePrefixesPresent(ArgumentMultimap argumentMultimap, Prefix... prefixes) {
         return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
+    }
+
+    /** Prevents criteria from being accepted until the person model can retain them. */
+    private static void rejectUnstoredCriteria(DatingCriteriaParser.ParsedCriteria criteria) throws ParseException {
+        if (criteria.hasCriteria()) {
+            throw new ParseException(DatingCriteriaParser.MESSAGE_CRITERIA_NOT_YET_STORED);
+        }
     }
 
     /**
