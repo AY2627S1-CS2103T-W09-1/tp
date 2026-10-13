@@ -38,9 +38,6 @@ class JsonAdaptedPerson {
     private final String age;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final String religion;
-    private final String preferredReligion;
-    private final String requiredReligion;
-    private final List<String> excludedReligions = new ArrayList<>();
     private final String relationshipGoal;
 
     /**
@@ -53,9 +50,6 @@ class JsonAdaptedPerson {
             @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("smokingStatus") String smokingStatus, @JsonProperty("gender") String gender,
             @JsonProperty("religion") String religion,
-            @JsonProperty("preferredReligion") String preferredReligion,
-            @JsonProperty("requiredReligion") String requiredReligion,
-            @JsonProperty("excludedReligions") List<String> excludedReligions,
             @JsonProperty("relationshipGoal") String relationshipGoal) {
         this.name = name;
         this.phone = phone;
@@ -65,37 +59,33 @@ class JsonAdaptedPerson {
         this.smokingStatus = smokingStatus;
         this.age = age;
         this.religion = religion;
-        this.preferredReligion = preferredReligion;
-        this.requiredReligion = requiredReligion;
         if (tags != null) {
             this.tags.addAll(tags);
-        }
-        if (excludedReligions != null) {
-            this.excludedReligions.addAll(excludedReligions);
         }
         this.relationshipGoal = relationshipGoal;
     }
 
-    /** Creates an adapted legacy person with no recorded religion details. */
+    /**
+     * Creates an adapted legacy person with no recorded religion details.
+     */
     public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, null, tags, null, null, null, null, null, null, null);
+        this(name, phone, email, address, null, tags, null, null, null, null);
     }
 
     /**
-     * Constructs a person with the age, smoking-status, and gender fields but no religion criteria.
+     * Constructs a person with the age, smoking-status, and gender fields but no recorded religion.
      */
     public JsonAdaptedPerson(String name, String phone, String email, String address, String age,
             List<JsonAdaptedTag> tags, String smokingStatus, String gender) {
-        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null, null, null, null);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null);
     }
 
     /**
-     * Constructs a legacy religion-criteria test fixture with default values for subsequently added fields.
+     * Constructs a religion test fixture with default values for subsequently added fields.
      */
     public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags,
-            String religion, String preferredReligion, String requiredReligion, List<String> excludedReligions) {
-        this(name, phone, email, address, "18", tags, null, null, religion, preferredReligion,
-                requiredReligion, excludedReligions, null);
+            String religion) {
+        this(name, phone, email, address, "18", tags, null, null, religion, null);
     }
 
     /**
@@ -113,12 +103,6 @@ class JsonAdaptedPerson {
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
         religion = source.getReligion().map(Religion::toString).orElse(null);
-        preferredReligion = source.getPreferredReligion().map(Religion::toString).orElse(null);
-        requiredReligion = source.getRequiredReligion().map(Religion::toString).orElse(null);
-        excludedReligions.addAll(source.getExcludedReligions().stream()
-                .map(Religion::toString)
-                .sorted()
-                .collect(Collectors.toList()));
         relationshipGoal = source.getRelationshipGoal().map(RelationshipGoal::toString).orElse(null);
     }
 
@@ -197,17 +181,8 @@ class JsonAdaptedPerson {
 
         try {
             Religion modelReligion = religion == null ? null : new Religion(religion);
-            Religion modelPreferred = preferredReligion == null ? null : new Religion(preferredReligion);
-            Religion modelRequired = requiredReligion == null ? null : new Religion(requiredReligion);
-            Set<Religion> modelExcluded = new HashSet<>();
-            for (String excluded : excludedReligions) {
-                if (excluded == null || !modelExcluded.add(new Religion(excluded))) {
-                    throw new IllegalArgumentException("Excluded religions must be valid and unique.");
-                }
-            }
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags,
-                    modelSmokingStatus, modelGender, modelReligion, modelPreferred, modelRequired, modelExcluded,
-                    modelRelationshipGoal);
+                    modelSmokingStatus, modelGender, modelReligion, modelRelationshipGoal);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(exception.getMessage());
         }

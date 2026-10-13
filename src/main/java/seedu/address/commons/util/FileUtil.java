@@ -16,6 +16,7 @@ public class FileUtil {
      * @throws IOException if the file or directory cannot be created.
      */
     public static void createIfMissing(Path file) throws IOException {
+        file = AppPaths.resolveDataPath(file);
         if (Files.exists(file)) {
             return;
         }
@@ -40,7 +41,7 @@ public class FileUtil {
      * Assumes file exists
      */
     public static String readFromFile(Path file) throws IOException {
-        return new String(Files.readAllBytes(file), CHARSET);
+        return new String(Files.readAllBytes(AppPaths.resolveDataPath(file)), CHARSET);
     }
 
     /**
@@ -48,7 +49,7 @@ public class FileUtil {
      * Will create the file if it does not exist yet.
      */
     public static void writeToFile(Path file, String content) throws IOException {
-        Files.write(file, content.getBytes(CHARSET));
+        Files.write(AppPaths.resolveDataPath(file), content.getBytes(CHARSET));
     }
 
 }

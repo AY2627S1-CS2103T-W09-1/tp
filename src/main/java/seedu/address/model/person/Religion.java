@@ -12,7 +12,9 @@ import java.util.Objects;
  */
 public final class Religion {
 
-    /** The fixed, immutable categories accepted for religion fields. */
+    /**
+     * The fixed, immutable categories accepted for religion fields.
+     */
     public static final List<String> CATEGORIES = List.of("Christianity", "Islam", "Hinduism", "Buddhism",
             "Sikhism", "Judaism", "Jainism", "Baha'i Faith", "Shinto", "Taoism", "Confucianism",
             "Zoroastrianism", "Rastafari", "Wicca", "Paganism", "Tenrikyo", "Cao Dai", "Druze",
@@ -20,17 +22,19 @@ public final class Religion {
 
     public static final String MESSAGE_CONSTRAINTS = "Religion must be one of: "
             + String.join(", ", CATEGORIES) + ".";
-    public static final String MESSAGE_CONFLICT = "Preferred and required religions must agree, and neither can be "
-            + "an excluded religion.";
 
     private final String displayValue;
+
+    /**
+     * Lowercase canonical value used for equality and hashing.
+     */
     private final String comparisonValue;
 
     /**
      * Creates a religion from a supported category.
      *
-     * @param value the value entered by the user or loaded from storage
-     * @throws IllegalArgumentException if the value is not supported
+     * @param value The value entered by the user or loaded from storage.
+     * @throws IllegalArgumentException If the value is not supported.
      */
     public Religion(String value) {
         requireNonNull(value);
@@ -45,19 +49,25 @@ public final class Religion {
         throw new IllegalArgumentException(MESSAGE_CONSTRAINTS);
     }
 
-    /** Returns the canonical category for display and storage. */
+    /**
+     * Returns the canonical category for display and storage.
+     */
     @Override
     public String toString() {
         return displayValue;
     }
 
-    /** Returns whether two religions represent the same category. */
+    /**
+     * Returns whether two religions represent the same category.
+     */
     @Override
     public boolean equals(Object other) {
         return other instanceof Religion religion && comparisonValue.equals(religion.comparisonValue);
     }
 
-    /** Returns a hash code consistent with case-insensitive religion equality. */
+    /**
+     * Returns a hash code consistent with case-insensitive religion equality.
+     */
     @Override
     public int hashCode() {
         return Objects.hash(comparisonValue);

@@ -203,27 +203,26 @@ public class EditCommandParserTest {
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
     }
 
-    /** Parses setting and clearing religion fields without conflating clear with omission. */
     @Test
     public void parse_religionEdits_success() {
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
-                .withReligion("Jainism").withPreferredReligion("Buddhism")
-                .withRequiredReligion("Buddhism").withExcludedReligions("Islam", "No religion").build();
-        assertParseSuccess(parser, "1 r/Jainism rp/Buddhism rr/Buddhism"
-                + " rx/Islam rx/No religion", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withReligion("Jainism").build();
+        assertParseSuccess(parser, "1 r/jAiNiSm", new EditCommand(INDEX_FIRST_PERSON, descriptor));
 
-        descriptor = new EditPersonDescriptorBuilder().withReligion(null)
-                .withPreferredReligion(null).withRequiredReligion(null).withExcludedReligions().build();
-        assertParseSuccess(parser, "1 r/ rp/ rr/ rx/", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        descriptor = new EditPersonDescriptorBuilder().withReligion(null).build();
+        assertParseSuccess(parser, "1 r/", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
-    /** Invalid values and repeated single-valued religion fields are rejected. */
     @Test
     public void parse_invalidReligionEdit_failure() {
         assertParseFailure(parser, "1 r/Other: Jainism", Religion.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1 rr/Unlisted faith", Religion.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "1 r/Islam r/Buddhism",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_RELIGION));
+        for (String prefix : new String[] {"rp/", "rr/", "rx/"}) {
+            assertParseFailure(parser, "1 a/New Road " + prefix + "Buddhism",
+                    ParserUtil.MESSAGE_REMOVED_RELIGION_CRITERIA);
+            assertParseFailure(parser, "1 r/Jainism " + prefix,
+                    ParserUtil.MESSAGE_REMOVED_RELIGION_CRITERIA);
+        }
     }
 
     @Test

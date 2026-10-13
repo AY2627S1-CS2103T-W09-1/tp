@@ -3,12 +3,16 @@ package seedu.address.commons.core;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+
+import seedu.address.commons.util.AppPaths;
 
 /**
  * Configures and manages loggers and handlers, including their logging level.
@@ -86,12 +90,21 @@ public class LogsCenter {
 
         // add a FileHandler to log to a file
         try {
-            FileHandler fileHandler = new FileHandler(LOG_FILE, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
+            Path home = AppPaths.getHomeFolder();
+            try (var entries = Files.list(home)) {
+                for (Path entry : entries.filter(path -> path.getFileName().toString().startsWith(LOG_FILE)).toList()) {
+                    AppPaths.resolveWithinHome(home, entry);
+                }
+            }
+            Path logFile = AppPaths.resolveWithinHome(home, Path.of(LOG_FILE));
+            // Escape percent signs because FileHandler treats them as pattern substitutions.
+            String logPattern = logFile.toString().replace("%", "%%");
+            FileHandler fileHandler = new FileHandler(logPattern, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
             fileHandler.setFormatter(new SimpleFormatter());
             fileHandler.setLevel(Level.ALL);
             baseLogger.addHandler(fileHandler);
         } catch (IOException e) {
-            logger.warning("Error adding file handler for logger.");
+            baseLogger.warning("Error adding file handler for logger; using console logging only.");
         }
     }
 

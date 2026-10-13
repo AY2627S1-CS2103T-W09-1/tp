@@ -5,10 +5,14 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
-/** Tests supported religion categories and their canonicalization. */
+/**
+ * Tests supported religion categories and their canonicalization.
+ */
 public class ReligionTest {
 
-    /** Known categories are canonicalized without losing case-insensitive equality. */
+    /**
+     * Checks canonicalization and equality for a known category.
+     */
     @Test
     public void constructor_knownCategory_canonicalizes() {
         Religion religion = new Religion("  no   RELIGION ");
@@ -16,7 +20,9 @@ public class ReligionTest {
         assertEquals(new Religion("No religion"), religion);
     }
 
-    /** Additional categories are canonicalized and compare case-insensitively. */
+    /**
+     * Checks canonicalization and equality for an additional category.
+     */
     @Test
     public void constructor_additionalCategory_canonicalizes() {
         Religion religion = new Religion("  jAiNiSm ");
@@ -25,7 +31,9 @@ public class ReligionTest {
         assertEquals(religion.hashCode(), new Religion("jainism").hashCode());
     }
 
-    /** The listed Baha'i Faith category is accepted without alternate spellings. */
+    /**
+     * Checks that the listed Baha'i Faith spelling is accepted.
+     */
     @Test
     public void constructor_bahaiCategory_canonicalizes() {
         Religion religion = new Religion("Baha'i Faith");
@@ -33,7 +41,9 @@ public class ReligionTest {
         assertEquals(new Religion("baha'i faith"), religion);
     }
 
-    /** Free text and the former Other syntax are rejected. */
+    /**
+     * Checks rejection of free text and unsupported spellings.
+     */
     @Test
     public void constructor_unsupportedValue_throwsIllegalArgumentException() {
         String message = Religion.MESSAGE_CONSTRAINTS;

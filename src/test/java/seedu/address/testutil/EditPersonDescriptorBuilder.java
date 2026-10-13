@@ -90,7 +90,9 @@ public class EditPersonDescriptorBuilder {
         return this;
     }
 
-    /** Sets the {@code Age} of the {@code EditPersonDescriptor} that we are building. */
+    /**
+     * Sets the {@code Age} of the {@code EditPersonDescriptor} that we are building.
+     */
     public EditPersonDescriptorBuilder withAge(int age) {
         descriptor.setAge(new Age(age));
         return this;
@@ -114,28 +116,11 @@ public class EditPersonDescriptorBuilder {
         return this;
     }
 
-    /** Sets or clears the client's religion; null means clear. */
+    /**
+     * Sets or clears the client's religion; null means clear.
+     */
     public EditPersonDescriptorBuilder withReligion(String value) {
         descriptor.setReligion(value == null ? null : new Religion(value));
-        return this;
-    }
-
-    /** Sets or clears the preferred partner religion. */
-    public EditPersonDescriptorBuilder withPreferredReligion(String value) {
-        descriptor.setPreferredReligion(value == null ? null : new Religion(value));
-        return this;
-    }
-
-    /** Sets or clears the required partner religion. */
-    public EditPersonDescriptorBuilder withRequiredReligion(String value) {
-        descriptor.setRequiredReligion(value == null ? null : new Religion(value));
-        return this;
-    }
-
-    /** Replaces excluded partner religions, clearing them for zero values. */
-    public EditPersonDescriptorBuilder withExcludedReligions(String... values) {
-        Set<Religion> religions = Stream.of(values).map(Religion::new).collect(Collectors.toSet());
-        descriptor.setExcludedReligions(religions);
         return this;
     }
 
@@ -155,7 +140,9 @@ public class EditPersonDescriptorBuilder {
         return this;
     }
 
-    /** Returns the prepared edit descriptor. */
+    /**
+     * Returns the prepared edit descriptor.
+     */
     public EditPersonDescriptor build() {
         return descriptor;
     }
