@@ -24,7 +24,8 @@ public class FindCommand extends Command {
             + "Use find g/ to list all persons with a specified gender.\n"
             + "Or search by age: find age/25 or find age/25-35 (18 to 99, inclusive).\n"
             + "Or search by own religion: find r/Jainism (one supported category, case-insensitive).\n"
-            + "Use one search mode at a time: name, age, gender, or religion.";
+            + "Or search by relationship goal: find rg/GOAL (e.g. find rg/long).\n"
+            + "Use one search mode at a time: name, age, gender, religion, or relationship goal.";
 
     private final Predicate<Person> predicate;
 
