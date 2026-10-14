@@ -1,6 +1,8 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -8,6 +10,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.RelationshipGoal;
 
 /**
@@ -51,6 +54,10 @@ public class PersonCard extends UiPart<Region> {
     private FlowPane tags;
     @FXML
     private Label relationshipGoal;
+    @FXML
+    private Label preferences;
+    @FXML
+    private Label dealbreakers;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -72,5 +79,17 @@ public class PersonCard extends UiPart<Region> {
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
         relationshipGoal.setText("Relationship goal: "
                 + person.getRelationshipGoal().map(Object::toString).orElse(RelationshipGoal.NOT_SPECIFIED_LABEL));
+        preferences.setText(formatCriteria("Preferences", person.getDatingCriteria().getPreferences()));
+        preferences.setManaged(!person.getDatingCriteria().getPreferences().isEmpty());
+        preferences.setVisible(!person.getDatingCriteria().getPreferences().isEmpty());
+        dealbreakers.setText(formatCriteria("Dealbreakers", person.getDatingCriteria().getDealbreakers()));
+        dealbreakers.setManaged(!person.getDatingCriteria().getDealbreakers().isEmpty());
+        dealbreakers.setVisible(!person.getDatingCriteria().getDealbreakers().isEmpty());
+    }
+
+    private static String formatCriteria(String label, Map<DatingAttribute, String> criteria) {
+        return label + ": " + criteria.entrySet().stream()
+                .map(entry -> entry.getKey().getDisplayName() + " = " + entry.getValue())
+                .collect(Collectors.joining("; "));
     }
 }
