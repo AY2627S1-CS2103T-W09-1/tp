@@ -14,6 +14,7 @@ import static seedu.address.testutil.TypicalPersons.AMY;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,9 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.FindCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -69,6 +72,42 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_findReligion_preservesRecordsAndReplacesResults() throws Exception {
+        Person jain = new PersonBuilder().withName("Jain Demo").withReligion("Jainism")
+                .withSmokingStatus("no").withGender("nb").withRelationshipGoal("long").build();
+        Person none = new PersonBuilder().withName("None Demo").withReligion("No religion").build();
+        Person unknown = new PersonBuilder().withName("Unknown Demo").build();
+        model.addPerson(jain);
+        model.addPerson(none);
+        model.addPerson(unknown);
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        logic.execute("find Unknown");
+        assertEquals(List.of(unknown), model.getFilteredPersonList());
+        CommandResult result = logic.execute("find r/jAiNiSm");
+        assertEquals(String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
+        assertEquals(List.of(jain), model.getFilteredPersonList());
+        for (String query : new String[] {"find r/", "find r/Other", "find r/Jainism r/Islam",
+            "find Jain r/Jainism", "find r/Jainism age/25", "find r/Jainism g/nb"}) {
+            assertThrows(ParseException.class, () -> logic.execute(query));
+            assertEquals(List.of(jain), model.getFilteredPersonList());
+            assertEquals(original, model.getAddressBook());
+        }
+        logic.execute("find r/No religion");
+        assertEquals(List.of(none), model.getFilteredPersonList());
+        result = logic.execute("find r/Buddhism");
+        assertEquals(String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, 0), result.getFeedbackToUser());
+        assertEquals(List.of(), model.getFilteredPersonList());
+        assertEquals(original, model.getAddressBook());
+
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        Model restored = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        new FindCommandParser().parse("r/Jainism").execute(restored);
+        assertEquals(List.of(jain), restored.getFilteredPersonList());
+        assertEquals(original, restored.getAddressBook());
     }
 
     @Test
