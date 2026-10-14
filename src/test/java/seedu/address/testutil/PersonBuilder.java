@@ -36,9 +36,6 @@ public class PersonBuilder {
     private Set<Tag> tags;
     private SmokingStatus smokingStatus;
     private Religion religion;
-    private Religion preferredReligion;
-    private Religion requiredReligion;
-    private Set<Religion> excludedReligions;
     private RelationshipGoal relationshipGoal;
 
     /**
@@ -52,7 +49,6 @@ public class PersonBuilder {
         age = new Age(DEFAULT_AGE);
         tags = new HashSet<>();
         smokingStatus = SmokingStatus.UNSPECIFIED;
-        excludedReligions = new HashSet<>();
     }
 
     /**
@@ -68,9 +64,6 @@ public class PersonBuilder {
         age = personToCopy.getAge();
         tags = new HashSet<>(personToCopy.getTags());
         religion = personToCopy.getReligion().orElse(null);
-        preferredReligion = personToCopy.getPreferredReligion().orElse(null);
-        requiredReligion = personToCopy.getRequiredReligion().orElse(null);
-        excludedReligions = new HashSet<>(personToCopy.getExcludedReligions());
         relationshipGoal = personToCopy.getRelationshipGoal().orElse(null);
     }
 
@@ -98,7 +91,9 @@ public class PersonBuilder {
         return this;
     }
 
-    /** Sets the {@code Age} of the {@code Person} that we are building. */
+    /**
+     * Sets the {@code Age} of the {@code Person} that we are building.
+     */
     public PersonBuilder withAge(int age) {
         this.age = new Age(age);
         return this;
@@ -136,30 +131,11 @@ public class PersonBuilder {
         return this;
     }
 
-    /** Sets the client's own religion. */
+    /**
+     * Sets the client's own religion.
+     */
     public PersonBuilder withReligion(String value) {
         religion = new Religion(value);
-        return this;
-    }
-
-    /** Sets a soft preference for a partner's religion. */
-    public PersonBuilder withPreferredReligion(String value) {
-        preferredReligion = new Religion(value);
-        return this;
-    }
-
-    /** Sets a required partner religion. */
-    public PersonBuilder withRequiredReligion(String value) {
-        requiredReligion = new Religion(value);
-        return this;
-    }
-
-    /** Replaces the excluded partner religions. */
-    public PersonBuilder withExcludedReligions(String... values) {
-        excludedReligions = new HashSet<>();
-        for (String value : values) {
-            excludedReligions.add(new Religion(value));
-        }
         return this;
     }
 
@@ -171,10 +147,12 @@ public class PersonBuilder {
         return this;
     }
 
-    /** Builds an immutable person with the selected details. */
+    /**
+     * Builds an immutable person with the selected details.
+     */
     public Person build() {
         return new Person(name, phone, email, address, age, tags, smokingStatus, gender, religion,
-                preferredReligion, requiredReligion, excludedReligions, relationshipGoal);
+                relationshipGoal);
     }
 
 }

@@ -1,9 +1,11 @@
 package seedu.address;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.commons.util.AppPaths;
 
 /**
  * The main entry point to the application.
@@ -24,7 +26,13 @@ import seedu.address.commons.core.LogsCenter;
 public class Main {
     private static Logger logger = LogsCenter.getLogger(Main.class);
 
-    public static void main(String[] args) {
+    /**
+     * Launches the application with runtime caches confined to its home folder.
+     *
+     * @throws IOException If the home folder cannot safely store runtime files.
+     */
+    public static void main(String[] args) throws IOException {
+        AppPaths.configureRuntimeCaches();
 
         logger.warning("The warnings about a 'restricted method in java.lang.System' "
             + "and 'enabling native access' appearing below (if any) can be ignored.");

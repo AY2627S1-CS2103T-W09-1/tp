@@ -26,6 +26,24 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_REMOVED_RELIGION_CRITERIA =
+            "Partner religion criteria (rp/, rr/, rx/) are no longer supported. Use r/ for the client's own religion.";
+
+    /**
+     * Rejects removed partner-criteria prefixes before they can become part of another field's value.
+     *
+     * @throws ParseException If any obsolete partner religion prefix is supplied.
+     */
+    public static void rejectRemovedReligionCriteria(String args) throws ParseException {
+        Prefix[] removedPrefixes = {new Prefix("rp/"), new Prefix("rr/"), new Prefix("rx/")};
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenize(args, removedPrefixes);
+        for (Prefix prefix : removedPrefixes) {
+            if (arguments.getValue(prefix).isPresent()) {
+                throw new ParseException(MESSAGE_REMOVED_RELIGION_CRITERIA);
+            }
+        }
+    }
+
 
     /**
      * Parses a smoking status, ignoring surrounding whitespace and case.
@@ -168,7 +186,7 @@ public class ParserUtil {
     /**
      * Parses a supported religion category.
      *
-     * @throws ParseException if the value is unsupported or incomplete
+     * @throws ParseException If the value is unsupported or incomplete.
      */
     public static Religion parseReligion(String value) throws ParseException {
         requireNonNull(value);
@@ -177,23 +195,6 @@ public class ParserUtil {
         } catch (IllegalArgumentException exception) {
             throw new ParseException(Religion.MESSAGE_CONSTRAINTS);
         }
-    }
-
-    /**
-     * Parses repeated excluded-religion values, rejecting duplicates.
-     *
-     * @throws ParseException if a value is invalid or repeated
-     */
-    public static Set<Religion> parseExcludedReligions(Collection<String> values) throws ParseException {
-        requireNonNull(values);
-        Set<Religion> religions = new HashSet<>();
-        for (String value : values) {
-            Religion religion = parseReligion(value);
-            if (!religions.add(religion)) {
-                throw new ParseException("Duplicate excluded religion: " + religion);
-            }
-        }
-        return religions;
     }
 
     /**

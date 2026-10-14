@@ -53,6 +53,9 @@ public class PersonTest {
         assertFalse(BOB.isSamePerson(editedBob));
     }
 
+    /**
+     * Checks equality across contact details and religion fields.
+     */
     @Test
     public void equals() {
         // same values -> returns true
@@ -95,30 +98,14 @@ public class PersonTest {
         editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
 
-        // different religion or partner criteria -> returns false
+        // different religion -> returns false
         editedAlice = new PersonBuilder(ALICE).withReligion("Islam").build();
         assertFalse(ALICE.equals(editedAlice));
-        editedAlice = new PersonBuilder(ALICE).withExcludedReligions("No religion").build();
-        assertFalse(ALICE.equals(editedAlice));
     }
 
-    /** Religion criteria must not contradict each other. */
-    @Test
-    public void constructor_conflictingReligionCriteria_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, Religion.MESSAGE_CONFLICT, () -> new PersonBuilder()
-                .withPreferredReligion("Islam").withRequiredReligion("Buddhism").build());
-        assertThrows(IllegalArgumentException.class, Religion.MESSAGE_CONFLICT, () -> new PersonBuilder()
-                .withRequiredReligion("Islam").withExcludedReligions("Islam").build());
-    }
-
-    /** Exclusion sets cannot be modified through the getter. */
-    @Test
-    public void getExcludedReligions_unmodifiable() {
-        Person person = new PersonBuilder().withExcludedReligions("Islam").build();
-        assertThrows(UnsupportedOperationException.class, () -> person.getExcludedReligions()
-                .add(new Religion("Buddhism")));
-    }
-
+    /**
+     * Checks that the person string includes unset religion fields.
+     */
     @Test
     public void gender_affectsEqualityButNotIdentity() {
         Person specified = new PersonBuilder(ALICE).withGender("w").build();
@@ -156,7 +143,7 @@ public class PersonTest {
                 + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", smokingStatus="
                 + ALICE.getSmokingStatus() + ", age=" + ALICE.getAge()
                 + ", tags=" + ALICE.getTags() + ", gender=" + ALICE.getGender()
-                + ", religion=null, preferredReligion=null, requiredReligion=null, excludedReligions=[]"
+                + ", religion=null"
                 + ", relationshipGoal=" + ALICE.getRelationshipGoal().orElse(null) + "}";
         assertEquals(expected, ALICE.toString());
     }

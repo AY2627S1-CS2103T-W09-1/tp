@@ -185,6 +185,22 @@ The person card and command feedback display the status, including `Not specifie
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 It does not yet implement smoking preferences, dealbreakers, matching, or a command to clear a recorded status.
+### Application data sandbox
+
+`AppPaths` derives the packaged application's home folder from its JAR code source,
+not the working directory. `MainApp` resolves preferences and client data under this
+folder; `LogsCenter` confines rotating logs there and escapes log-pattern characters.
+`FileUtil` and `JsonUtil` validate packaged data paths before reading or writing,
+rejecting traversal and existing symbolic links that lead outside the home folder.
+Unsafe log destinations fall back to console logging rather than another directory.
+
+`Main` configures JavaFX's native-library cache and temporary-file directory inside
+that same home before starting JavaFX. These settings are JVM-process properties,
+not persistent OS configuration changes. An unsafe or unwritable runtime-cache
+folder prevents startup instead of falling back outside the sandbox. Class-directory
+runs have no JAR home and retain working-directory behavior for development and
+JUnit fixtures; the sandbox must also be verified against the packaged JAR.
+
 ### Religion attributes
 
 `Religion` accepts only the categories listed in the User Guide. It strips leading and trailing
@@ -194,16 +210,23 @@ Each valid input is stored and displayed using the category's canonical spelling
 and an `Other` category are not accepted. A finite list makes values directly comparable for
 future search and matching without inventing a meaning for arbitrary free text.
 
-`AddCommandParser` and `EditCommandParser` parse the client's own religion (`r/`), a soft partner
-preference (`rp/`), a required partner religion (`rr/`), and excluded partner religions (`rx/`).
-`Person` rejects a preference that differs from the requirement or appears in the exclusions;
-it also rejects a required religion that appears in the exclusions. `edit` can clear individual
-fields with an empty prefix, while repeated `rx/` values replace the exclusion set. Absent
-religion fields mean **unknown**, not `No religion`, which is an explicit category.
+`AddCommandParser` and `EditCommandParser` parse only the client's own religion (`r/`).
+The value is optional in `Person`; absent means **unknown**, not the explicit `No religion`
+category. `add` rejects a blank or repeated `r/`; `edit` supports clearing with an empty
+`r/`, while an omitted prefix preserves the existing value and all unrelated fields.
+A failed command leaves the record unchanged.
 
-`JsonAdaptedPerson` saves the canonical names and treats missing religion properties in older
-data as unknown. `PersonCard` displays the recorded values. Name-only `find` and pairwise
-compatibility do not yet use these fields; they are separate increments.
+`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete `rp/`, `rr/`
+and `rx/` prefixes before normal field parsing, including blank values. This prevents
+an old criteria command from silently becoming part of an address or tag after removal.
+No replacement partner-preference or dealbreaker model is implemented in this increment.
+
+`JsonAdaptedPerson` saves the canonical own-religion name and treats a missing property
+as unknown. The existing unknown-property handling ignores obsolete stored partner
+criteria, even if their former values were invalid; they are omitted on the next save.
+The own religion and other valid attributes survive this transition. `PersonCard` shows
+only the own religion. Religion search is tracked separately in issue #52; compatibility
+is also a separate increment.
 
 ### Recording relationship goals
 
@@ -483,6 +506,7 @@ A client may belong to several different groups. Renaming or deleting a group do
 6. Validation failures should not partially change stored client records or group membership.
 7. The GUI should work well at 1920×1080 or higher with 100% or 125% scaling, and remain usable at 1280×720 or higher with 150% scaling.
 8. Any proposed third-party library or service should satisfy the course's external-software rules and receive teaching-team approval before use.
+9. The packaged app must read and write application files only inside the folder containing its JAR or its subfolders, and must not change OS-level configuration settings (Constraint-Data-Sandbox).
 
 ### Glossary
 
@@ -500,8 +524,8 @@ A client may belong to several different groups. Renaming or deleting a group do
 
 The draft feature notes disagree on some validation rules. Resolve these before implementing or publishing precise command specifications:
 
-* Data collection gives client ages as 18–99, while filtering allows search ages up to 120; the mockup also displays age ranges where the proposed `add`/`edit` syntax describes one age.
-* Data collection accepts free-text religions, while filtering lists a fixed set of religions. The two commands need one consistent stored and searchable representation.
+* The implemented age range is 18–99 for client data and age searches. Draft ranges up to 120 and age-range client records are not supported.
+* Religion data uses the 21 fixed categories in the User Guide, with no free-text or `Other` value. Future filtering must use the same canonical representation.
 * Name-only `find` is retained alongside gender-only `find g/`. Exact-age and age-range searches are also supported separately. Combining characteristics into an OR search remains pending.
 * The proposed `find` command uses OR logic for characteristics, but AB3 already uses `find` for name search. Decide how to preserve or replace the inherited behavior.
 * Group-list output is described, but the command format for listing all groups is not yet specified.
@@ -566,33 +590,56 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases …​ }_
 
+### Application data sandbox
+
+1. Launch from another working folder
+
+   1. Put the packaged JAR in a new writable home folder. From a different empty
+      folder, run `java -jar /path/to/home/addressbook.jar` using Java 25. Add a
+      test contact, then exit.<br>
+      Expected: Preferences, logs, caches, and `data/addressbook.json` are created
+      only in the JAR home folder; the working folder remains empty. Relaunching
+      from either folder retains the contact.
+
+1. Reject outward symbolic links (where supported by the OS)
+
+   1. Back up the isolated test data. With the app closed, replace its `data`
+      subfolder with a symbolic link to a separate folder containing a sentinel
+      data file. Launch and try adding a contact.<br>
+      Expected: External data is not loaded or overwritten. Saving is rejected;
+      the sentinel file is unchanged. Restore the real in-home data folder afterward.
+
 ### Religion attributes
 
-1. Adding and retaining religion values
+1. Adding, editing and retaining the client's own religion
 
-   1. Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane r/jAiNiSm rp/Buddhism rr/Buddhism rx/Islam`.<br>
-      Expected: The contact card shows `Religion: Jainism`, `Preferred: Buddhism`,
-      `Required: Buddhism`, and `Excluded: Islam`. Mixed case is converted to the
-      category's canonical spelling.
+   1. Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb rg/long r/jAiNiSm`.<br>
+      Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
+      non-binary gender and a long-term relationship goal. No partner criteria appear.
 
-   1. Enter `find Nia`.<br>
-      Expected: The contact appears. `find` searches the name, not religion fields.
+   1. Enter `find Nia`, then `edit 1 r/Christianity`.<br>
+      Expected: The religion changes to `Christianity`; all other details remain unchanged.
 
-   1. Enter `edit 1 rr/Islam rx/Islam`.<br>
-      Expected: The edit is rejected because a required religion cannot also be
-      excluded. The contact's previous values are unchanged.
+   1. Enter each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
+      Expected: Each command is rejected because partner religion criteria are no longer
+      supported. Repeat with empty `rp/`, `rr/`, and `rx/`; these are also rejected.
+      The contact's religion and other details remain unchanged.
 
-   1. Enter `edit 1 rp/ rr/ rx/`.<br>
-      Expected: The partner criteria are cleared, but the client's religion remains `Jainism`.
-
-   1. Close and relaunch the app.<br>
-      Expected: Nia's religion is still `Jainism`; the cleared partner criteria stay empty.
+   1. Enter `edit 1 r/`, then close and relaunch the app and enter `find Nia`.<br>
+      Expected: Religion remains unknown, not `No religion`; the other details are retained.
 
 1. Rejecting unsupported categories
 
-   1. Enter `edit 1 r/Other` after locating Nia with `find Nia` again.<br>
-      Expected: The edit is rejected with the supported-category list; `Other` is not
-      stored as a religion.
+   1. Enter `edit 1 r/Other` after locating Nia.<br>
+      Expected: The edit is rejected with the supported-category list; `Other` is not stored.
+
+1. Loading data containing obsolete partner criteria
+
+   1. With the app closed, back up its in-home data file. Add `preferredReligion`,
+      `requiredReligion`, and `excludedReligions` properties to a valid contact,
+      leaving its own religion and required attributes valid. Relaunch and enter `list`.<br>
+      Expected: The contact and its own attributes load. Partner criteria are not shown
+      and the obsolete properties are omitted from the saved file. Restore the backup.
 
 ### Deleting a person
 
