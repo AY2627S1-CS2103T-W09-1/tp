@@ -74,6 +74,18 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void updateFilteredPersonList_withoutComparator_clearsSortOrder() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS, (a, b) ->
+                b.getName().fullName.compareTo(a.getName().fullName));
+        assertEquals(List.of(BENSON, ALICE), modelManager.getFilteredPersonList());
+
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        assertEquals(List.of(ALICE, BENSON), modelManager.getFilteredPersonList());
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();

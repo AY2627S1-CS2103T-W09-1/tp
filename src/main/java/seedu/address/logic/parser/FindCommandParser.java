@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_MATCH;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
@@ -11,7 +12,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.FindMatchCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Age;
 import seedu.address.model.person.AgeMatchesPredicate;
@@ -25,36 +28,40 @@ import seedu.address.model.person.SmokingStatusMatchesPredicate;
 /**
  * Parses input arguments and creates a new FindCommand object.
  */
-public class FindCommandParser implements Parser<FindCommand> {
+public class FindCommandParser implements Parser<Command> {
 
     public static final String MESSAGE_INVALID_GENDER_LIST =
             "Use distinct genders separated by commas (m, w, nb), or leave g/ empty for any specified gender.";
 
     /**
-     * Parses name keywords or a single age, gender, religion, relationship-goal or smoking criterion.
+     * Parses name keywords or a single age, gender, religion, relationship-goal, smoking or match criterion.
      *
      * @throws ParseException if the input is invalid or combines search modes.
      */
-    public FindCommand parse(String args) throws ParseException {
+    public Command parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + trimmedArgs,
-                PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING);
+                PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING, PREFIX_MATCH);
         boolean hasAge = argMultimap.getValue(PREFIX_AGE).isPresent();
         boolean hasGender = argMultimap.getValue(PREFIX_GENDER).isPresent();
         boolean hasReligion = argMultimap.getValue(PREFIX_RELIGION).isPresent();
         boolean hasGoal = argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).isPresent();
         boolean hasSmoking = argMultimap.getValue(PREFIX_SMOKING).isPresent();
+        boolean hasMatch = argMultimap.getValue(PREFIX_MATCH).isPresent();
         int searchModes = (hasAge ? 1 : 0) + (hasGender ? 1 : 0) + (hasReligion ? 1 : 0)
-                + (hasGoal ? 1 : 0) + (hasSmoking ? 1 : 0);
+                + (hasGoal ? 1 : 0) + (hasSmoking ? 1 : 0) + (hasMatch ? 1 : 0);
         if (trimmedArgs.isEmpty() || searchModes > 1
                 || (searchModes == 1 && !argMultimap.getPreamble().isEmpty())) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION,
-                PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING);
+                PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING, PREFIX_MATCH);
         if (hasSmoking) {
             return new FindCommand(new SmokingStatusMatchesPredicate(
                     ParserUtil.parseSmokingStatus(argMultimap.getValue(PREFIX_SMOKING).get())));
+        }
+        if (hasMatch) {
+            return new FindMatchCommand(ParserUtil.parseIndex(argMultimap.getValue(PREFIX_MATCH).get()));
         }
         if (hasGoal) {
             return new FindCommand(new RelationshipGoalMatchesPredicate(
