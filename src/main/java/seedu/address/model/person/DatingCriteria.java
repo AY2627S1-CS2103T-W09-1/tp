@@ -18,8 +18,8 @@ public final class DatingCriteria {
     private final Map<DatingAttribute, String> preferences;
     private final Map<DatingAttribute, String> dealbreakers;
 
-    public DatingCriteria(Map<DatingAttribute, String> preferences,
-                          Map<DatingAttribute, String> dealbreakers) {
+    /** Creates criteria after validating and canonicalizing all supplied values. */
+    public DatingCriteria(Map<DatingAttribute, String> preferences, Map<DatingAttribute, String> dealbreakers) {
         this.preferences = normalize(preferences);
         this.dealbreakers = normalize(dealbreakers);
     }

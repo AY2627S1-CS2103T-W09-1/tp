@@ -29,8 +29,8 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
-import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.DatingAttribute;
+import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
@@ -420,7 +420,7 @@ public class EditCommand extends Command {
          */
         @Override
         public String toString() {
-            return new ToStringBuilder(this)
+            ToStringBuilder builder = new ToStringBuilder(this)
                     .add("name", name)
                     .add("phone", phone)
                     .add("email", email)
@@ -431,12 +431,16 @@ public class EditCommand extends Command {
                     .add("gender", gender)
                     .add("religion", religion)
                     .add("religionEdited", religionEdited)
-                    .add("relationshipGoal", relationshipGoal)
-                    .add("preferences", preferences)
-                    .add("preferencesEdited", preferencesEdited)
-                    .add("dealbreakers", dealbreakers)
-                    .add("dealbreakersEdited", dealbreakersEdited)
-                    .toString();
+                    .add("relationshipGoal", relationshipGoal);
+            if (preferencesEdited) {
+                builder.add("preferences", preferences)
+                        .add("preferencesEdited", true);
+            }
+            if (dealbreakersEdited) {
+                builder.add("dealbreakers", dealbreakers)
+                        .add("dealbreakersEdited", true);
+            }
+            return builder.toString();
         }
     }
 }

@@ -178,6 +178,7 @@ public final class DatingCriteriaParser {
     public record ParsedCriteria(String outsideArguments, Map<DatingAttribute, String> preferences,
                                  Map<DatingAttribute, String> dealbreakers, boolean preferencesSupplied,
                                  boolean dealbreakersSupplied) {
+        /** Makes defensive copies of the parsed preference and dealbreaker maps. */
         public ParsedCriteria {
             requireNonNull(outsideArguments);
             preferences = Map.copyOf(preferences);

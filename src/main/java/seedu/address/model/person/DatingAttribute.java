@@ -49,10 +49,10 @@ public enum DatingAttribute {
             throw new IllegalArgumentException(MESSAGE_EMPTY_VALUE);
         }
         return switch (this) {
-        case AGE -> normalizeAgeCriterion(value);
-        case SMOKING -> new SmokingStatus(value.trim()).value;
-        case RELIGION -> new Religion(value).toString();
-        case RELATIONSHIP_GOAL -> RelationshipGoal.fromString(value).toString();
+            case AGE -> normalizeAgeCriterion(value);
+            case SMOKING -> new SmokingStatus(value.trim()).value;
+            case RELIGION -> new Religion(value).toString();
+            case RELATIONSHIP_GOAL -> RelationshipGoal.fromString(value).toString();
         };
     }
 

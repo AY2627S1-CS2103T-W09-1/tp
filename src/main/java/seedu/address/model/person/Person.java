@@ -213,7 +213,7 @@ public class Person {
      */
     @Override
     public String toString() {
-        return new ToStringBuilder(this)
+        ToStringBuilder builder = new ToStringBuilder(this)
                 .add("name", name)
                 .add("phone", phone)
                 .add("email", email)
@@ -223,9 +223,11 @@ public class Person {
                 .add("tags", tags)
                 .add("gender", gender)
                 .add("religion", religion)
-                .add("relationshipGoal", relationshipGoal)
-                .add("datingCriteria", datingCriteria)
-                .toString();
+                .add("relationshipGoal", relationshipGoal);
+        if (!datingCriteria.isEmpty()) {
+            builder.add("datingCriteria", datingCriteria);
+        }
+        return builder.toString();
     }
 
 }
