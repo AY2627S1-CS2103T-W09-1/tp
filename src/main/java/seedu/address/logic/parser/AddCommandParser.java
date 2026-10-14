@@ -19,6 +19,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
@@ -42,7 +43,6 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         DatingCriteriaParser.ParsedCriteria parsedCriteria = DatingCriteriaParser.parse(args);
-        rejectUnstoredCriteria(parsedCriteria);
         args = parsedCriteria.outsideArguments();
         ParserUtil.rejectRemovedReligionCriteria(args);
         ArgumentMultimap argMultimap =
@@ -69,10 +69,11 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         Religion religion = parseOptionalReligion(argMultimap, PREFIX_RELIGION);
         RelationshipGoal relationshipGoal = parseOptionalRelationshipGoal(argMultimap);
+        DatingCriteria datingCriteria = new DatingCriteria(parsedCriteria.preferences(), parsedCriteria.dealbreakers());
 
         try {
             Person person = new Person(name, phone, email, address, age, tagList, smokingStatus, gender,
-                    religion, relationshipGoal);
+                    religion, relationshipGoal, datingCriteria);
             return new AddCommand(person);
         } catch (IllegalArgumentException exception) {
             throw new ParseException(exception.getMessage());
@@ -85,13 +86,6 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     private static boolean arePrefixesPresent(ArgumentMultimap argumentMultimap, Prefix... prefixes) {
         return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
-    }
-
-    /** Prevents criteria from being accepted until the person model can retain them. */
-    private static void rejectUnstoredCriteria(DatingCriteriaParser.ParsedCriteria criteria) throws ParseException {
-        if (criteria.hasCriteria()) {
-            throw new ParseException(DatingCriteriaParser.MESSAGE_CRITERIA_NOT_YET_STORED);
-        }
     }
 
     /**

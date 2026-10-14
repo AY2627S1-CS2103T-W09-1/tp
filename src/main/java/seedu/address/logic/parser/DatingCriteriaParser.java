@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingAttribute;
 
 /**
  * Parses the preference ({@code {...}}) and dealbreaker ({@code <...>}) environments in a command.
@@ -27,12 +27,6 @@ public final class DatingCriteriaParser {
     public static final String MESSAGE_INVALID_ENVIRONMENT = "Dating criteria must use one non-nested "
             + "{...} preference environment and one non-nested <...> dealbreaker environment.";
     public static final String MESSAGE_INVALID_CRITERION_PREFIX = "Dating criteria may use only age/, s/, r/, or rg/.";
-    public static final String MESSAGE_EMPTY_CRITERION_VALUE = "A dating criterion must have a value.";
-    public static final String MESSAGE_INVALID_AGE_RANGE =
-            "The lower age bound cannot be greater than the upper age bound.";
-    public static final String MESSAGE_CRITERIA_NOT_YET_STORED =
-            "Preferences and dealbreakers are not yet stored by this command.";
-
     private static final Set<Prefix> SUPPORTED_PREFIXES = Set.of(
             PREFIX_AGE, PREFIX_SMOKING, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
     private static final Pattern PREFIX_TOKEN = Pattern.compile("(?:^|\\s)([A-Za-z]+/)");
@@ -52,8 +46,8 @@ public final class DatingCriteriaParser {
         Environment currentEnvironment = Environment.OUTSIDE;
         boolean preferencesSupplied = false;
         boolean dealbreakersSupplied = false;
-        Map<Prefix, String> preferences = Map.of();
-        Map<Prefix, String> dealbreakers = Map.of();
+        Map<DatingAttribute, String> preferences = Map.of();
+        Map<DatingAttribute, String> dealbreakers = Map.of();
 
         for (int index = 0; index < arguments.length(); index++) {
             char character = arguments.charAt(index);
@@ -86,7 +80,7 @@ public final class DatingCriteriaParser {
                 throw new ParseException(MESSAGE_INVALID_ENVIRONMENT);
             }
             if (isClosingDelimiter(character, currentEnvironment)) {
-                Map<Prefix, String> criteria = parseEnvironment(environmentContents.toString());
+                Map<DatingAttribute, String> criteria = parseEnvironment(environmentContents.toString());
                 if (currentEnvironment == Environment.PREFERENCES) {
                     preferences = criteria;
                 } else {
@@ -114,7 +108,7 @@ public final class DatingCriteriaParser {
                 || (environment == Environment.DEALBREAKERS && character == '>');
     }
 
-    private static Map<Prefix, String> parseEnvironment(String contents) throws ParseException {
+    private static Map<DatingAttribute, String> parseEnvironment(String contents) throws ParseException {
         if (contents.isBlank()) {
             return Map.of();
         }
@@ -126,14 +120,14 @@ public final class DatingCriteriaParser {
         }
         arguments.verifyNoDuplicatePrefixesFor(supportedPrefixes());
 
-        Map<Prefix, String> criteria = new LinkedHashMap<>();
+        Map<DatingAttribute, String> criteria = new LinkedHashMap<>();
         for (Prefix prefix : supportedPrefixes()) {
             if (arguments.getValue(prefix).isPresent()) {
                 String value = arguments.getValue(prefix).get();
                 if (value.isEmpty()) {
-                    throw new ParseException(MESSAGE_EMPTY_CRITERION_VALUE);
+                    throw new ParseException(DatingAttribute.MESSAGE_EMPTY_VALUE);
                 }
-                criteria.put(prefix, validateAndNormalize(prefix, value));
+                criteria.put(toDatingAttribute(prefix), validateAndNormalize(prefix, value));
             }
         }
         return criteria;
@@ -154,30 +148,24 @@ public final class DatingCriteriaParser {
     }
 
     private static String validateAndNormalize(Prefix prefix, String value) throws ParseException {
-        if (prefix.equals(PREFIX_AGE)) {
-            return parseAgeCriterion(value);
+        try {
+            return toDatingAttribute(prefix).normalizeCriterion(value);
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(exception.getMessage(), exception);
         }
-        if (prefix.equals(PREFIX_SMOKING)) {
-            return ParserUtil.parseSmokingStatus(value).value;
-        }
-        if (prefix.equals(PREFIX_RELIGION)) {
-            return ParserUtil.parseReligion(value).toString();
-        }
-        return ParserUtil.parseRelationshipGoal(value).toString();
     }
 
-    private static String parseAgeCriterion(String value) throws ParseException {
-        String[] bounds = value.trim().split("-", -1);
-        if (bounds.length > 2 || !Age.isValidAge(bounds[0])
-                || (bounds.length == 2 && !Age.isValidAge(bounds[1]))) {
-            throw new ParseException(Age.MESSAGE_CONSTRAINTS);
+    private static DatingAttribute toDatingAttribute(Prefix prefix) {
+        if (prefix.equals(PREFIX_AGE)) {
+            return DatingAttribute.AGE;
         }
-        int lowerBound = Integer.parseInt(bounds[0]);
-        int upperBound = bounds.length == 2 ? Integer.parseInt(bounds[1]) : lowerBound;
-        if (lowerBound > upperBound) {
-            throw new ParseException(MESSAGE_INVALID_AGE_RANGE);
+        if (prefix.equals(PREFIX_SMOKING)) {
+            return DatingAttribute.SMOKING;
         }
-        return bounds.length == 1 ? Integer.toString(lowerBound) : lowerBound + "-" + upperBound;
+        if (prefix.equals(PREFIX_RELIGION)) {
+            return DatingAttribute.RELIGION;
+        }
+        return DatingAttribute.RELATIONSHIP_GOAL;
     }
 
     private enum Environment {
@@ -187,8 +175,8 @@ public final class DatingCriteriaParser {
     }
 
     /** Parsed environments together with the ordinary command arguments. */
-    public record ParsedCriteria(String outsideArguments, Map<Prefix, String> preferences,
-                                 Map<Prefix, String> dealbreakers, boolean preferencesSupplied,
+    public record ParsedCriteria(String outsideArguments, Map<DatingAttribute, String> preferences,
+                                 Map<DatingAttribute, String> dealbreakers, boolean preferencesSupplied,
                                  boolean dealbreakersSupplied) {
         public ParsedCriteria {
             requireNonNull(outsideArguments);
