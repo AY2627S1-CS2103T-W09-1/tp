@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
@@ -39,6 +41,8 @@ class JsonAdaptedPerson {
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final String religion;
     private final String relationshipGoal;
+    private final Map<String, String> preferences;
+    private final Map<String, String> dealbreakers;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -50,7 +54,9 @@ class JsonAdaptedPerson {
             @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("smokingStatus") String smokingStatus, @JsonProperty("gender") String gender,
             @JsonProperty("religion") String religion,
-            @JsonProperty("relationshipGoal") String relationshipGoal) {
+            @JsonProperty("relationshipGoal") String relationshipGoal,
+            @JsonProperty("preferences") Map<String, String> preferences,
+            @JsonProperty("dealbreakers") Map<String, String> dealbreakers) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -63,13 +69,15 @@ class JsonAdaptedPerson {
             this.tags.addAll(tags);
         }
         this.relationshipGoal = relationshipGoal;
+        this.preferences = preferences;
+        this.dealbreakers = dealbreakers;
     }
 
     /**
      * Creates an adapted legacy person with no recorded religion details.
      */
     public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags) {
-        this(name, phone, email, address, null, tags, null, null, null, null);
+        this(name, phone, email, address, null, tags, null, null, null, null, null, null);
     }
 
     /**
@@ -77,7 +85,7 @@ class JsonAdaptedPerson {
      */
     public JsonAdaptedPerson(String name, String phone, String email, String address, String age,
             List<JsonAdaptedTag> tags, String smokingStatus, String gender) {
-        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null, null, null);
     }
 
     /**
@@ -85,7 +93,7 @@ class JsonAdaptedPerson {
      */
     public JsonAdaptedPerson(String name, String phone, String email, String address, List<JsonAdaptedTag> tags,
             String religion) {
-        this(name, phone, email, address, "18", tags, null, null, religion, null);
+        this(name, phone, email, address, "18", tags, null, null, religion, null, null, null);
     }
 
     /**
@@ -104,6 +112,8 @@ class JsonAdaptedPerson {
                 .collect(Collectors.toList()));
         religion = source.getReligion().map(Religion::toString).orElse(null);
         relationshipGoal = source.getRelationshipGoal().map(RelationshipGoal::toString).orElse(null);
+        preferences = source.getDatingCriteria().getPreferencesForStorage();
+        dealbreakers = source.getDatingCriteria().getDealbreakersForStorage();
     }
 
     /**
@@ -181,8 +191,9 @@ class JsonAdaptedPerson {
 
         try {
             Religion modelReligion = religion == null ? null : new Religion(religion);
+            DatingCriteria modelDatingCriteria = DatingCriteria.fromStorage(preferences, dealbreakers);
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags,
-                    modelSmokingStatus, modelGender, modelReligion, modelRelationshipGoal);
+                    modelSmokingStatus, modelGender, modelReligion, modelRelationshipGoal, modelDatingCriteria);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(exception.getMessage());
         }

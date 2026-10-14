@@ -31,6 +31,7 @@ public class Person {
     private final Set<Tag> tags = new HashSet<>();
     private final Religion religion;
     private final RelationshipGoal relationshipGoal;
+    private final DatingCriteria datingCriteria;
 
     /**
      * Creates a person whose smoking status and relationship goal have not been recorded.
@@ -76,7 +77,18 @@ public class Person {
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus, Gender gender, Religion religion, RelationshipGoal relationshipGoal) {
-        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, religion, relationshipGoal,
+                DatingCriteria.EMPTY);
+    }
+
+    /**
+     * Creates a person with all supported characteristics and partner criteria.
+     * A null religion or relationship goal means it has not been recorded.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+            SmokingStatus smokingStatus, Gender gender, Religion religion, RelationshipGoal relationshipGoal,
+            DatingCriteria datingCriteria) {
+        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender, datingCriteria);
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -87,6 +99,7 @@ public class Person {
         this.tags.addAll(tags);
         this.religion = religion;
         this.relationshipGoal = relationshipGoal;
+        this.datingCriteria = datingCriteria;
     }
 
     public Name getName() {
@@ -129,6 +142,11 @@ public class Person {
      */
     public Optional<RelationshipGoal> getRelationshipGoal() {
         return Optional.ofNullable(relationshipGoal);
+    }
+
+    /** Returns the client's preferences and dealbreakers for a potential partner. */
+    public DatingCriteria getDatingCriteria() {
+        return datingCriteria;
     }
 
     /**
@@ -176,7 +194,8 @@ public class Person {
                 && tags.equals(otherPerson.tags)
                 && gender == otherPerson.gender
                 && Objects.equals(religion, otherPerson.religion)
-                && Objects.equals(relationshipGoal, otherPerson.relationshipGoal);
+                && Objects.equals(relationshipGoal, otherPerson.relationshipGoal)
+                && datingCriteria.equals(otherPerson.datingCriteria);
     }
 
     /**
@@ -186,7 +205,7 @@ public class Person {
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
         return Objects.hash(name, phone, email, address, tags, religion, age, smokingStatus, gender,
-                relationshipGoal);
+                relationshipGoal, datingCriteria);
     }
 
     /**
@@ -205,6 +224,7 @@ public class Person {
                 .add("gender", gender)
                 .add("religion", religion)
                 .add("relationshipGoal", relationshipGoal)
+                .add("datingCriteria", datingCriteria)
                 .toString();
     }
 

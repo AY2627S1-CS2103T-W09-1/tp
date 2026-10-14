@@ -16,6 +16,7 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +29,8 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingCriteria;
+import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
@@ -136,12 +139,19 @@ public class EditCommand extends Command {
         RelationshipGoal updatedRelationshipGoal = editPersonDescriptor.isRelationshipGoalEdited()
                 ? editPersonDescriptor.getRelationshipGoal().orElse(null)
                 : personToEdit.getRelationshipGoal().orElse(null);
+        Map<DatingAttribute, String> updatedPreferences = editPersonDescriptor.isPreferencesEdited()
+                ? editPersonDescriptor.getPreferences().orElseThrow()
+                : personToEdit.getDatingCriteria().getPreferences();
+        Map<DatingAttribute, String> updatedDealbreakers = editPersonDescriptor.isDealbreakersEdited()
+                ? editPersonDescriptor.getDealbreakers().orElseThrow()
+                : personToEdit.getDatingCriteria().getDealbreakers();
+        DatingCriteria updatedDatingCriteria = new DatingCriteria(updatedPreferences, updatedDealbreakers);
 
         Religion updatedReligion = editPersonDescriptor.isReligionEdited()
                 ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
 
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
-                updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal);
+                updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal, updatedDatingCriteria);
     }
 
     @Override
@@ -185,6 +195,10 @@ public class EditCommand extends Command {
         private boolean religionEdited;
         private RelationshipGoal relationshipGoal;
         private boolean relationshipGoalEdited;
+        private Map<DatingAttribute, String> preferences;
+        private boolean preferencesEdited;
+        private Map<DatingAttribute, String> dealbreakers;
+        private boolean dealbreakersEdited;
 
         public EditPersonDescriptor() {}
 
@@ -207,6 +221,12 @@ public class EditCommand extends Command {
             if (toCopy.relationshipGoalEdited) {
                 setRelationshipGoal(toCopy.relationshipGoal);
             }
+            if (toCopy.preferencesEdited) {
+                setPreferences(toCopy.preferences);
+            }
+            if (toCopy.dealbreakersEdited) {
+                setDealbreakers(toCopy.dealbreakers);
+            }
         }
 
         /**
@@ -214,7 +234,7 @@ public class EditCommand extends Command {
          */
         public boolean isAnyFieldEdited() {
             return CollectionUtil.isAnyNonNull(name, phone, email, address, age, tags, smokingStatus, gender)
-                    || religionEdited || relationshipGoalEdited;
+                    || religionEdited || relationshipGoalEdited || preferencesEdited || dealbreakersEdited;
         }
 
         public void setName(Name name) {
@@ -334,6 +354,38 @@ public class EditCommand extends Command {
             return relationshipGoalEdited;
         }
 
+        /** Replaces every recorded partner preference. */
+        public void setPreferences(Map<DatingAttribute, String> preferences) {
+            this.preferences = Map.copyOf(requireNonNull(preferences));
+            preferencesEdited = true;
+        }
+
+        /** Returns replacement preferences when the preference environment was supplied. */
+        public Optional<Map<DatingAttribute, String>> getPreferences() {
+            return Optional.ofNullable(preferences);
+        }
+
+        /** Returns whether the preference environment was supplied, including an empty one. */
+        public boolean isPreferencesEdited() {
+            return preferencesEdited;
+        }
+
+        /** Replaces every recorded partner dealbreaker. */
+        public void setDealbreakers(Map<DatingAttribute, String> dealbreakers) {
+            this.dealbreakers = Map.copyOf(requireNonNull(dealbreakers));
+            dealbreakersEdited = true;
+        }
+
+        /** Returns replacement dealbreakers when the dealbreaker environment was supplied. */
+        public Optional<Map<DatingAttribute, String>> getDealbreakers() {
+            return Optional.ofNullable(dealbreakers);
+        }
+
+        /** Returns whether the dealbreaker environment was supplied, including an empty one. */
+        public boolean isDealbreakersEdited() {
+            return dealbreakersEdited;
+        }
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -356,7 +408,11 @@ public class EditCommand extends Command {
                     && Objects.equals(religion, otherEditPersonDescriptor.religion)
                     && religionEdited == otherEditPersonDescriptor.religionEdited
                     && Objects.equals(relationshipGoal, otherEditPersonDescriptor.relationshipGoal)
-                    && relationshipGoalEdited == otherEditPersonDescriptor.relationshipGoalEdited;
+                    && relationshipGoalEdited == otherEditPersonDescriptor.relationshipGoalEdited
+                    && Objects.equals(preferences, otherEditPersonDescriptor.preferences)
+                    && preferencesEdited == otherEditPersonDescriptor.preferencesEdited
+                    && Objects.equals(dealbreakers, otherEditPersonDescriptor.dealbreakers)
+                    && dealbreakersEdited == otherEditPersonDescriptor.dealbreakersEdited;
         }
 
         /**
@@ -376,6 +432,10 @@ public class EditCommand extends Command {
                     .add("religion", religion)
                     .add("religionEdited", religionEdited)
                     .add("relationshipGoal", relationshipGoal)
+                    .add("preferences", preferences)
+                    .add("preferencesEdited", preferencesEdited)
+                    .add("dealbreakers", dealbreakers)
+                    .add("dealbreakersEdited", dealbreakersEdited)
                     .toString();
         }
     }

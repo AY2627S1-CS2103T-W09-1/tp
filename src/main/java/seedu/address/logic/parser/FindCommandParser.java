@@ -30,11 +30,7 @@ public class FindCommandParser implements Parser<FindCommand> {
      * @throws ParseException if the input is invalid or combines search modes.
      */
     public FindCommand parse(String args) throws ParseException {
-        DatingCriteriaParser.ParsedCriteria parsedCriteria = DatingCriteriaParser.parse(args);
-        if (parsedCriteria.hasCriteria()) {
-            throw new ParseException(DatingCriteriaParser.MESSAGE_CRITERIA_NOT_YET_STORED);
-        }
-        String trimmedArgs = parsedCriteria.outsideArguments().trim();
+        String trimmedArgs = args.trim();
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + trimmedArgs, PREFIX_AGE, PREFIX_GENDER);
         boolean hasAge = argMultimap.getValue(PREFIX_AGE).isPresent();
         boolean hasGender = argMultimap.getValue(PREFIX_GENDER).isPresent();
