@@ -19,6 +19,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
@@ -41,6 +42,8 @@ public class AddCommandParser implements Parser<AddCommand> {
      * @throws ParseException If the user input does not conform to the expected format.
      */
     public AddCommand parse(String args) throws ParseException {
+        DatingCriteriaParser.ParsedCriteria parsedCriteria = DatingCriteriaParser.parse(args);
+        args = parsedCriteria.outsideArguments();
         ParserUtil.rejectRemovedReligionCriteria(args);
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
@@ -66,10 +69,11 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         Religion religion = parseOptionalReligion(argMultimap, PREFIX_RELIGION);
         RelationshipGoal relationshipGoal = parseOptionalRelationshipGoal(argMultimap);
+        DatingCriteria datingCriteria = new DatingCriteria(parsedCriteria.preferences(), parsedCriteria.dealbreakers());
 
         try {
             Person person = new Person(name, phone, email, address, age, tagList, smokingStatus, gender,
-                    religion, relationshipGoal);
+                    religion, relationshipGoal, datingCriteria);
             return new AddCommand(person);
         } catch (IllegalArgumentException exception) {
             throw new ParseException(exception.getMessage());

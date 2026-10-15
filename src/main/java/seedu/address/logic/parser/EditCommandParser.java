@@ -37,6 +37,8 @@ public class EditCommandParser implements Parser<EditCommand> {
      */
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
+        DatingCriteriaParser.ParsedCriteria parsedCriteria = DatingCriteriaParser.parse(args);
+        args = parsedCriteria.outsideArguments();
         ParserUtil.rejectRemovedReligionCriteria(args);
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
@@ -86,6 +88,12 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).isPresent()) {
             String value = argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).get();
             editPersonDescriptor.setRelationshipGoal(value.isEmpty() ? null : ParserUtil.parseRelationshipGoal(value));
+        }
+        if (parsedCriteria.preferencesSupplied()) {
+            editPersonDescriptor.setPreferences(parsedCriteria.preferences());
+        }
+        if (parsedCriteria.dealbreakersSupplied()) {
+            editPersonDescriptor.setDealbreakers(parsedCriteria.dealbreakers());
         }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {

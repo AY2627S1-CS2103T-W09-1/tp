@@ -1,10 +1,12 @@
 package seedu.address.logic;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.address.logic.parser.Prefix;
+import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.RelationshipGoal;
 
@@ -55,7 +57,18 @@ public class Messages {
         String relationshipGoal = person.getRelationshipGoal().map(Object::toString)
                 .orElse(RelationshipGoal.NOT_SPECIFIED_LABEL);
         builder.append("; Relationship goal: ").append(relationshipGoal);
+        appendCriteria(builder, "Preferences", person.getDatingCriteria().getPreferences());
+        appendCriteria(builder, "Dealbreakers", person.getDatingCriteria().getDealbreakers());
         return builder.toString();
+    }
+
+    private static void appendCriteria(StringBuilder builder, String label, Map<DatingAttribute, String> criteria) {
+        if (!criteria.isEmpty()) {
+            builder.append("; ").append(label).append(": ")
+                    .append(criteria.entrySet().stream()
+                            .map(entry -> entry.getKey().getDisplayName() + " = " + entry.getValue())
+                            .collect(Collectors.joining(", ")));
+        }
     }
 
 }
