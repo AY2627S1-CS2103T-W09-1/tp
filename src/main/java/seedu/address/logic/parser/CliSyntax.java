@@ -16,5 +16,6 @@ public class CliSyntax {
     public static final Prefix PREFIX_SMOKING = new Prefix("s/");
     public static final Prefix PREFIX_RELIGION = new Prefix("r/");
     public static final Prefix PREFIX_RELATIONSHIP_GOAL = new Prefix("rg/");
+    public static final Prefix PREFIX_MATCH = new Prefix("match/");
 
 }

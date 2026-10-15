@@ -27,7 +27,9 @@ public class FindCommand extends Command {
             + "Or search by relationship goal: find rg/GOAL (e.g. find rg/long).\n"
             + "Or search by own smoking status: find s/yes or find s/no (case-insensitive).\n"
             + "Clients with unspecified smoking status are excluded from smoking searches.\n"
-            + "Use one search mode at a time: name, age, gender, religion, relationship goal, or smoking status.";
+            + "Or find compatible clients for a person: find match/INDEX (best matches first).\n"
+            + "Use one search mode at a time: name, age, gender, religion, relationship goal, smoking status "
+            + "or match.";
 
     private final Predicate<Person> predicate;
 

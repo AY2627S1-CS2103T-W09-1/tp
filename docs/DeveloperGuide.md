@@ -281,6 +281,26 @@ save after successful commands; the saved client data is unchanged. Invalid comm
 Tests cover parsing and dispatch, comparison rules and missing values, filtered indexes, reloads, and unchanged
 records and saved data. Run `./gradlew test --tests '*Match*'` for the matching tests.
 
+### Finding compatible clients
+
+`find match/INDEX` lists the clients compatible with the client at `INDEX` in the displayed list.
+`FindCommandParser` treats `match/` as another exclusive search mode and returns a `FindMatchCommand`.
+It is a separate command because the index must be resolved against the displayed list when the
+command runs, which the parser cannot do.
+
+`FindMatchCommand` reuses `MatchAssessment` (see [Pairwise matching](#pairwise-matching)) so that it
+never disagrees with `match`. For every other client in the address book, it builds one
+`MatchAssessment` with the target. Clients whose outcome is `INCOMPATIBLE` are hidden; clients with
+unknown details stay listed. Each remaining client is scored by the number of preference comparisons
+with status `MET` in both directions, and the list is sorted by score, highest first. Scores are
+computed once before sorting, and ties keep insertion order because the sort is stable.
+
+To support sorting, `ModelManager` wraps its `FilteredList` in a `SortedList`, and
+`getFilteredPersonList()` returns the sorted view. Every index-based command therefore uses the order
+the user sees. `Model#updateFilteredPersonList(Predicate, Comparator)` sets both the filter and the
+sort order. The one-argument `updateFilteredPersonList(Predicate)` clears the sort order, so `list`
+and other searches return to insertion order without any changes.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation

@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
 import java.util.Set;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.FindMatchCommand;
 import seedu.address.model.person.Age;
 import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.Gender;
@@ -194,5 +196,27 @@ public class FindCommandParserTest {
         }
         assertParseFailure(parser, "s/yes {s/no}", SmokingStatus.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "s/no <s/yes>", SmokingStatus.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_validMatchIndex_returnsFindMatchCommand() {
+        assertParseSuccess(parser, " match/1 ", new FindMatchCommand(INDEX_FIRST_PERSON));
+    }
+
+    @Test
+    public void parse_invalidMatchIndex_throwsParseException() {
+        for (String args : new String[] {"match/0", "match/-1", "match/abc", "match/"}) {
+            assertParseFailure(parser, args, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+        assertParseFailure(parser, "match/1 match/2",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_MATCH));
+    }
+
+    @Test
+    public void parse_matchCombinedWithOtherMode_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"match/1 g/m", "age/25 match/1", "Alice match/1"}) {
+            assertParseFailure(parser, args, message);
+        }
     }
 }

@@ -1,10 +1,14 @@
 package seedu.address.testutil;
 
+import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingAttribute;
+import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
@@ -37,6 +41,8 @@ public class PersonBuilder {
     private SmokingStatus smokingStatus;
     private Religion religion;
     private RelationshipGoal relationshipGoal;
+    private Map<DatingAttribute, String> preferences = new EnumMap<>(DatingAttribute.class);
+    private Map<DatingAttribute, String> dealbreakers = new EnumMap<>(DatingAttribute.class);
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -65,6 +71,10 @@ public class PersonBuilder {
         tags = new HashSet<>(personToCopy.getTags());
         religion = personToCopy.getReligion().orElse(null);
         relationshipGoal = personToCopy.getRelationshipGoal().orElse(null);
+        preferences = new EnumMap<>(DatingAttribute.class);
+        preferences.putAll(personToCopy.getDatingCriteria().getPreferences());
+        dealbreakers = new EnumMap<>(DatingAttribute.class);
+        dealbreakers.putAll(personToCopy.getDatingCriteria().getDealbreakers());
     }
 
     /**
@@ -148,11 +158,27 @@ public class PersonBuilder {
     }
 
     /**
+     * Adds a partner preference to the {@code Person} that we are building.
+     */
+    public PersonBuilder withPreference(DatingAttribute attribute, String value) {
+        preferences.put(attribute, value);
+        return this;
+    }
+
+    /**
+     * Adds a partner dealbreaker to the {@code Person} that we are building.
+     */
+    public PersonBuilder withDealbreaker(DatingAttribute attribute, String value) {
+        dealbreakers.put(attribute, value);
+        return this;
+    }
+
+    /**
      * Builds an immutable person with the selected details.
      */
     public Person build() {
         return new Person(name, phone, email, address, age, tags, smokingStatus, gender, religion,
-                relationshipGoal);
+                relationshipGoal, new DatingCriteria(preferences, dealbreakers));
     }
 
 }
