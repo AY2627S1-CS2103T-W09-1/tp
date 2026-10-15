@@ -184,7 +184,8 @@ An empty stored string also means unspecified. Other invalid stored values are r
 The person card and command feedback display the status, including `Not specified` for missing information.
 
 This increment supplies personal-characteristic data for later filtering and matching work.
-It does not yet implement smoking preferences, dealbreakers, matching, or a command to clear a recorded status.
+Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
+Clearing a recorded smoking status is not supported.
 ### Application data sandbox
 
 `AppPaths` derives the packaged application's home folder from its JAR code source,
@@ -208,9 +209,9 @@ whitespace, collapses repeated internal whitespace, and compares names without r
 Each valid input is stored and displayed using the category's canonical spelling: for example,
 `r/jAiNiSm` becomes `Jainism`. Other spellings (such as a misspelling or a different apostrophe)
 and an `Other` category are not accepted. A finite list makes values directly comparable for
-future search and matching without inventing a meaning for arbitrary free text.
+search and matching without inventing a meaning for arbitrary free text.
 
-`AddCommandParser` and `EditCommandParser` parse only the client's own religion (`r/`).
+Outside criteria blocks, `AddCommandParser` and `EditCommandParser` parse the client's own religion (`r/`).
 The value is optional in `Person`; absent means **unknown**, not the explicit `No religion`
 category. `add` rejects a blank or repeated `r/`; `edit` supports clearing with an empty
 `r/`, while an omitted prefix preserves the existing value and all unrelated fields.
@@ -219,14 +220,13 @@ A failed command leaves the record unchanged.
 `ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete `rp/`, `rr/`
 and `rx/` prefixes before normal field parsing, including blank values. This prevents
 an old criteria command from silently becoming part of an address or tag after removal.
-No replacement partner-preference or dealbreaker model is implemented in this increment.
+Partner criteria now use `DatingCriteria`; see [Pairwise matching](#pairwise-matching).
 
 `JsonAdaptedPerson` saves the canonical own-religion name and treats a missing property
 as unknown. The existing unknown-property handling ignores obsolete stored partner
 criteria, even if their former values were invalid; they are omitted on the next save.
 The own religion and other valid attributes survive this transition. `PersonCard` shows
-only the own religion. Religion search is tracked separately in issue #52; compatibility
-is also a separate increment.
+the own religion and any recorded `DatingCriteria`. Pairwise matching uses those criteria.
 
 ### Recording relationship goals
 
@@ -258,7 +258,28 @@ and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal e
 so clients with an unknown goal are never returned. A single goal is accepted rather than a
 comma-separated list, because some full goal names contain commas.
 
-Relationship-goal preferences, dealbreakers and matching are not implemented yet.
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
+
+### Pairwise matching
+
+`MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
+`MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
+`MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
+smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
+other attributes compare canonical values. Gender is not a supported dating criterion.
+
+Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
+when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.
+Any known violation makes the pair incompatible, even if another comparison is unknown. Otherwise, an unknown
+comparison or no criteria on either client gives insufficient information. All other pairs are compatible with
+recorded dealbreakers, including pairs with unmet preferences.
+
+The command formats both directions into the existing `CommandResult` display. It does not change model data,
+the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
+save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
+
+Tests cover parsing and dispatch, comparison rules and missing values, filtered indexes, reloads, and unchanged
+records and saved data. Run `./gradlew test --tests '*Match*'` for the matching tests.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -465,7 +486,7 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
 **Extensions**
 
 * 1a. An index is invalid, missing, repeated, or outside the displayed list.
-    * 1a1. CupidMaxxing explains the problem and leaves the previous comparison and list unchanged.
+    * 1a1. CupidMaxxing shows an error in the command-result area and leaves client records and the list unchanged.
 
       Use case ends.
 * 2a. At least one dealbreaker is violated.
@@ -474,6 +495,11 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
       Use case resumes at step 4.
 * 2b. No known dealbreaker is violated, but required information is missing.
     * 2b1. CupidMaxxing reports insufficient information rather than claiming compatibility.
+
+      Use case resumes at step 4.
+
+* 2c. Neither client has recorded criteria.
+    * 2c1. CupidMaxxing reports insufficient information.
 
       Use case resumes at step 4.
 
