@@ -88,7 +88,7 @@ The optional `s/SMOKING` field records the client's **own smoking habit**:
 * Omit the field if the status is unknown. The person card displays `Smoking: Not specified`.
 * A supplied `s/` must have a value, and may appear only once per command. Blank, invalid, or repeated values reject the command without changing any records.
 * Smoking status is saved between sessions. Older records without this field remain usable and display `Not specified`.
-* This field does not record a partner preference or dealbreaker. Smoking-based searching and matching are not implemented in this increment.
+* This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 <div markdown="span" class="alert alert-primary">:bulb: **Tip:**
 A person can have any number of tags, including zero.
 </div>
@@ -121,8 +121,7 @@ use the listed spelling, although its letter case can vary. There is no free-tex
 * The religion is saved between sessions and shown on the client card.
 * The former partner-criteria prefixes `rp/`, `rr/`, and `rx/` are no longer
   supported. Commands containing them are rejected without changing records.
-  A replacement preferences/dealbreakers workflow is not implemented yet.
-* Religion searching and compatibility are separate increments.
+  Use the criteria blocks described under [Matching two clients](#matching-two-clients-match) instead.
 
 #### Relationship goal field
 
@@ -143,7 +142,7 @@ Keyword | Relationship goal
 * Omit the field if the goal is not known. The client card then displays `Relationship goal: Not specified`. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
 * A supplied `rg/` may appear only once per command. Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
 * The relationship goal is saved between sessions. Older records without this field remain usable and display `Not specified`.
-* This field does not record a partner preference or dealbreaker. Searching and matching by relationship goal are not implemented in this increment.
+* This field records the client's own goal. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 ### Listing all clients: `list`
 
@@ -217,6 +216,42 @@ Examples:
 
 A valid search with no matches displays an empty result list and a count of zero.
 Use `list` to show every client again; searching does not modify the stored records.
+
+### Matching two clients: `match`
+
+Assesses two clients against each other's saved preferences and dealbreakers.
+
+Format: `match INDEX_A INDEX_B`
+
+* Use two different positive indexes from the **currently displayed list**, including after `find`.
+* Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
+* The command-result area shows both names, an overall result, and each direction's comparisons as
+  **Met**, **Unmet**, or **Unknown**, with the criterion and actual value. A violated dealbreaker is labeled explicitly.
+* The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
+
+Set partner criteria with `add` or `edit`: `{...}` contains preferences and `<...>` contains **excluded values**.
+For example, `edit 1 {age/25-35 rg/long} <s/yes>` prefers ages 25–35 and a long-term relationship,
+and excludes smokers. Ordinary fields outside the blocks describe the client's own attributes.
+
+Each block is optional and may appear once. Inside a block, use each of `age/`, `s/`, `r/`, or `rg/` at most once;
+`g/` is not supported. Age accepts an exact age or inclusive range, with bounds from 18 to 99.
+Other criteria use the same values as the client's own fields and compare exact normalized categories.
+Different relationship-goal categories are not treated as equivalent.
+When editing, a supplied block replaces all existing criteria of that kind; omitting it preserves them.
+Use `{}` to clear preferences or `<>` to clear dealbreakers.
+
+Overall results, in priority order:
+
+1. **Incompatible**: either client violates at least one of the other's dealbreakers.
+2. **Insufficient information**: no known violation, but an attribute needed for a recorded criterion is unknown,
+   or neither client has any criteria.
+3. **Compatible with recorded dealbreakers**: all recorded criteria can be evaluated and no dealbreaker is violated.
+   Unmet preferences alone do not make a pair incompatible.
+
+Missing smoking status, religion, or relationship goal is unknown, not a match or a violation.
+An omitted criterion adds no constraint. `No religion` and `unsure` are explicit values, not missing information.
+
+Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
 
 ### Deleting a person: `delete'
 
@@ -303,5 +338,6 @@ Action | Format, Examples
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, or `find s/no`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`
 **List** | `list`
+**Match** | `match INDEX_A INDEX_B`<br> e.g., `match 1 3`
 **Help** | `help`
 **Exit** | `exit`
