@@ -16,6 +16,8 @@ import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Religion;
+import seedu.address.model.person.ReligionMatchesPredicate;
 
 public class FindCommandParserTest {
 
@@ -86,6 +88,40 @@ public class FindCommandParserTest {
         }
         assertParseFailure(parser, "g/m Alice", Gender.MESSAGE_CONSTRAINTS);
     }
+    @Test
+    public void parse_religion_normalizesSupportedCategories() {
+        for (String category : Religion.CATEGORIES) {
+            assertParseSuccess(parser, "r/" + category,
+                    new FindCommand(new ReligionMatchesPredicate(new Religion(category))));
+        }
+        assertParseSuccess(parser, " r/  bAhA'i   FAITH  ",
+                new FindCommand(new ReligionMatchesPredicate(new Religion("Baha'i Faith"))));
+    }
+
+    @Test
+    public void parse_blankOrInvalidReligion_throwsParseException() {
+        for (String value : new String[] {"", "   ", "Other", "Jain", "Jainism,Buddhism", "Jainism Alice"}) {
+            assertParseFailure(parser, "r/" + value, Religion.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_repeatedReligionPrefix_throwsParseException() {
+        String message = Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_RELIGION);
+        assertParseFailure(parser, "r/Jainism r/Islam", message);
+        assertParseFailure(parser, "r/Jainism r/jainism", message);
+        assertParseFailure(parser, "r/ r/Jainism", message);
+    }
+
+    @Test
+    public void parse_mixedReligionSearchModes_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"Alice r/Jainism", "r/Jainism age/25", "age/25 r/Jainism",
+            "r/Jainism g/nb", "g/nb r/Jainism", "R/Jainism", "r /Jainism", "rp/Jainism", "rx/Islam"}) {
+            assertParseFailure(parser, args, message);
+        }
+    }
+
     @Test
     public void parse_combinedAgeAndGender_throwsParseException() {
         String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);

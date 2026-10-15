@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -15,6 +16,7 @@ import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.ReligionMatchesPredicate;
 
 /**
  * Parses input arguments and creates a new FindCommand object.
@@ -25,20 +27,27 @@ public class FindCommandParser implements Parser<FindCommand> {
             "Use distinct genders separated by commas (m, w, nb), or leave g/ empty for any specified gender.";
 
     /**
-     * Parses name keywords, an age criterion, or a gender criterion into a FindCommand.
+     * Parses name keywords or a single age, gender or own-religion criterion into a FindCommand.
      *
      * @throws ParseException if the input is invalid or combines search modes.
      */
     public FindCommand parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + trimmedArgs, PREFIX_AGE, PREFIX_GENDER);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + trimmedArgs,
+                PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION);
         boolean hasAge = argMultimap.getValue(PREFIX_AGE).isPresent();
         boolean hasGender = argMultimap.getValue(PREFIX_GENDER).isPresent();
-        if (trimmedArgs.isEmpty() || (hasAge && hasGender)
-                || ((hasAge || hasGender) && !argMultimap.getPreamble().isEmpty())) {
+        boolean hasReligion = argMultimap.getValue(PREFIX_RELIGION).isPresent();
+        int searchModes = (hasAge ? 1 : 0) + (hasGender ? 1 : 0) + (hasReligion ? 1 : 0);
+        if (trimmedArgs.isEmpty() || searchModes > 1
+                || (searchModes == 1 && !argMultimap.getPreamble().isEmpty())) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_AGE, PREFIX_GENDER);
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION);
+        if (hasReligion) {
+            return new FindCommand(new ReligionMatchesPredicate(
+                    ParserUtil.parseReligion(argMultimap.getValue(PREFIX_RELIGION).get())));
+        }
         if (hasGender) {
             return new FindCommand(new GenderMatchesPredicate(parseGenders(argMultimap.getValue(PREFIX_GENDER).get())));
         }

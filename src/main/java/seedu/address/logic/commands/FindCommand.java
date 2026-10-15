@@ -23,10 +23,14 @@ public class FindCommand extends Command {
             + "Or search by gender: find g/m,w (m, w, nb; comma-separated without duplicates).\n"
             + "Use find g/ to list all persons with a specified gender.\n"
             + "Or search by age: find age/25 or find age/25-35 (18 to 99, inclusive).\n"
-            + "Use one search mode at a time: name, age, or gender.";
+            + "Or search by own religion: find r/Jainism (one supported category, case-insensitive).\n"
+            + "Use one search mode at a time: name, age, gender, or religion.";
 
     private final Predicate<Person> predicate;
 
+    /**
+     * Creates a search using the supplied matching criterion.
+     */
     public FindCommand(Predicate<Person> predicate) {
         this.predicate = predicate;
     }

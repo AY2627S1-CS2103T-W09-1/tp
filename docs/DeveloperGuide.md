@@ -536,6 +536,27 @@ The draft feature notes disagree on some validation rules. Resolve these before 
 
 Given below are instructions to test the app manually.
 
+### Finding clients by their own religion
+
+`FindCommandParser` recognizes `r/` alongside the existing age and gender modes. It
+requires exactly one search mode, rejects repeated prefixes and uses `ParserUtil.parseReligion`
+to share the same fixed categories and normalization as add/edit. Blank and unsupported
+values fail during parsing, before the displayed list or stored records can change.
+
+`ReligionMatchesPredicate` compares only `Person.getReligion()` with the requested category.
+Unknown religion never matches, including a request for the explicit `No religion` category.
+`FindCommand` updates the full address book's filtered view, so a previous shortlist does not
+restrict the next search. The existing result-count feedback and zero-result behavior apply.
+No partner preferences, combined-trait OR/AND search or compatibility assessment is added.
+
+Manual checks (use distinct test names):
+
+1. Add `Religion Jain` with `add n/Religion Jain p/91234567 e/jain@example.com a/Test Lane age/25 r/jAiNiSm`, `Religion None` with `add n/Religion None p/91234567 e/none@example.com a/Test Lane age/25 r/No religion`, and `Religion Unknown` with `add n/Religion Unknown p/91234567 e/unknown@example.com a/Test Lane age/25`.
+2. Run `find Unknown`, then `find r/JAINISM`. The Jainism client appears even though the prior list contained only the unknown client. The count equals the displayed matches across the full book.
+3. Run `find r/No religion`. Only explicitly recorded No religion clients appear; unknown clients are excluded. Try a supported category absent from the book: the list is empty and the count is zero. Run `list` to restore all contacts.
+4. With a non-empty result list, try `find r/`, `find r/Other`, `find r/Jainism r/Islam`, `find Religion r/Jainism`, `find r/Jainism age/25`, and `find r/Jainism g/nb`. Each fails without changing records or the previous results.
+5. Restart and repeat the religion searches. Own religion and ordinary client details remain unchanged. Confirm that name, age and gender searches still work independently.
+
 ### Recording and finding gender
 
 Use a test data file and distinct client names for these checks.
