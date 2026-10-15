@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
@@ -26,9 +27,10 @@ public final class DatingCriteriaParser {
 
     public static final String MESSAGE_INVALID_ENVIRONMENT = "Dating criteria must use one non-nested "
             + "{...} preference environment and one non-nested <...> dealbreaker environment.";
-    public static final String MESSAGE_INVALID_CRITERION_PREFIX = "Dating criteria may use only age/, s/, r/, or rg/.";
+    public static final String MESSAGE_INVALID_CRITERION_PREFIX =
+            "Dating criteria may use only age/, g/, s/, r/, or rg/.";
     private static final Set<Prefix> SUPPORTED_PREFIXES = Set.of(
-            PREFIX_AGE, PREFIX_SMOKING, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
+            PREFIX_AGE, PREFIX_GENDER, PREFIX_SMOKING, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
     private static final Pattern PREFIX_TOKEN = Pattern.compile("(?:^|\\s)([A-Za-z]+/)");
 
     private DatingCriteriaParser() {}
@@ -144,7 +146,8 @@ public final class DatingCriteriaParser {
     }
 
     private static Prefix[] supportedPrefixes() {
-        return new Prefix[] {PREFIX_AGE, PREFIX_SMOKING, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL};
+        return new Prefix[] {PREFIX_AGE, PREFIX_GENDER, PREFIX_SMOKING, PREFIX_RELIGION,
+            PREFIX_RELATIONSHIP_GOAL};
     }
 
     private static String validateAndNormalize(Prefix prefix, String value) throws ParseException {
@@ -158,6 +161,9 @@ public final class DatingCriteriaParser {
     private static DatingAttribute toDatingAttribute(Prefix prefix) {
         if (prefix.equals(PREFIX_AGE)) {
             return DatingAttribute.AGE;
+        }
+        if (prefix.equals(PREFIX_GENDER)) {
+            return DatingAttribute.GENDER;
         }
         if (prefix.equals(PREFIX_SMOKING)) {
             return DatingAttribute.SMOKING;

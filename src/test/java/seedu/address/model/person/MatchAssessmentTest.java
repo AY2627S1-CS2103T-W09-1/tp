@@ -16,7 +16,7 @@ import seedu.address.testutil.PersonBuilder;
 
 public class MatchAssessmentTest {
     private final Person candidate = new PersonBuilder().withAge(30).withSmokingStatus("no")
-            .withReligion("Buddhism").withRelationshipGoal("long").build();
+            .withGender("m").withReligion("Buddhism").withRelationshipGoal("long").build();
 
     @Test
     public void assess_normalizedPreferences_allMet() {
@@ -54,6 +54,16 @@ public class MatchAssessmentTest {
                 .getFirstComparisons().getFirst().status());
         assertEquals(UNMET, assess(Map.of(DatingAttribute.AGE, "31"), Map.of(), candidate)
                 .getFirstComparisons().getFirst().status());
+    }
+
+    @Test
+    public void assess_genderPreferenceAndDealbreaker_comparesGender() {
+        MatchAssessment preferenceAssessment = assess(Map.of(DatingAttribute.GENDER, "m"), Map.of(), candidate);
+        assertEquals(MET, preferenceAssessment.getFirstComparisons().getFirst().status());
+
+        MatchAssessment dealbreakerAssessment = assess(Map.of(), Map.of(DatingAttribute.GENDER, "m"), candidate);
+        assertEquals(UNMET, dealbreakerAssessment.getFirstComparisons().getFirst().status());
+        assertEquals(INCOMPATIBLE, dealbreakerAssessment.getOutcome());
     }
 
     @Test

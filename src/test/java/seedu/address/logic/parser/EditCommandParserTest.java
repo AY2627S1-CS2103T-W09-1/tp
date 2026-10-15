@@ -38,6 +38,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -45,6 +47,7 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
@@ -250,6 +253,15 @@ public class EditCommandParserTest {
         descriptor = new EditPersonDescriptorBuilder().withoutRelationshipGoal().build();
         assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_RELATIONSHIP_GOAL,
                 new EditCommand(targetIndex, descriptor));
+    }
+
+    @Test
+    public void parse_genderCriteria_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        descriptor.setPreferences(Map.of(DatingAttribute.GENDER, "m"));
+        descriptor.setDealbreakers(Map.of(DatingAttribute.GENDER, "w"));
+
+        assertParseSuccess(parser, "1 { g/m } < g/w >", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test
