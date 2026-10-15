@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.MatchCommand;
+import seedu.address.logic.commands.MatchCommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -53,14 +55,18 @@ public class MatchCommandIntegrationTest {
         List<Person> displayed = List.copyOf(model.getFilteredPersonList());
         String saved = Files.readString(storage.getAddressBookFilePath());
 
-        String feedback = logic.execute("match 1 2").getFeedbackToUser();
+        MatchCommandResult result = assertInstanceOf(MatchCommandResult.class, logic.execute("match 1 2"));
+        assertEquals("Alice", result.getFirstName());
+        assertEquals("Bob", result.getSecondName());
+        assertEquals(2, result.getAssessment().getFirstComparisons().size());
+        String feedback = result.getFeedbackToUser();
         assertEquals("Alice <-> Bob\nResult: Incompatible"
                 + "\n\nAlice's criteria -> Bob"
-                + "\nMet - Preference: Age 25-35; actual: 30"
-                + "\nUnmet (violated) - Dealbreaker: exclude Smoking yes; actual: yes"
+                + "\nMet - Preference: Age 25-35; Actual: 30"
+                + "\nViolated - Dealbreaker: Smoking Exclude: Yes; Actual: Yes"
                 + "\n\nBob's criteria -> Alice"
-                + "\nUnknown - Preference: Religion Buddhism; actual: Not specified"
-                + "\nMet - Preference: Relationship goal Long-term relationship; actual: Long-term relationship",
+                + "\nUnknown - Preference: Religion Buddhism; Actual: Not specified"
+                + "\nMet - Preference: Relationship goal Long-term relationship; Actual: Long-term relationship",
                 feedback);
         assertEquals(before, model.getAddressBook());
         assertEquals(displayed, model.getFilteredPersonList());
@@ -100,7 +106,7 @@ public class MatchCommandIntegrationTest {
         logic.execute("edit 2 r/Islam");
         String feedback = logic.execute("match 2 3").getFeedbackToUser();
         assertTrue(feedback.contains("Result: Compatible with recorded dealbreakers"));
-        assertTrue(feedback.contains("Unmet - Preference: Religion Buddhism; actual: Islam"));
+        assertTrue(feedback.contains("Unmet - Preference: Religion Buddhism; Actual: Islam"));
         logic.execute("edit 2 {}");
         logic.execute("edit 3 {}");
         feedback = logic.execute("match 2 3").getFeedbackToUser();

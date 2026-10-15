@@ -227,8 +227,9 @@ Format: `match INDEX_A INDEX_B`
 
 * Use two different positive indexes from the **currently displayed list**, including after `find`.
 * Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
-* The command-result area shows both names, an overall result, and each direction's comparisons as
-  **Met**, **Unmet**, or **Unknown**, with the criterion and actual value. A violated dealbreaker is labeled explicitly.
+* The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
+  and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
+  and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
 * The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
 
 Set partner criteria with `add` or `edit`: `{...}` contains preferences and `<...>` contains **excluded values**.

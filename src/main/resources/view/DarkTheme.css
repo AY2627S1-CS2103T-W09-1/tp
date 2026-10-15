@@ -157,6 +157,54 @@
     -fx-text-fill: black !important;
 }
 
+.match-scroll, .match-scroll > .viewport {
+    -fx-background-color: #383838;
+}
+
+.match-result {
+    -fx-padding: 12;
+    -fx-spacing: 12;
+}
+
+.match-result .label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-text-fill: #eeeeee;
+}
+
+.match-result .match-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.match-result .match-outcome, .match-result .match-direction {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.match-result .match-compatible {
+    -fx-text-fill: #86efac;
+}
+
+.match-result .match-incompatible {
+    -fx-text-fill: #fca5a5;
+}
+
+.match-result .match-unknown {
+    -fx-text-fill: #fcd34d;
+}
+
+.match-table-header, .match-table-cell {
+    -fx-padding: 8;
+    -fx-alignment: center-left;
+    -fx-border-color: transparent transparent #555555 transparent;
+}
+
+.match-table-header {
+    -fx-background-color: #454545;
+    -fx-font-weight: bold;
+}
+
 .status-bar .label {
     -fx-font-family: "Segoe UI Light";
     -fx-text-fill: white;
