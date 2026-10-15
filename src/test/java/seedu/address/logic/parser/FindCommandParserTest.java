@@ -20,6 +20,8 @@ import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.RelationshipGoalMatchesPredicate;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.ReligionMatchesPredicate;
+import seedu.address.model.person.SmokingStatus;
+import seedu.address.model.person.SmokingStatusMatchesPredicate;
 
 public class FindCommandParserTest {
 
@@ -148,5 +150,49 @@ public class FindCommandParserTest {
         for (String args : new String[] {"rg/long g/m", "r/Jainism rg/long", "Alice rg/long"}) {
             assertParseFailure(parser, args, usage);
         }
+    }
+
+    @Test
+    public void parse_smoking_normalizesCaseAndSurroundingWhitespace() {
+        for (String value : new String[] {"yes", "YES", "yEs", "no", "NO", "nO"}) {
+            assertParseSuccess(parser, " \t s/ \t" + value + " \t ",
+                    new FindCommand(new SmokingStatusMatchesPredicate(new SmokingStatus(value))));
+        }
+    }
+
+    @Test
+    public void parse_blankOrInvalidSmoking_throwsParseException() {
+        for (String value : new String[] {"", "   ", "unknown", "sometimes", "true", "0", "y", "n",
+            "yes,no", "yes no", "y es", "yeſ", "yes Alice", "yes x/no", "yes\ts/no"}) {
+            assertParseFailure(parser, "s/" + value, SmokingStatus.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_repeatedSmokingPrefix_throwsParseException() {
+        String message = Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_SMOKING);
+        for (String args : new String[] {"s/yes s/no", "s/yes s/yes", "s/ s/no", "s/no s/"}) {
+            assertParseFailure(parser, args, message);
+        }
+    }
+
+    @Test
+    public void parse_combinedSmokingSearchModes_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String criterion : new String[] {"age/25", "g/m", "r/Jainism", "rg/long"}) {
+            assertParseFailure(parser, "s/yes " + criterion, message);
+            assertParseFailure(parser, criterion + " s/no", message);
+        }
+        assertParseFailure(parser, "Alice s/yes", message);
+    }
+
+    @Test
+    public void parse_incorrectSmokingPrefixOrCriteriaEnvironment_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"S/yes", "s /yes", "smoking/yes", "{s/yes}", "<s/no>"}) {
+            assertParseFailure(parser, args, message);
+        }
+        assertParseFailure(parser, "s/yes {s/no}", SmokingStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/no <s/yes>", SmokingStatus.MESSAGE_CONSTRAINTS);
     }
 }
