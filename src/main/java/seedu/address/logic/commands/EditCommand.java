@@ -65,6 +65,8 @@ public class EditCommand extends Command {
             + "[" + PREFIX_TAG + "TAG]... "
             + "[" + PREFIX_RELIGION + "RELIGION] "
             + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL]\n"
+            + "Partner religion: {r/RELIGION} prefers; <r/RELIGION> excludes (must not have).\n"
+            + "Supplied criteria add or update entries; {} or <> clears that entire set.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";

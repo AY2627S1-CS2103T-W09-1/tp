@@ -13,43 +13,69 @@ import java.util.Objects;
  */
 public final class DatingCriteria {
 
+    public static final String MESSAGE_CONFLICTING_RELIGION =
+            "A partner religion cannot be both preferred and excluded.";
+
     public static final DatingCriteria EMPTY = new DatingCriteria(Map.of(), Map.of());
 
     private final Map<DatingAttribute, String> preferences;
     private final Map<DatingAttribute, String> dealbreakers;
 
-    /** Creates criteria after validating and canonicalizing all supplied values. */
+    /**
+     * Creates criteria after validating and canonicalizing all supplied values.
+     * Dealbreaker values describe attributes a partner must not have.
+     *
+     * @throws IllegalArgumentException If the same religion is both preferred and excluded.
+     */
     public DatingCriteria(Map<DatingAttribute, String> preferences, Map<DatingAttribute, String> dealbreakers) {
         this.preferences = normalize(preferences);
         this.dealbreakers = normalize(dealbreakers);
+        String preferredReligion = this.preferences.get(DatingAttribute.RELIGION);
+        if (preferredReligion != null && preferredReligion.equals(this.dealbreakers.get(DatingAttribute.RELIGION))) {
+            throw new IllegalArgumentException(MESSAGE_CONFLICTING_RELIGION);
+        }
     }
 
-    /** Returns the preference criteria indexed by their target attribute. */
+    /**
+     * Returns the preference criteria indexed by their target attribute.
+     */
     public Map<DatingAttribute, String> getPreferences() {
         return preferences;
     }
 
-    /** Returns the hard dealbreaker criteria indexed by their target attribute. */
+    /**
+     * Returns the excluded partner values indexed by their target attribute.
+     */
     public Map<DatingAttribute, String> getDealbreakers() {
         return dealbreakers;
     }
 
-    /** Returns whether no preference or dealbreaker is recorded. */
+    /**
+     * Returns whether no preference or dealbreaker is recorded.
+     */
     public boolean isEmpty() {
         return preferences.isEmpty() && dealbreakers.isEmpty();
     }
 
-    /** Converts criteria to stable JSON-ready keys and values. */
+    /**
+     * Converts criteria to stable JSON-ready keys and values.
+     */
     public Map<String, String> getPreferencesForStorage() {
         return toStorageMap(preferences);
     }
 
-    /** Converts dealbreakers to stable JSON-ready keys and values. */
+    /**
+     * Converts dealbreakers to stable JSON-ready keys and values.
+     */
     public Map<String, String> getDealbreakersForStorage() {
         return toStorageMap(dealbreakers);
     }
 
-    /** Reconstructs criteria saved using {@link #getPreferencesForStorage()}. */
+    /**
+     * Reconstructs criteria saved using {@link #getPreferencesForStorage()}.
+     *
+     * @throws IllegalArgumentException If stored criteria are invalid or contradictory.
+     */
     public static DatingCriteria fromStorage(Map<String, String> preferences,
                                              Map<String, String> dealbreakers) {
         return new DatingCriteria(fromStorageMap(preferences), fromStorageMap(dealbreakers));
@@ -77,6 +103,9 @@ public final class DatingCriteria {
         }
         Map<DatingAttribute, String> converted = new EnumMap<>(DatingAttribute.class);
         for (Map.Entry<String, String> entry : criteria.entrySet()) {
+            if (entry.getValue() == null) {
+                throw new IllegalArgumentException(DatingAttribute.MESSAGE_EMPTY_VALUE);
+            }
             DatingAttribute attribute = DatingAttribute.fromStorageKey(entry.getKey());
             if (converted.put(attribute, entry.getValue()) != null) {
                 throw new IllegalArgumentException("A dating attribute may be specified only once.");
