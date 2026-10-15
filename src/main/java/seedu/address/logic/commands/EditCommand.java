@@ -155,9 +155,13 @@ public class EditCommand extends Command {
 
     /**
      * Applies supplied criteria to the existing criteria without removing attributes that were not supplied.
+     * An explicitly empty environment clears all criteria of that type.
      */
     private static Map<DatingAttribute, String> mergeCriteria(Map<DatingAttribute, String> existingCriteria,
                                                                Optional<Map<DatingAttribute, String>> editedCriteria) {
+        if (editedCriteria.filter(Map::isEmpty).isPresent()) {
+            return Map.of();
+        }
         Map<DatingAttribute, String> mergedCriteria = new HashMap<>(existingCriteria);
         editedCriteria.ifPresent(mergedCriteria::putAll);
         return mergedCriteria;

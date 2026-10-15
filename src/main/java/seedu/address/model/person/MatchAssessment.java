@@ -68,6 +68,8 @@ public final class MatchAssessment {
     private static Optional<String> getActualValue(Person person, DatingAttribute attribute) {
         return switch (attribute) {
             case AGE -> Optional.of(Integer.toString(person.getAge().value));
+            case GENDER -> person.getGender().equals(Gender.UNSPECIFIED)
+                    ? Optional.empty() : Optional.of(person.getGender().getValue());
             case SMOKING -> person.getSmokingStatus().equals(SmokingStatus.UNSPECIFIED)
                     ? Optional.empty() : Optional.of(person.getSmokingStatus().value);
             case RELIGION -> person.getReligion().map(Religion::toString);
