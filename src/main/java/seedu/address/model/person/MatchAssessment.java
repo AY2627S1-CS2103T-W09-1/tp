@@ -96,7 +96,19 @@ public final class MatchAssessment {
      * The overall assessment based only on recorded criteria.
      */
     public enum Outcome {
-        COMPATIBLE, INCOMPATIBLE, INSUFFICIENT_INFORMATION
+        COMPATIBLE("Compatible with recorded dealbreakers"),
+        INCOMPATIBLE("Incompatible"),
+        INSUFFICIENT_INFORMATION("Insufficient information");
+
+        private final String displayName;
+
+        Outcome(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /**
@@ -104,5 +116,29 @@ public final class MatchAssessment {
      */
     public record Comparison(DatingAttribute attribute, String criterion, Optional<String> actual,
                              boolean isDealbreaker, Status status) {
+        public String getTypeLabel() {
+            return isDealbreaker ? "Dealbreaker" : "Preference";
+        }
+
+        public String getCriterionLabel() {
+            return (isDealbreaker ? "Exclude: " : "") + formatValue(criterion);
+        }
+
+        public String getActualLabel() {
+            return actual.map(this::formatValue).orElse("Not specified");
+        }
+
+        public String getStatusLabel() {
+            return switch (status) {
+                case MET -> "Met";
+                case UNMET -> isDealbreaker ? "Violated" : "Unmet";
+                case UNKNOWN -> "Unknown";
+            };
+        }
+
+        private String formatValue(String value) {
+            return attribute == DatingAttribute.SMOKING
+                    ? (value.equals("yes") ? "Yes" : "No") : value;
+        }
     }
 }

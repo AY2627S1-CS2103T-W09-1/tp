@@ -50,14 +50,11 @@ public class MatchCommand extends Command {
         Person first = displayed.get(firstIndex.getZeroBased());
         Person second = displayed.get(secondIndex.getZeroBased());
         MatchAssessment assessment = new MatchAssessment(first, second);
-        String outcome = switch (assessment.getOutcome()) {
-            case COMPATIBLE -> "Compatible with recorded dealbreakers";
-            case INCOMPATIBLE -> "Incompatible";
-            case INSUFFICIENT_INFORMATION -> "Insufficient information";
-        };
-        return new CommandResult(first.getName() + " <-> " + second.getName() + "\nResult: " + outcome
+        String feedback = first.getName() + " <-> " + second.getName()
+                + "\nResult: " + assessment.getOutcome().getDisplayName()
                 + formatDirection(first, second, assessment.getFirstComparisons())
-                + formatDirection(second, first, assessment.getSecondComparisons()));
+                + formatDirection(second, first, assessment.getSecondComparisons());
+        return new MatchCommandResult(feedback, first.getName().fullName, second.getName().fullName, assessment);
     }
 
     private static String formatDirection(Person owner, Person candidate, List<Comparison> comparisons) {
@@ -67,14 +64,9 @@ public class MatchCommand extends Command {
     }
 
     private static String formatComparison(Comparison comparison) {
-        String kind = comparison.isDealbreaker() ? "Dealbreaker: exclude " : "Preference: ";
-        String status = switch (comparison.status()) {
-            case MET -> "Met";
-            case UNMET -> comparison.isDealbreaker() ? "Unmet (violated)" : "Unmet";
-            case UNKNOWN -> "Unknown";
-        };
-        return status + " - " + kind + comparison.attribute().getDisplayName() + " " + comparison.criterion()
-                + "; actual: " + comparison.actual().orElse("Not specified");
+        return comparison.getStatusLabel() + " - " + comparison.getTypeLabel() + ": "
+                + comparison.attribute().getDisplayName() + " " + comparison.getCriterionLabel()
+                + "; Actual: " + comparison.getActualLabel();
     }
 
     @Override

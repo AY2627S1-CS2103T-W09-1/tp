@@ -274,7 +274,9 @@ Any known violation makes the pair incompatible, even if another comparison is u
 comparison or no criteria on either client gives insufficient information. All other pairs are compatible with
 recorded dealbreakers, including pairs with unmet preferences.
 
-The command formats both directions into the existing `CommandResult` display. It does not change model data,
+`MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome and
+a table per direction in the command-result area. Plain-text feedback uses the same labels for logs.
+Other commands and errors retain their text display. Matching does not change model data,
 the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
 save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
 
