@@ -16,6 +16,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -25,6 +27,8 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.DatingAttribute;
+import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -240,6 +244,27 @@ public class EditCommandTest {
         assertFirstPersonEditSuccess(descriptor, personWithoutGoal);
     }
 
+    @Test
+    public void execute_criteriaEdits_existingCriteriaPreservedAndSuppliedCriteriaUpdated() {
+        Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person personWithCriteria = withDatingCriteria(original, new DatingCriteria(
+                Map.of(DatingAttribute.AGE, "20-30", DatingAttribute.SMOKING, "no"),
+                Map.of(DatingAttribute.RELIGION, "Islam", DatingAttribute.RELATIONSHIP_GOAL, "long")));
+        model.setPerson(original, personWithCriteria);
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        descriptor.setPreferences(Map.of(DatingAttribute.AGE, "25-35", DatingAttribute.RELIGION, "Buddhism"));
+        descriptor.setDealbreakers(Map.of(DatingAttribute.RELIGION, "Hinduism", DatingAttribute.AGE, "18-24"));
+
+        Person expectedPerson = withDatingCriteria(personWithCriteria, new DatingCriteria(
+                Map.of(DatingAttribute.AGE, "25-35", DatingAttribute.SMOKING, "no",
+                        DatingAttribute.RELIGION, "Buddhism"),
+                Map.of(DatingAttribute.RELIGION, "Hinduism", DatingAttribute.RELATIONSHIP_GOAL, "long",
+                        DatingAttribute.AGE, "18-24")));
+
+        assertFirstPersonEditSuccess(descriptor, expectedPerson);
+    }
+
     /**
      * Gives the first person in {@code model} the relationship goal {@code relationshipGoal}
      * and returns the updated person.
@@ -249,6 +274,13 @@ public class EditCommandTest {
         Person personWithGoal = new PersonBuilder(firstPerson).withRelationshipGoal(relationshipGoal).build();
         model.setPerson(firstPerson, personWithGoal);
         return personWithGoal;
+    }
+
+    /** Returns a copy of {@code person} with the supplied dating criteria. */
+    private Person withDatingCriteria(Person person, DatingCriteria datingCriteria) {
+        return new Person(person.getName(), person.getPhone(), person.getEmail(), person.getAddress(), person.getAge(),
+                person.getTags(), person.getSmokingStatus(), person.getGender(), person.getReligion().orElse(null),
+                person.getRelationshipGoal().orElse(null), datingCriteria);
     }
 
     /**
