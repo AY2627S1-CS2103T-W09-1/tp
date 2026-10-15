@@ -69,9 +69,9 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         Religion religion = parseOptionalReligion(argMultimap, PREFIX_RELIGION);
         RelationshipGoal relationshipGoal = parseOptionalRelationshipGoal(argMultimap);
-        DatingCriteria datingCriteria = new DatingCriteria(parsedCriteria.preferences(), parsedCriteria.dealbreakers());
-
         try {
+            DatingCriteria datingCriteria = new DatingCriteria(
+                    parsedCriteria.preferences(), parsedCriteria.dealbreakers());
             Person person = new Person(name, phone, email, address, age, tagList, smokingStatus, gender,
                     religion, relationshipGoal, datingCriteria);
             return new AddCommand(person);

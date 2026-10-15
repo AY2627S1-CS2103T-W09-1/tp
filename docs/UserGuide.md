@@ -75,9 +75,9 @@ Format: `help`
 
 ### Adding a client: `add`
 
-Adds a client to CupidMaxxing with contact details and age. Gender, smoking status and tags are optional.
+Adds a client to CupidMaxxing with contact details and age. Gender, smoking status, religion and tags are optional.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{r/PREFERRED_RELIGION}] [<r/EXCLUDED_RELIGION>]`
 
 * `AGE` is compulsory and must be an integer from 18 to 99 (inclusive).
 * `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one `g/` prefix are allowed per command.
@@ -116,13 +116,19 @@ use the listed spelling, although its letter case can vary. There is no free-tex
 `Other` category. If none applies, leave the field unset rather than selecting
 `No religion`, which means the client explicitly has no religion.
 
-* `r/RELIGION` records the client's **own religion**, not a partner preference.
-* Supply `r/` only once per command. Its value must be non-empty in `add`.
-* The religion is saved between sessions and shown on the client card.
-* The former partner-criteria prefixes `rp/`, `rr/`, and `rx/` are no longer
-  supported. Commands containing them are rejected without changing records.
-  A replacement preferences/dealbreakers workflow is not implemented yet.
-* Religion searching and compatibility are separate increments.
+* `r/RELIGION` outside braces records the client's **own religion**, not a partner preference.
+* `{r/RELIGION}` records a **soft partner preference**: a religion the client would like a partner to have.
+* `<r/RELIGION>` records an **excluded partner religion** (a dealbreaker): the partner **must not have** this religion. It does not mean the partner must have it.
+* Type the curly braces `{}` and angle brackets `<>` literally; square brackets in the format above only mark optional parts. For example, `r/Jainism {r/Buddhism} <r/Islam>` records own religion Jainism, a preference for Buddhism, and an exclusion of Islam.
+* Each command may contain at most one preference environment `{...}` and one exclusion environment `<...>`. Environments cannot be nested. Supply at most one `r/` outside the environments and at most one `r/` inside each environment; a list of religions is not accepted.
+* All three religion values use the same 21 categories and normalization above. A blank outer `r/` is rejected in `add`; a blank `r/` inside either environment is always rejected.
+* The same normalized religion cannot be both preferred and excluded: `{r/Islam} <r/islam>` is rejected without changing records. The client's own religion is independent and may equal or differ from either partner criterion.
+* Own religion and partner criteria are saved between sessions. The client's own religion is shown on the client card.
+* The former partner-criteria prefixes `rp/`, `rr/`, and `rx/` are no longer supported. Commands containing them are rejected without changing records.
+* `find r/RELIGION` searches only the client's own religion. Searching criteria environments and compatibility evaluation are not implemented; recording an exclusion does not run a matching command.
+
+Example:
+* `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>` Adds a 25-year-old client with the own religion, preference and exclusion described above. The required contact details and age are outside the environments.
 
 #### Relationship goal field
 
@@ -155,7 +161,7 @@ Format: `list`
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{r/PREFERRED_RELIGION}] [<r/EXCLUDED_RELIGION>]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
 * At least one of the optional fields must be provided.
@@ -165,8 +171,10 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
-* Use `r/RELIGION` to update the client's own religion. Empty `r/` clears it;
-  omitting `r/` preserves it. Other contact details remain unchanged.
+* Use outer `r/RELIGION` to update the client's own religion. Empty outer `r/` clears only the own religion; omitting it preserves it. Partner criteria and other contact details remain unchanged unless separately edited.
+* Use `{r/RELIGION}` to set the preferred partner religion and `<r/RELIGION>` to set an excluded partner religion. The same validation rules as [Religion fields](#religion-fields) apply, including checking the resulting record for a religion that is both preferred and excluded.
+* **A supplied environment replaces its entire bucket, not just its religion entry.** For example, editing with `{r/Buddhism}` removes any existing age, smoking or relationship-goal preferences in that preference bucket. Include all preferences you want to retain in the same `{...}` environment. The same replacement rule applies to the exclusion/dealbreaker bucket `<...>`.
+* Omit an environment to preserve its entire bucket. Use `{}` to clear all preferences, or `<>` to clear all exclusions/dealbreakers. These do not clear the client's own religion. `{r/}` and `<r/>` are invalid, not clearing commands. A rejected edit leaves the whole record unchanged.
 * The removed `rp/`, `rr/`, and `rx/` prefixes are rejected, including empty values.
 * Use `rg/RELATIONSHIP_GOAL` to update the relationship goal. Omitting `rg/` preserves the existing goal, and `rg/` with no value clears it.
 
@@ -174,7 +182,11 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 r/Christianity` Sets the client's own religion.
-*  `edit 1 r/` Clears the client's own religion to unknown.
+*  `edit 1 r/` Clears the client's own religion to unknown, preserving both partner-criteria buckets.
+*  `edit 1 {r/Buddhism} <r/Islam>` Replaces all preferences with a preference for Buddhism and all exclusions with an exclusion of Islam; own religion and other client details are preserved.
+*  `edit 1 {r/Buddhism age/25}` Replaces the entire preference bucket with religion Buddhism and age 25; any other existing preferences are removed, while exclusions are preserved.
+*  `edit 1 {}` Clears all preferences, preserving exclusions and own religion.
+*  `edit 1 <>` Clears all exclusions/dealbreakers, preserving preferences and own religion.
 *  `edit 3 rg/short-open` Records the 3rd displayed client as looking for a short-term relationship, open to long, preserving their other details.
 *  `edit 3 rg/` Clears the 3rd displayed client's relationship goal.
 
@@ -254,13 +266,19 @@ not supported for application data; move the data itself into the home folder in
 
 CupidMaxxing data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
-Records with valid required fields but no religion properties load with unknown
-religion details, not `No religion`. Invalid stored own-religion values reject the
-file. Obsolete `preferredReligion`, `requiredReligion`, and `excludedReligions`
-properties are ignored when loading and omitted on the next save; valid own
-religion and other contact details are retained. Back up older development data before
-migrating it; replace an obsolete `Other` religion only with an accurate supported
-category, or remove that optional property if the religion is unknown.
+Records with valid required fields but no own-religion property load with unknown
+own religion, not `No religion`. Partner criteria are saved in the `preferences` and
+`dealbreakers` maps: for example, `"preferences": {"religion": "Buddhism"}` and
+`"dealbreakers": {"religion": "Islam"}`. The latter records an exclusion, not a requirement
+to have Islam. Older valid records without these maps load with empty partner criteria.
+Invalid religion values (including a null religion entry inside a criteria map), or the
+same normalized religion in both maps, reject the file through the existing invalid-data
+handling. A missing or null own-religion property still means unknown.
+Obsolete `preferredReligion`, `requiredReligion`, and `excludedReligions` properties are
+ignored when loading and omitted on the next save; they are not migrated into the new
+maps. Valid own religion and other contact details are retained. Back up older development
+data before migrating it; replace an obsolete `Other` religion only with an accurate
+supported category, or remove that optional property if the religion is unknown.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
 If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
@@ -291,10 +309,10 @@ _Details coming soon ..._
 
 Action | Format, Examples
 --------|------------------
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 rg/long t/friend t/colleague`
+**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{r/PREFERRED_RELIGION}] [<r/EXCLUDED_RELIGION>]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 rg/long t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{r/PREFERRED_RELIGION}] [<r/EXCLUDED_RELIGION>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, or `find r/RELIGION`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`
 **List** | `list`
 **Help** | `help`

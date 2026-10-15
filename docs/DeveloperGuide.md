@@ -210,23 +210,58 @@ Each valid input is stored and displayed using the category's canonical spelling
 and an `Other` category are not accepted. A finite list makes values directly comparable for
 future search and matching without inventing a meaning for arbitrary free text.
 
-`AddCommandParser` and `EditCommandParser` parse only the client's own religion (`r/`).
-The value is optional in `Person`; absent means **unknown**, not the explicit `No religion`
-category. `add` rejects a blank or repeated `r/`; `edit` supports clearing with an empty
-`r/`, while an omitted prefix preserves the existing value and all unrelated fields.
-A failed command leaves the record unchanged.
+`AddCommandParser` and `EditCommandParser` first use the shared `DatingCriteriaParser`
+to extract at most one non-nested `{...}` preference environment and one non-nested
+`<...>` dealbreaker environment. They tokenize the remaining outer arguments for the
+client's own fields. Thus outer `r/` records own religion, `{r/Buddhism}` records a soft
+partner preference for Buddhism, and `<r/Islam>` records Islam as an excluded partner
+religion: the partner **must not have** it. Exclusion is not a requirement to have that
+religion. These commands record criteria; no compatibility evaluator is implemented.
 
-`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete `rp/`, `rr/`
-and `rx/` prefixes before normal field parsing, including blank values. This prevents
-an old criteria command from silently becoming part of an address or tag after removal.
-No replacement partner-preference or dealbreaker model is implemented in this increment.
+The own religion is optional in `Person`; absent means **unknown**, not the explicit
+`No religion` category. `add` rejects a blank outer `r/`; `edit` supports clearing only
+the own field with an empty outer `r/`. Omitting it preserves the own religion. One
+`r/` is permitted in each environment independently of the outer `r/`. Blank religion
+values inside environments, duplicate prefixes within an environment, repeated
+environments and nested or unbalanced delimiters are rejected.
 
-`JsonAdaptedPerson` saves the canonical own-religion name and treats a missing property
-as unknown. The existing unknown-property handling ignores obsolete stored partner
-criteria, even if their former values were invalid; they are omitted on the next save.
-The own religion and other valid attributes survive this transition. `PersonCard` shows
-only the own religion. Religion search is tracked separately in issue #52; compatibility
-is also a separate increment.
+`DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
+the own field. `Person` holds an immutable `DatingCriteria` with separate preference
+and dealbreaker maps indexed by `DatingAttribute`. The resulting criteria must not
+prefer and exclude the same normalized religion, including when an edit replaces only
+one bucket and retains the other. The own religion is independent: it may equal or differ
+from either partner criterion. A failed add or edit leaves stored records unchanged.
+
+`DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an
+explicitly empty one. `EditPersonDescriptor` carries these optional bucket updates;
+`EditCommand` preserves an omitted bucket but replaces a supplied bucket in full.
+For example, `{r/Buddhism}` removes any previous age, smoking or relationship-goal
+preferences; it is not a per-attribute merge. `{}` clears all preferences and `<>`
+clears all exclusions/dealbreakers, without changing the own religion or the other bucket.
+Unrelated person fields are preserved unless separately supplied in the edit.
+
+`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete outer
+`rp/`, `rr/` and `rx/` prefixes, including blank values; the shared environment parser
+also rejects them inside environments. This prevents a legacy criteria command from
+silently becoming part of another field.
+
+`JsonAdaptedPerson` saves the canonical own-religion name and treats a missing or null
+own-religion property as unknown. It persists criteria via `DatingCriteria` as the
+`preferences` and `dealbreakers` maps, using the key `religion` and a canonical category
+string, for example `"preferences": {"religion": "Buddhism"}` and
+`"dealbreakers": {"religion": "Islam"}`. `DatingCriteria.fromStorage` restores these
+maps; older valid records without them load with empty criteria. Invalid religion
+criteria, including null map values and a normalized preference/exclusion conflict,
+are reported through the existing `IllegalValueException` invalid-data path rather
+than an unchecked crash. The existing unknown-property handling ignores obsolete
+`preferredReligion`, `requiredReligion` and `excludedReligions` properties; they are
+omitted on the next save, not migrated into the new maps. Valid own religion and other
+attributes survive this transition. All persistence continues through the existing
+JAR-home-confined storage; religion criteria introduce no new files or OS configuration.
+
+`PersonCard` shows the client's own religion. `find r/RELIGION` compares only that own
+field, not either partner-criteria map. Criteria-environment searching and compatibility
+evaluation remain outside this increment.
 
 ### Recording relationship goals
 
@@ -536,6 +571,79 @@ The draft feature notes disagree on some validation rules. Resolve these before 
 
 Given below are instructions to test the app manually.
 
+### Recording religion preferences and exclusions
+
+Use an isolated writable JAR home folder with test data, not real client records. All
+JSON inspection and fixtures below are confined to that folder's `data/addressbook.json`.
+Back up the test file before changing it, close the app before editing JSON, and restore
+the valid backup between invalid-file tests. In steps using `edit 1`, first run
+`find Criteria` and check that only the named test client is displayed.
+
+1. Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no rg/long t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
+   Expected: One client is added with own religion Jainism, preference religion Buddhism
+   and age 25, and excluded religion Islam. Ordinary details, gender, smoking status,
+   relationship goal and tag are recorded normally. Inspect the saved JSON: outer
+   `religion` is `Jainism`, `preferences` contains `religion: Buddhism` and `age: 25`,
+   and `dealbreakers` contains `religion: Islam` (JSON keys and values are strings).
+2. Run `find Criteria`, then `edit 1 p/92345678`.<br>
+   Expected: Only the phone changes. Own religion and both entire criteria maps remain
+   unchanged. In the remaining steps, check that name, this phone, email, address,
+   age, gender, smoking status, relationship goal and tag remain unchanged unless
+   explicitly edited.
+3. Run `edit 1 r/Buddhism`, then `edit 1 r/Islam`, finding the test client again
+   before each edit.<br>
+   Expected: Both succeed. Own religion may equal the preferred or excluded religion;
+   neither edit changes the criteria maps.
+4. Run `edit 1 r/`, then `edit 1 r/Jainism`, finding the client again each time.<br>
+   Expected: The first clears only own religion to unknown; the second restores it.
+   Preferences and exclusions remain unchanged throughout.
+5. Run `edit 1 {r/ Baha'i   Faith }`.<br>
+   Expected: Preferences become only `religion: Baha'i Faith`; the former age preference
+   is removed. Islam remains excluded, and own religion stays Jainism. Run
+   `edit 1 <r/ Christianity >` after finding the client again.<br>
+   Expected: Only the exclusion bucket is replaced, with canonical Christianity;
+   the Baha'i Faith preference is preserved.
+6. Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
+   Expected: Both buckets are replaced with the specified contents. Then try
+   `edit 1 {r/ iSlAm }`.<br>
+   Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
+   Neither the existing preference map nor any other field changes. Also try
+   `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
+7. Try each of `edit 1 {r/}`, `edit 1 <r/>`, `edit 1 {r/Other}`,
+   `edit 1 <r/Islam r/Christianity>`, `edit 1 r/Jainism r/Islam`,
+   `edit 1 {r/Buddhism} {r/Jainism}`, `edit 1 <r/Islam> <r/Christianity>`,
+   `edit 1 {r/Buddhism <r/Islam>}`, and `edit 1 {r/Buddhism`.<br>
+   Expected: Every command is rejected; the entire previous record is unchanged.
+8. Try `add n/Religion Invalid p/91234567 e/invalid@example.com a/Test Lane age/25 {r/Islam} <r/islam>`.<br>
+   Expected: Rejected after normalization; no new client is added. Repeat with the
+   criteria replaced by `{r/}` and then `{r/Buddhism r/Islam}`; both are rejected.
+   For each legacy prefix `rp/`, `rr/` and `rx/`, try `edit 1 PREFIXIslam`,
+   `edit 1 PREFIX`, and `edit 1 {PREFIXIslam}`, replacing `PREFIX` literally.<br>
+   Expected: Legacy prefixes are rejected, including blank values; no record changes.
+9. Find the test client again and run `edit 1 {}`.<br>
+   Expected: All preferences are cleared, including age; excluded Islam and own Jainism
+   remain. Run `edit 1 {r/Buddhism}` after finding it again, then `edit 1 <>` after
+   finding it once more.<br>
+   Expected: The latter clears all exclusions, preserving the Buddhism preference
+   and own Jainism. Saved maps reflect each change.
+10. Restore `edit 1 <r/Islam>` after finding the client, exit, and restart the JAR.<br>
+    Expected: Own Jainism, preferred Buddhism, excluded Islam and all ordinary details
+    survive. Run `find r/Jainism`, `find r/Buddhism` and `find r/Islam`.<br>
+    Expected: The test client appears only for Jainism, never solely because of a
+    preference or exclusion. Use `list` to restore the full display. These searches
+    do not evaluate compatibility. Exit and back up this latest valid test file before
+    the following JSON fixture checks.
+11. With the app closed, remove only the test client's `preferences` and `dealbreakers`
+    properties from `data/addressbook.json` and restart.<br>
+    Expected: The client loads with empty criteria; own religion and ordinary details
+    remain intact. Restore the valid backup before continuing.
+12. In separate copies of the valid test file, set the preference map's `religion`
+    value to `Other`, to null, and to `ISLAM` while the exclusion remains `Islam`.
+    Restart for each case, without issuing a saving command.<br>
+    Expected: Each invalid file uses the existing invalid-data handling (an empty
+    address book), without an unchecked crash. The invalid file remains on disk
+    until a saving command; restore the backup before testing the next case.
+
 ### Finding clients by their own religion
 
 `FindCommandParser` recognizes `r/` alongside the existing age and gender modes. It
@@ -547,7 +655,8 @@ values fail during parsing, before the displayed list or stored records can chan
 Unknown religion never matches, including a request for the explicit `No religion` category.
 `FindCommand` updates the full address book's filtered view, so a previous shortlist does not
 restrict the next search. The existing result-count feedback and zero-result behavior apply.
-No partner preferences, combined-trait OR/AND search or compatibility assessment is added.
+This search does not inspect partner preferences or exclusions. Criteria-environment
+searching, combined-trait OR/AND search and compatibility assessment are not implemented.
 
 Manual checks (use distinct test names):
 
