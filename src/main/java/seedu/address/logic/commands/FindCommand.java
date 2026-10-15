@@ -25,7 +25,9 @@ public class FindCommand extends Command {
             + "Or search by age: find age/25 or find age/25-35 (18 to 99, inclusive).\n"
             + "Or search by own religion: find r/Jainism (one supported category, case-insensitive).\n"
             + "Or search by relationship goal: find rg/GOAL (e.g. find rg/long).\n"
-            + "Use one search mode at a time: name, age, gender, religion, or relationship goal.";
+            + "Or search by own smoking status: find s/yes or find s/no (case-insensitive).\n"
+            + "Clients with unspecified smoking status are excluded from smoking searches.\n"
+            + "Use one search mode at a time: name, age, gender, religion, relationship goal, or smoking status.";
 
     private final Predicate<Person> predicate;
 

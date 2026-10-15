@@ -183,7 +183,7 @@ Examples:
 
 ### Finding clients: `find`
 
-Search by name, age, or the client's own gender, religion or relationship goal. Each search examines the full client list and replaces the displayed results.
+Search by name, age, or the client's own gender, religion, relationship goal or smoking status. Each search examines the full client list and replaces the displayed results.
 
 Formats:
 
@@ -194,9 +194,11 @@ Formats:
 * `find r/RELIGION` searches one of the supported [religion categories](#religion-fields), using the same case and whitespace normalization as `add` and `edit`. It matches the client's **own religion**, not partner criteria.
 * A client with unknown religion does not match any religion search. `find r/No religion` matches only clients explicitly recorded as `No religion`, not those with an unset `r/`.
 * `find rg/GOAL` returns clients with that relationship goal. `GOAL` accepts the same keywords and full names as `add` and `edit`, such as `life`, `long`, `long-open`, `short-open`, `short` or `unsure`. Clients with no recorded goal are excluded.
+* `find s/yes` or `find s/no` searches the client's **own smoking habit**, ignoring case and surrounding whitespace in the value. Clients with unspecified smoking status are excluded from both searches; unspecified does not mean non-smoker. Partner preferences and dealbreakers do not affect these results.
+* A blank `s/`, unsupported values (such as `unknown`), repeated `s/` prefixes and lists such as `s/yes,no` are rejected.
 * A blank `r/`, an unsupported category, repeated `r/` prefixes or a list of religions are rejected. Partial category names do not match.
 
-Use one search mode at a time. Name keywords, age, gender, religion and relationship-goal criteria cannot be combined. Searches by smoking and combined-trait searches are not supported in this increment.
+Use one search mode at a time. Name keywords, age, gender, religion, relationship-goal and smoking criteria cannot be combined. Combined-trait searches and searches within preference/dealbreaker environments are not supported in this increment.
 
 Use each prefix only once. Duplicate gender values (including `m,M`), unsupported values, and empty items such as `m,` or `m,,w` are rejected. Gender lists are supported only by `find`, not by `add` or `edit`. Commands and prefixes must be lowercase; separate each prefix from preceding text with a space. Invalid commands leave records and displayed results unchanged.
 
@@ -210,6 +212,8 @@ Examples:
 * `find r/Baha'i   Faith` finds clients recorded as Baha'i Faith, ignoring repeated spaces.
 * `find r/No religion` finds clients who explicitly have no religion.
 * `find rg/long` finds clients looking for a long-term relationship.
+* `find s/YES` finds clients recorded as smokers.
+* `find s/no` finds clients explicitly recorded as non-smokers.
 
 A valid search with no matches displays an empty result list and a count of zero.
 Use `list` to show every client again; searching does not modify the stored records.
@@ -297,7 +301,7 @@ Action | Format, Examples
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, or `find rg/GOAL`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`
+**Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, or `find s/no`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`
 **List** | `list`
 **Help** | `help`
 **Exit** | `exit`

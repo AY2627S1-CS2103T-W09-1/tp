@@ -704,6 +704,26 @@ testers are expected to do more *exploratory* testing.
    1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find Rae rg/long` in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
 
+### Finding clients by smoking status
+
+The `FindCommandParser` reuses `ParserUtil.parseSmokingStatus` to validate a single `s/yes` or `s/no`
+criterion. `SmokingStatusMatchesPredicate` compares only the client's recorded smoking status.
+It rejects an unspecified search criterion, and unspecified client statuses match neither value.
+The existing `FindCommand` filters the full address book without changing stored records.
+
+Manual checks (use a separate test data set):
+
+1. Add three clients with distinct names: one with `s/yes`, one with `s/no`, and one with no `s/`.
+   Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
+2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
+   even though the previous search hid that client. Check that the displayed count is correct.
+3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find Alice s/yes`.
+   Each should report an error and preserve the previous results and records.
+4. Run `list` to restore all three clients. Restart the application and repeat the searches;
+   the results should remain the same. With no clients of the searched status, expect zero matches.
+5. After `find s/no`, run `edit 1 s/yes` or `delete 1` on disposable test data.
+   Confirm that it targets the first displayed client, not the first client in the full book.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files
