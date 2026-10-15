@@ -39,6 +39,8 @@ public class AddCommand extends Command {
             + "[" + PREFIX_TAG + "TAG]... "
             + "[" + PREFIX_RELIGION + "RELIGION] "
             + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL]\n"
+            + "Partner religion: {r/RELIGION} prefers; <r/RELIGION> excludes (must not have).\n"
+            + "Outer r/ records only the client's own religion.\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + "John Doe "
             + PREFIX_PHONE + "98765432 "

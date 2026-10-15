@@ -65,6 +65,8 @@ public class EditCommand extends Command {
             + "[" + PREFIX_TAG + "TAG]... "
             + "[" + PREFIX_RELIGION + "RELIGION] "
             + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL]\n"
+            + "Partner religion: {r/RELIGION} prefers; <r/RELIGION> excludes (must not have).\n"
+            + "Supplied criteria add or update entries; {} or <> clears that entire set.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
@@ -154,10 +156,13 @@ public class EditCommand extends Command {
     }
 
     /**
-     * Applies supplied criteria to the existing criteria without removing attributes that were not supplied.
+     * Adds or updates supplied criteria, or clears the whole set for an explicitly empty environment.
      */
     private static Map<DatingAttribute, String> mergeCriteria(Map<DatingAttribute, String> existingCriteria,
                                                                Optional<Map<DatingAttribute, String>> editedCriteria) {
+        if (editedCriteria.isPresent() && editedCriteria.get().isEmpty()) {
+            return Map.of();
+        }
         Map<DatingAttribute, String> mergedCriteria = new HashMap<>(existingCriteria);
         editedCriteria.ifPresent(mergedCriteria::putAll);
         return mergedCriteria;

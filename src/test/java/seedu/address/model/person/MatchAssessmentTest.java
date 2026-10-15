@@ -82,7 +82,9 @@ public class MatchAssessmentTest {
         Person unknown = new PersonBuilder().build();
         Map<DatingAttribute, String> criteria = Map.of(DatingAttribute.SMOKING, "yes",
                 DatingAttribute.RELIGION, "No religion", DatingAttribute.RELATIONSHIP_GOAL, "unsure");
-        MatchAssessment assessment = assess(criteria, criteria, unknown);
+        Map<DatingAttribute, String> exclusions = Map.of(DatingAttribute.SMOKING, "no",
+                DatingAttribute.RELIGION, "Buddhism", DatingAttribute.RELATIONSHIP_GOAL, "short");
+        MatchAssessment assessment = assess(criteria, exclusions, unknown);
         assertEquals(INSUFFICIENT_INFORMATION, assessment.getOutcome());
         assertEquals(6, assessment.getFirstComparisons().size());
         assessment.getFirstComparisons().forEach(result -> assertEquals(UNKNOWN, result.status()));
