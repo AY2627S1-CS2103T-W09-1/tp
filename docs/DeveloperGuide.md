@@ -184,7 +184,8 @@ An empty stored string also means unspecified. Other invalid stored values are r
 The person card and command feedback display the status, including `Not specified` for missing information.
 
 This increment supplies personal-characteristic data for later filtering and matching work.
-It does not yet implement smoking preferences, dealbreakers, matching, or a command to clear a recorded status.
+Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
+Clearing a recorded smoking status is not supported.
 ### Application data sandbox
 
 `AppPaths` derives the packaged application's home folder from its JAR code source,
@@ -208,7 +209,7 @@ whitespace, collapses repeated internal whitespace, and compares names without r
 Each valid input is stored and displayed using the category's canonical spelling: for example,
 `r/jAiNiSm` becomes `Jainism`. Other spellings (such as a misspelling or a different apostrophe)
 and an `Other` category are not accepted. A finite list makes values directly comparable for
-future search and matching without inventing a meaning for arbitrary free text.
+search and matching without inventing a meaning for arbitrary free text.
 
 `AddCommandParser` and `EditCommandParser` first use the shared `DatingCriteriaParser`
 to extract at most one non-nested `{...}` preference environment and one non-nested
@@ -216,7 +217,7 @@ to extract at most one non-nested `{...}` preference environment and one non-nes
 client's own fields. Thus outer `r/` records own religion, `{r/Buddhism}` records a soft
 partner preference for Buddhism, and `<r/Islam>` records Islam as an excluded partner
 religion: the partner **must not have** it. Exclusion is not a requirement to have that
-religion. These commands record criteria; no compatibility evaluator is implemented.
+religion. These commands record criteria; [pairwise matching](#pairwise-matching) evaluates them.
 
 The own religion is optional in `Person`; absent means **unknown**, not the explicit
 `No religion` category. `add` rejects a blank outer `r/`; `edit` supports clearing only
@@ -228,15 +229,15 @@ environments and nested or unbalanced delimiters are rejected.
 `DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
 the own field. `Person` holds an immutable `DatingCriteria` with separate preference
 and dealbreaker maps indexed by `DatingAttribute`. The resulting criteria must not
-prefer and exclude the same normalized religion, including when an edit replaces only
+prefer and exclude the same normalized religion, including when an edit updates only
 one bucket and retains the other. The own religion is independent: it may equal or differ
 from either partner criterion. A failed add or edit leaves stored records unchanged.
 
 `DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an
 explicitly empty one. `EditPersonDescriptor` carries these optional bucket updates;
-`EditCommand` preserves an omitted bucket but replaces a supplied bucket in full.
-For example, `{r/Buddhism}` removes any previous age, smoking or relationship-goal
-preferences; it is not a per-attribute merge. `{}` clears all preferences and `<>`
+`EditCommand` preserves an omitted bucket and merges a non-empty update by attribute.
+For example, `{r/Buddhism}` changes the preferred religion while preserving age, smoking
+and relationship-goal preferences. `{}` clears all preferences and `<>`
 clears all exclusions/dealbreakers, without changing the own religion or the other bucket.
 Unrelated person fields are preserved unless separately supplied in the edit.
 
@@ -259,9 +260,9 @@ omitted on the next save, not migrated into the new maps. Valid own religion and
 attributes survive this transition. All persistence continues through the existing
 JAR-home-confined storage; religion criteria introduce no new files or OS configuration.
 
-`PersonCard` shows the client's own religion. `find r/RELIGION` compares only that own
-field, not either partner-criteria map. Criteria-environment searching and compatibility
-evaluation remain outside this increment.
+`PersonCard` shows the client's own religion and recorded partner criteria. `find r/RELIGION` compares only that own
+field, not either partner-criteria map. Criteria-environment searching is not supported. Use `match` for
+compatibility evaluation.
 
 ### Recording relationship goals
 
@@ -285,8 +286,56 @@ or null fields in older JSON files as unknown. Other invalid stored values are r
 existing storage-error path. The person card and command feedback display the goal, including
 `Not specified` for missing information.
 
-This increment supplies personal-characteristic data for later filtering and matching work.
-It does not yet implement relationship-goal preferences, dealbreakers, searching, or matching.
+`find rg/GOAL` searches by relationship goal. `FindCommandParser` treats `rg/` as one more search
+mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
+combines modes, mixes a prefix with name keywords, or repeats `rg/`. The value is parsed with
+`ParserUtil#parseRelationshipGoal`, so search accepts exactly the keywords and full names that `add`
+and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal equals the parsed goal,
+so clients with an unknown goal are never returned. A single goal is accepted rather than a
+comma-separated list, because some full goal names contain commas.
+
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
+
+### Pairwise matching
+
+`MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
+`MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
+`MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
+smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
+other attributes compare canonical values. Gender is not a supported dating criterion.
+
+Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
+when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.
+Any known violation makes the pair incompatible, even if another comparison is unknown. Otherwise, an unknown
+comparison or no criteria on either client gives insufficient information. All other pairs are compatible with
+recorded dealbreakers, including pairs with unmet preferences.
+
+The command formats both directions into the existing `CommandResult` display. It does not change model data,
+the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
+save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
+
+Tests cover parsing and dispatch, comparison rules and missing values, filtered indexes, reloads, and unchanged
+records and saved data. Run `./gradlew test --tests '*Match*'` for the matching tests.
+
+### Finding compatible clients
+
+`find match/INDEX` lists the clients compatible with the client at `INDEX` in the displayed list.
+`FindCommandParser` treats `match/` as another exclusive search mode and returns a `FindMatchCommand`.
+It is a separate command because the index must be resolved against the displayed list when the
+command runs, which the parser cannot do.
+
+`FindMatchCommand` reuses `MatchAssessment` (see [Pairwise matching](#pairwise-matching)) so that it
+never disagrees with `match`. For every other client in the address book, it builds one
+`MatchAssessment` with the target. Clients whose outcome is `INCOMPATIBLE` are hidden; clients with
+unknown details stay listed. Each remaining client is scored by the number of preference comparisons
+with status `MET` in both directions, and the list is sorted by score, highest first. Scores are
+computed once before sorting, and ties keep insertion order because the sort is stable.
+
+To support sorting, `ModelManager` wraps its `FilteredList` in a `SortedList`, and
+`getFilteredPersonList()` returns the sorted view. Every index-based command therefore uses the order
+the user sees. `Model#updateFilteredPersonList(Predicate, Comparator)` sets both the filter and the
+sort order. The one-argument `updateFilteredPersonList(Predicate)` clears the sort order, so `list`
+and other searches return to insertion order without any changes.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -493,7 +542,7 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
 **Extensions**
 
 * 1a. An index is invalid, missing, repeated, or outside the displayed list.
-    * 1a1. CupidMaxxing explains the problem and leaves the previous comparison and list unchanged.
+    * 1a1. CupidMaxxing shows an error in the command-result area and leaves client records and the list unchanged.
 
       Use case ends.
 * 2a. At least one dealbreaker is violated.
@@ -502,6 +551,11 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
       Use case resumes at step 4.
 * 2b. No known dealbreaker is violated, but required information is missing.
     * 2b1. CupidMaxxing reports insufficient information rather than claiming compatibility.
+
+      Use case resumes at step 4.
+
+* 2c. Neither client has recorded criteria.
+    * 2c1. CupidMaxxing reports insufficient information.
 
       Use case resumes at step 4.
 
@@ -598,13 +652,13 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
    Expected: The first clears only own religion to unknown; the second restores it.
    Preferences and exclusions remain unchanged throughout.
 5. Run `edit 1 {r/ Baha'i   Faith }`.<br>
-   Expected: Preferences become only `religion: Baha'i Faith`; the former age preference
-   is removed. Islam remains excluded, and own religion stays Jainism. Run
+   Expected: The preferred religion becomes Baha'i Faith; the existing age preference
+   remains 25. Islam remains excluded, and own religion stays Jainism. Run
    `edit 1 <r/ Christianity >` after finding the client again.<br>
-   Expected: Only the exclusion bucket is replaced, with canonical Christianity;
+   Expected: The excluded religion is updated to canonical Christianity;
    the Baha'i Faith preference is preserved.
 6. Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
-   Expected: Both buckets are replaced with the specified contents. Then try
+   Expected: The supplied entries are updated in each bucket; other criteria are preserved. Then try
    `edit 1 {r/ iSlAm }`.<br>
    Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
    Neither the existing preference map nor any other field changes. Also try
@@ -655,8 +709,7 @@ values fail during parsing, before the displayed list or stored records can chan
 Unknown religion never matches, including a request for the explicit `No religion` category.
 `FindCommand` updates the full address book's filtered view, so a previous shortlist does not
 restrict the next search. The existing result-count feedback and zero-result behavior apply.
-This search does not inspect partner preferences or exclusions. Criteria-environment
-searching, combined-trait OR/AND search and compatibility assessment are not implemented.
+No partner preferences, combined-trait OR/AND search or compatibility assessment is added.
 
 Manual checks (use distinct test names):
 
@@ -794,6 +847,37 @@ testers are expected to do more *exploratory* testing.
 
    1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/short rg/life`.<br>
       Expected: The command is rejected because `rg/` is repeated. No contact is added.
+
+1. Finding clients by relationship goal
+
+   1. Ensure Rae has `rg/long` and another client has a different or no goal, then enter `find rg/long`.<br>
+      Expected: Rae is listed and clients with other or unspecified goals are not. The status shows the number listed.
+
+   1. Enter `find rg/Long-term relationship`.<br>
+      Expected: The same clients are listed as for `find rg/long`.
+
+   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find Rae rg/long` in turn.<br>
+      Expected: Each command is rejected with an error and the displayed list is unchanged.
+
+### Finding clients by smoking status
+
+The `FindCommandParser` reuses `ParserUtil.parseSmokingStatus` to validate a single `s/yes` or `s/no`
+criterion. `SmokingStatusMatchesPredicate` compares only the client's recorded smoking status.
+It rejects an unspecified search criterion, and unspecified client statuses match neither value.
+The existing `FindCommand` filters the full address book without changing stored records.
+
+Manual checks (use a separate test data set):
+
+1. Add three clients with distinct names: one with `s/yes`, one with `s/no`, and one with no `s/`.
+   Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
+2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
+   even though the previous search hid that client. Check that the displayed count is correct.
+3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find Alice s/yes`.
+   Each should report an error and preserve the previous results and records.
+4. Run `list` to restore all three clients. Restart the application and repeat the searches;
+   the results should remain the same. With no clients of the searched status, expect zero matches.
+5. After `find s/no`, run `edit 1 s/yes` or `delete 1` on disposable test data.
+   Confirm that it targets the first displayed client, not the first client in the full book.
 
 ### Saving data
 

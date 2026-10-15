@@ -1,0 +1,108 @@
+package seedu.address.model.person;
+
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+/**
+ * Compares two clients' saved criteria in both directions without modifying either client.
+ * Dealbreakers describe excluded values; a met dealbreaker means the exclusion is respected.
+ */
+public final class MatchAssessment {
+    private final List<Comparison> firstComparisons;
+    private final List<Comparison> secondComparisons;
+
+    /**
+     * Assesses each client's criteria against the other client's own attributes.
+     */
+    public MatchAssessment(Person first, Person second) {
+        requireAllNonNull(first, second);
+        firstComparisons = compare(first, second);
+        secondComparisons = compare(second, first);
+    }
+
+    public List<Comparison> getFirstComparisons() {
+        return firstComparisons;
+    }
+
+    public List<Comparison> getSecondComparisons() {
+        return secondComparisons;
+    }
+
+    /**
+     * Gives known dealbreaker violations precedence over missing information.
+     * Unmet preferences alone do not make a pair incompatible.
+     */
+    public Outcome getOutcome() {
+        List<Comparison> comparisons = Stream.concat(firstComparisons.stream(), secondComparisons.stream()).toList();
+        if (comparisons.stream().anyMatch(result -> result.isDealbreaker() && result.status() == Status.UNMET)) {
+            return Outcome.INCOMPATIBLE;
+        }
+        if (comparisons.isEmpty() || comparisons.stream().anyMatch(result -> result.status() == Status.UNKNOWN)) {
+            return Outcome.INSUFFICIENT_INFORMATION;
+        }
+        return Outcome.COMPATIBLE;
+    }
+
+    private static List<Comparison> compare(Person owner, Person candidate) {
+        List<Comparison> comparisons = new ArrayList<>();
+        addComparisons(comparisons, owner.getDatingCriteria().getPreferences(), candidate, false);
+        addComparisons(comparisons, owner.getDatingCriteria().getDealbreakers(), candidate, true);
+        return List.copyOf(comparisons);
+    }
+
+    private static void addComparisons(List<Comparison> comparisons, Map<DatingAttribute, String> criteria,
+            Person candidate, boolean isDealbreaker) {
+        criteria.forEach((attribute, criterion) -> {
+            Optional<String> actual = getActualValue(candidate, attribute);
+            Status status = actual.map(value -> matches(candidate, attribute, criterion, value) != isDealbreaker
+                    ? Status.MET : Status.UNMET).orElse(Status.UNKNOWN);
+            comparisons.add(new Comparison(attribute, criterion, actual, isDealbreaker, status));
+        });
+    }
+
+    private static Optional<String> getActualValue(Person person, DatingAttribute attribute) {
+        return switch (attribute) {
+            case AGE -> Optional.of(Integer.toString(person.getAge().value));
+            case SMOKING -> person.getSmokingStatus().equals(SmokingStatus.UNSPECIFIED)
+                    ? Optional.empty() : Optional.of(person.getSmokingStatus().value);
+            case RELIGION -> person.getReligion().map(Religion::toString);
+            case RELATIONSHIP_GOAL -> person.getRelationshipGoal().map(RelationshipGoal::toString);
+        };
+    }
+
+    private static boolean matches(Person candidate, DatingAttribute attribute, String criterion, String actual) {
+        if (attribute == DatingAttribute.AGE) {
+            String[] bounds = criterion.split("-");
+            int lower = Integer.parseInt(bounds[0]);
+            int upper = bounds.length == 1 ? lower : Integer.parseInt(bounds[1]);
+            return new AgeMatchesPredicate(lower, upper).test(candidate);
+        }
+        return criterion.equals(actual);
+    }
+
+    /**
+     * Whether a preference is satisfied or a dealbreaker exclusion is respected.
+     */
+    public enum Status {
+        MET, UNMET, UNKNOWN
+    }
+
+    /**
+     * The overall assessment based only on recorded criteria.
+     */
+    public enum Outcome {
+        COMPATIBLE, INCOMPATIBLE, INSUFFICIENT_INFORMATION
+    }
+
+    /**
+     * One criterion and the candidate's actual value, absent when it has not been recorded.
+     */
+    public record Comparison(DatingAttribute attribute, String criterion, Optional<String> actual,
+                             boolean isDealbreaker, Status status) {
+    }
+}

@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
 import java.util.Set;
@@ -11,13 +12,18 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.FindMatchCommand;
 import seedu.address.model.person.Age;
 import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.RelationshipGoal;
+import seedu.address.model.person.RelationshipGoalMatchesPredicate;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.ReligionMatchesPredicate;
+import seedu.address.model.person.SmokingStatus;
+import seedu.address.model.person.SmokingStatusMatchesPredicate;
 
 public class FindCommandParserTest {
 
@@ -127,5 +133,90 @@ public class FindCommandParserTest {
         String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
         assertParseFailure(parser, "age/25-35 g/m", message);
         assertParseFailure(parser, "g/m age/25-35", message);
+    }
+
+    @Test
+    public void parse_relationshipGoal_returnsGoalSearch() {
+        FindCommand expected = new FindCommand(
+                new RelationshipGoalMatchesPredicate(RelationshipGoal.LONG_TERM_OPEN_TO_SHORT));
+        assertParseSuccess(parser, " rg/long-open ", expected);
+    }
+
+    @Test
+    public void parse_invalidRelationshipGoal_throwsParseException() {
+        assertParseFailure(parser, "rg/", RelationshipGoal.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "rg/forever", RelationshipGoal.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "rg/long rg/short",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_RELATIONSHIP_GOAL));
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"rg/long g/m", "r/Jainism rg/long", "Alice rg/long"}) {
+            assertParseFailure(parser, args, usage);
+        }
+    }
+
+    @Test
+    public void parse_smoking_normalizesCaseAndSurroundingWhitespace() {
+        for (String value : new String[] {"yes", "YES", "yEs", "no", "NO", "nO"}) {
+            assertParseSuccess(parser, " \t s/ \t" + value + " \t ",
+                    new FindCommand(new SmokingStatusMatchesPredicate(new SmokingStatus(value))));
+        }
+    }
+
+    @Test
+    public void parse_blankOrInvalidSmoking_throwsParseException() {
+        for (String value : new String[] {"", "   ", "unknown", "sometimes", "true", "0", "y", "n",
+            "yes,no", "yes no", "y es", "yeſ", "yes Alice", "yes x/no", "yes\ts/no"}) {
+            assertParseFailure(parser, "s/" + value, SmokingStatus.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_repeatedSmokingPrefix_throwsParseException() {
+        String message = Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_SMOKING);
+        for (String args : new String[] {"s/yes s/no", "s/yes s/yes", "s/ s/no", "s/no s/"}) {
+            assertParseFailure(parser, args, message);
+        }
+    }
+
+    @Test
+    public void parse_combinedSmokingSearchModes_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String criterion : new String[] {"age/25", "g/m", "r/Jainism", "rg/long"}) {
+            assertParseFailure(parser, "s/yes " + criterion, message);
+            assertParseFailure(parser, criterion + " s/no", message);
+        }
+        assertParseFailure(parser, "Alice s/yes", message);
+    }
+
+    @Test
+    public void parse_incorrectSmokingPrefixOrCriteriaEnvironment_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"S/yes", "s /yes", "smoking/yes", "{s/yes}", "<s/no>"}) {
+            assertParseFailure(parser, args, message);
+        }
+        assertParseFailure(parser, "s/yes {s/no}", SmokingStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/no <s/yes>", SmokingStatus.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_validMatchIndex_returnsFindMatchCommand() {
+        assertParseSuccess(parser, " match/1 ", new FindMatchCommand(INDEX_FIRST_PERSON));
+    }
+
+    @Test
+    public void parse_invalidMatchIndex_throwsParseException() {
+        for (String args : new String[] {"match/0", "match/-1", "match/abc", "match/"}) {
+            assertParseFailure(parser, args, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+        assertParseFailure(parser, "match/1 match/2",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_MATCH));
+    }
+
+    @Test
+    public void parse_matchCombinedWithOtherMode_throwsParseException() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"match/1 g/m", "age/25 match/1", "Alice match/1"}) {
+            assertParseFailure(parser, args, message);
+        }
     }
 }

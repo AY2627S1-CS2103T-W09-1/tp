@@ -85,18 +85,21 @@ public class ReligionCriteriaIntegrationTest {
     }
 
     @Test
-    public void edit_criteriaEnvironments_replacesOnlySuppliedBucketAndCanClear() throws Exception {
-        logic.execute(ADD_CLIENT + " {r/Buddhism age/25-35} <r/Islam>");
+    public void edit_criteriaEnvironments_updatesOnlySuppliedAttributesAndCanClear() throws Exception {
+        logic.execute(ADD_CLIENT + " {r/Buddhism age/25-35} <r/Islam s/yes>");
         Person original = first();
         logic.execute("edit 1 {r/Jainism}");
-        assertEquals(Map.of(DatingAttribute.RELIGION, "Jainism"), first().getDatingCriteria().getPreferences());
+        assertEquals(Map.of(DatingAttribute.RELIGION, "Jainism", DatingAttribute.AGE, "25-35"),
+                first().getDatingCriteria().getPreferences());
         assertEquals(original.getDatingCriteria().getDealbreakers(), first().getDatingCriteria().getDealbreakers());
         assertEquals(original.getReligion(), first().getReligion());
         logic.execute("edit 1 <r/No religion>");
-        assertEquals(Map.of(DatingAttribute.RELIGION, "No religion"), first().getDatingCriteria().getDealbreakers());
+        assertEquals(Map.of(DatingAttribute.RELIGION, "No religion", DatingAttribute.SMOKING, "yes"),
+                first().getDatingCriteria().getDealbreakers());
         logic.execute("edit 1 {}");
         assertTrue(first().getDatingCriteria().getPreferences().isEmpty());
-        assertEquals(Map.of(DatingAttribute.RELIGION, "No religion"), first().getDatingCriteria().getDealbreakers());
+        assertEquals(Map.of(DatingAttribute.RELIGION, "No religion", DatingAttribute.SMOKING, "yes"),
+                first().getDatingCriteria().getDealbreakers());
         logic.execute("edit 1 <>");
         assertEquals(DatingCriteria.EMPTY, first().getDatingCriteria());
         Person expected = new Person(original.getName(), original.getPhone(), original.getEmail(),
