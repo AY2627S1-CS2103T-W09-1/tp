@@ -16,6 +16,8 @@ import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.RelationshipGoal;
+import seedu.address.model.person.RelationshipGoalMatchesPredicate;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.ReligionMatchesPredicate;
 
@@ -127,5 +129,24 @@ public class FindCommandParserTest {
         String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
         assertParseFailure(parser, "age/25-35 g/m", message);
         assertParseFailure(parser, "g/m age/25-35", message);
+    }
+
+    @Test
+    public void parse_relationshipGoal_returnsGoalSearch() {
+        FindCommand expected = new FindCommand(
+                new RelationshipGoalMatchesPredicate(RelationshipGoal.LONG_TERM_OPEN_TO_SHORT));
+        assertParseSuccess(parser, " rg/long-open ", expected);
+    }
+
+    @Test
+    public void parse_invalidRelationshipGoal_throwsParseException() {
+        assertParseFailure(parser, "rg/", RelationshipGoal.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "rg/forever", RelationshipGoal.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "rg/long rg/short",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_RELATIONSHIP_GOAL));
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"rg/long g/m", "r/Jainism rg/long", "Alice rg/long"}) {
+            assertParseFailure(parser, args, usage);
+        }
     }
 }

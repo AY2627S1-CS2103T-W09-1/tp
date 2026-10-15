@@ -250,8 +250,15 @@ or null fields in older JSON files as unknown. Other invalid stored values are r
 existing storage-error path. The person card and command feedback display the goal, including
 `Not specified` for missing information.
 
-This increment supplies personal-characteristic data for later filtering and matching work.
-It does not yet implement relationship-goal preferences, dealbreakers, searching, or matching.
+`find rg/GOAL` searches by relationship goal. `FindCommandParser` treats `rg/` as one more search
+mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
+combines modes, mixes a prefix with name keywords, or repeats `rg/`. The value is parsed with
+`ParserUtil#parseRelationshipGoal`, so search accepts exactly the keywords and full names that `add`
+and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal equals the parsed goal,
+so clients with an unknown goal are never returned. A single goal is accepted rather than a
+comma-separated list, because some full goal names contain commas.
+
+Relationship-goal preferences, dealbreakers and matching are not implemented yet.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -685,6 +692,17 @@ testers are expected to do more *exploratory* testing.
 
    1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/short rg/life`.<br>
       Expected: The command is rejected because `rg/` is repeated. No contact is added.
+
+1. Finding clients by relationship goal
+
+   1. Ensure Rae has `rg/long` and another client has a different or no goal, then enter `find rg/long`.<br>
+      Expected: Rae is listed and clients with other or unspecified goals are not. The status shows the number listed.
+
+   1. Enter `find rg/Long-term relationship`.<br>
+      Expected: The same clients are listed as for `find rg/long`.
+
+   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find Rae rg/long` in turn.<br>
+      Expected: Each command is rejected with an error and the displayed list is unchanged.
 
 ### Saving data
 
