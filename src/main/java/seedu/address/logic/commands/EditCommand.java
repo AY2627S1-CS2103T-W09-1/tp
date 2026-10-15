@@ -14,6 +14,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -139,12 +140,10 @@ public class EditCommand extends Command {
         RelationshipGoal updatedRelationshipGoal = editPersonDescriptor.isRelationshipGoalEdited()
                 ? editPersonDescriptor.getRelationshipGoal().orElse(null)
                 : personToEdit.getRelationshipGoal().orElse(null);
-        Map<DatingAttribute, String> updatedPreferences = editPersonDescriptor.isPreferencesEdited()
-                ? editPersonDescriptor.getPreferences().orElseThrow()
-                : personToEdit.getDatingCriteria().getPreferences();
-        Map<DatingAttribute, String> updatedDealbreakers = editPersonDescriptor.isDealbreakersEdited()
-                ? editPersonDescriptor.getDealbreakers().orElseThrow()
-                : personToEdit.getDatingCriteria().getDealbreakers();
+        Map<DatingAttribute, String> updatedPreferences = mergeCriteria(
+                personToEdit.getDatingCriteria().getPreferences(), editPersonDescriptor.getPreferences());
+        Map<DatingAttribute, String> updatedDealbreakers = mergeCriteria(
+                personToEdit.getDatingCriteria().getDealbreakers(), editPersonDescriptor.getDealbreakers());
         DatingCriteria updatedDatingCriteria = new DatingCriteria(updatedPreferences, updatedDealbreakers);
 
         Religion updatedReligion = editPersonDescriptor.isReligionEdited()
@@ -152,6 +151,16 @@ public class EditCommand extends Command {
 
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
                 updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal, updatedDatingCriteria);
+    }
+
+    /**
+     * Applies supplied criteria to the existing criteria without removing attributes that were not supplied.
+     */
+    private static Map<DatingAttribute, String> mergeCriteria(Map<DatingAttribute, String> existingCriteria,
+                                                               Optional<Map<DatingAttribute, String>> editedCriteria) {
+        Map<DatingAttribute, String> mergedCriteria = new HashMap<>(existingCriteria);
+        editedCriteria.ifPresent(mergedCriteria::putAll);
+        return mergedCriteria;
     }
 
     @Override
@@ -354,13 +363,13 @@ public class EditCommand extends Command {
             return relationshipGoalEdited;
         }
 
-        /** Replaces every recorded partner preference. */
+        /** Records partner preferences to add or update. */
         public void setPreferences(Map<DatingAttribute, String> preferences) {
             this.preferences = Map.copyOf(requireNonNull(preferences));
             preferencesEdited = true;
         }
 
-        /** Returns replacement preferences when the preference environment was supplied. */
+        /** Returns preferences to add or update when the preference environment was supplied. */
         public Optional<Map<DatingAttribute, String>> getPreferences() {
             return Optional.ofNullable(preferences);
         }
@@ -370,13 +379,13 @@ public class EditCommand extends Command {
             return preferencesEdited;
         }
 
-        /** Replaces every recorded partner dealbreaker. */
+        /** Records partner dealbreakers to add or update. */
         public void setDealbreakers(Map<DatingAttribute, String> dealbreakers) {
             this.dealbreakers = Map.copyOf(requireNonNull(dealbreakers));
             dealbreakersEdited = true;
         }
 
-        /** Returns replacement dealbreakers when the dealbreaker environment was supplied. */
+        /** Returns dealbreakers to add or update when the dealbreaker environment was supplied. */
         public Optional<Map<DatingAttribute, String>> getDealbreakers() {
             return Optional.ofNullable(dealbreakers);
         }
