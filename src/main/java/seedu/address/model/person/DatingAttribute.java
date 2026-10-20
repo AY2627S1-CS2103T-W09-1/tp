@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 /** A personal attribute that may appear in a partner preference or dealbreaker. */
 public enum DatingAttribute {
     AGE("age", "Age"),
+    GENDER("gender", "Gender"),
     SMOKING("smoking", "Smoking"),
     RELIGION("religion", "Religion"),
     RELATIONSHIP_GOAL("relationshipGoal", "Relationship goal");
@@ -50,6 +51,7 @@ public enum DatingAttribute {
         }
         return switch (this) {
             case AGE -> normalizeAgeCriterion(value);
+            case GENDER -> Gender.parseValue(value).getValue();
             case SMOKING -> new SmokingStatus(value.trim()).value;
             case RELIGION -> new Religion(value).toString();
             case RELATIONSHIP_GOAL -> RelationshipGoal.fromString(value).toString();
