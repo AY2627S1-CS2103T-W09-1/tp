@@ -72,6 +72,55 @@ public class AppPathsTest {
     }
 
     /**
+     * Checks that ordinary runtime folders are created and existing cache files are preserved.
+     */
+    @Test
+    public void prepareRuntimeFolder_regularFolders_preservesContents() throws IOException {
+        Path home = Files.createDirectory(temporaryFolder.resolve("home")).toRealPath();
+        for (String name : new String[] {".javafx", ".tmp"}) {
+            Path folder = AppPaths.prepareRuntimeFolder(home, name);
+            assertEquals(home.resolve(name), folder);
+            Path existing = Files.writeString(Files.createDirectory(folder.resolve("nested")).resolve("cache"),
+                    "unchanged");
+            assertEquals(folder, AppPaths.prepareRuntimeFolder(home, name));
+            assertEquals("unchanged", Files.readString(existing));
+        }
+    }
+
+    /**
+     * Checks that an inward runtime-folder link cannot hide an outward file link.
+     */
+    @Test
+    public void prepareRuntimeFolder_linkedRoot_throwsIoException() throws IOException {
+        Path home = Files.createDirectory(temporaryFolder.resolve("home")).toRealPath();
+        Path outside = Files.writeString(temporaryFolder.resolve("outside"), "unchanged");
+        for (String name : new String[] {".javafx", ".tmp"}) {
+            Path target = Files.createDirectory(home.resolve("target" + name));
+            createSymbolicLink(target.resolve("cache"), outside);
+            createSymbolicLink(home.resolve(name), target);
+            assertThrows(IOException.class, () -> AppPaths.prepareRuntimeFolder(home, name));
+            assertEquals("unchanged", Files.readString(outside));
+        }
+    }
+
+    /**
+     * Checks that a nested inward directory link cannot conceal unchecked cache descendants.
+     */
+    @Test
+    public void prepareRuntimeFolder_linkedDescendant_throwsIoException() throws IOException {
+        Path home = Files.createDirectory(temporaryFolder.resolve("home")).toRealPath();
+        Path outside = Files.writeString(temporaryFolder.resolve("outside"), "unchanged");
+        for (String name : new String[] {".javafx", ".tmp"}) {
+            Path folder = Files.createDirectory(home.resolve(name));
+            Path target = Files.createDirectory(home.resolve("target" + name));
+            createSymbolicLink(target.resolve("cache"), outside);
+            createSymbolicLink(folder.resolve("nested"), target);
+            assertThrows(IOException.class, () -> AppPaths.prepareRuntimeFolder(home, name));
+            assertEquals("unchanged", Files.readString(outside));
+        }
+    }
+
+    /**
      * Creates a test link, skipping link-specific tests on systems without link privileges.
      */
     private static void createSymbolicLink(Path link, Path target) {

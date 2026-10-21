@@ -27,7 +27,9 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
     public static final String MESSAGE_REMOVED_RELIGION_CRITERIA =
-            "Partner religion criteria (rp/, rr/, rx/) are no longer supported. Use r/ for the client's own religion.";
+            "Partner religion prefixes (rp/, rr/, rx/) are no longer supported. "
+            + "Use outer r/ for the client's own religion, {r/RELIGION} for a partner preference, "
+            + "or <r/RELIGION> for an excluded partner religion (must not have).";
 
     /**
      * Rejects removed partner-criteria prefixes before they can become part of another field's value.

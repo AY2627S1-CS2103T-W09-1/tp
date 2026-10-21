@@ -80,7 +80,7 @@ Adds a client to CupidMaxxing with contact details and age. Gender, smoking stat
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{r/PREFERRED_RELIGION}] [<r/EXCLUDED_RELIGION>]`
 
 * `AGE` is compulsory and must be an integer from 18 to 99 (inclusive).
-* `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one `g/` prefix are allowed per command.
+* `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one outer `g/` prefix are allowed per command. Each preference or dealbreaker block may also contain one separate gender criterion.
 * `rg/RELATIONSHIP_GOAL` is the client's own relationship goal. See [Relationship goal field](#relationship-goal-field) below.
 
 The optional `s/SMOKING` field records the client's **own smoking habit**:
@@ -128,7 +128,7 @@ use the listed spelling, although its letter case can vary. There is no free-tex
 * `find r/RELIGION` searches only the client's own religion. Searching criteria environments is not implemented. Use [match](#matching-two-clients-match) to assess recorded preferences and exclusions; recording an exclusion alone does not run a comparison.
 
 Example:
-* `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>` Adds a 25-year-old client with the own religion, preference and exclusion described above. The required contact details and age are outside the environments.
+* `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>` Adds a 25-year-old client with the client's own religion, preference and exclusion described above. The required contact details and age are outside the environments.
 
 #### Relationship goal field
 
@@ -171,7 +171,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
-* Use outer `r/RELIGION` to update the client's own religion. Empty outer `r/` clears only the own religion; omitting it preserves it. Partner criteria and other contact details remain unchanged unless separately edited.
+* Use outer `r/RELIGION` to update the client's own religion. Empty outer `r/` clears only the client's own religion; omitting it preserves it. Partner criteria and other contact details remain unchanged unless separately edited.
 * Use `{r/RELIGION}` to set the preferred partner religion and `<r/RELIGION>` to set an excluded partner religion. The same validation rules as [Religion fields](#religion-fields) apply, including checking the resulting record for a religion that is both preferred and excluded.
 * **A non-empty environment adds or updates only the supplied criteria.** For example, `{r/Buddhism}` changes the preferred religion while preserving existing age, smoking and relationship-goal preferences. The same rule applies to exclusions/dealbreakers in `<...>`.
 * Omit an environment to preserve its entire bucket. Use `{}` to clear all preferences, or `<>` to clear all exclusions/dealbreakers. These do not clear the client's own religion. `{r/}` and `<r/>` are invalid, not clearing commands. A rejected edit leaves the whole record unchanged.
@@ -250,8 +250,8 @@ Set partner criteria with `add` or `edit`: `{...}` contains preferences and `<..
 For example, `edit 1 {age/25-35 rg/long} <s/yes>` prefers ages 25–35 and a long-term relationship,
 and excludes smokers. Ordinary fields outside the blocks describe the client's own attributes.
 
-Each block is optional and may appear once. Inside a block, use each of `age/`, `s/`, `r/`, or `rg/` at most once;
-`g/` is not supported. Age accepts an exact age or inclusive range, with bounds from 18 to 99.
+Each block is optional and may appear once. Inside a block, use each of `age/`, `g/`, `s/`, `r/`, or `rg/` at most once.
+Gender accepts one value: `g/m`, `g/w`, or `g/nb`. Age accepts an exact age or inclusive range, with bounds from 18 to 99.
 Other criteria use the same values as the client's own fields and compare exact normalized categories.
 Different relationship-goal categories are not treated as equivalent.
 When editing, a non-empty block adds or updates only its supplied criteria; other criteria are preserved.
@@ -307,6 +307,14 @@ logs in `addressbook.log.*`, all inside that home folder. JavaFX runtime caches 
 temporary files also stay there, in `.javafx/` and `.tmp/`. The app does not change
 OS-level settings. Paths and symbolic links leading outside the home folder are
 not supported for application data; move the data itself into the home folder instead.
+
+The private `.javafx/` and `.tmp/` runtime folders must be ordinary folders, with no
+symbolic links at either folder's root or anywhere inside, even links pointing back
+inside the home folder. This prevents inward links from hiding outward links in their
+targets. An unsafe or unwritable runtime layout stops startup before JavaFX starts;
+the app does not automatically delete or rewrite existing caches or client data.
+In-home symbolic links for normal data and preferences retain their existing behavior;
+the stricter no-symbolic-link rule applies only to these two runtime folders.
 
 ### Editing the data file
 
