@@ -4,14 +4,18 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.group.ClientGroup;
+import seedu.address.model.group.GroupName;
 import seedu.address.model.person.Person;
 
 /**
@@ -24,6 +28,7 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
+    private GroupName displayedGroup;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -37,6 +42,11 @@ public class ModelManager implements Model {
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
         sortedPersons = new SortedList<>(filteredPersons);
+        this.addressBook.getGroupList().addListener((ListChangeListener<ClientGroup>) change -> {
+            if (displayedGroup != null) {
+                applyGroupFilter();
+            }
+        });
     }
 
     public ModelManager() {
@@ -97,6 +107,29 @@ public class ModelManager implements Model {
         addressBook.setPerson(target, editedPerson);
     }
 
+    @Override
+    public void setGroups(List<ClientGroup> groups) {
+        addressBook.setGroups(groups);
+    }
+
+    @Override
+    public void showGroup(GroupName name) {
+        requireNonNull(name);
+        if (addressBook.getGroupList().stream().noneMatch(group -> group.getName().equals(name))) {
+            throw new IllegalArgumentException("Unknown group: " + name);
+        }
+        displayedGroup = name;
+        applyGroupFilter();
+    }
+
+    private void applyGroupFilter() {
+        List<Person> members = addressBook.getGroupList().stream()
+                .filter(group -> group.getName().equals(displayedGroup))
+                .flatMap(group -> group.getMembers().stream()).toList();
+        filteredPersons.setPredicate(members::contains);
+        sortedPersons.setComparator(null);
+    }
+
     //=========== Filtered Person List Accessors =============================================================
 
     /**
@@ -111,6 +144,7 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
+        displayedGroup = null;
         filteredPersons.setPredicate(predicate);
         sortedPersons.setComparator(null);
     }
@@ -118,6 +152,7 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate, Comparator<Person> comparator) {
         requireAllNonNull(predicate, comparator);
+        displayedGroup = null;
         filteredPersons.setPredicate(predicate);
         sortedPersons.setComparator(comparator);
     }
