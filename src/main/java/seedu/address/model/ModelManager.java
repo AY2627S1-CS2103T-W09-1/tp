@@ -111,14 +111,15 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
-        filteredPersons.setPredicate(predicate);
+        // The previous comparator may not support persons admitted by the new filter.
         sortedPersons.setComparator(null);
+        filteredPersons.setPredicate(predicate);
     }
 
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate, Comparator<Person> comparator) {
         requireAllNonNull(predicate, comparator);
-        filteredPersons.setPredicate(predicate);
+        updateFilteredPersonList(predicate);
         sortedPersons.setComparator(comparator);
     }
 
