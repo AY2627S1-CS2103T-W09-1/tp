@@ -301,8 +301,9 @@ Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matchi
 `MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
 `MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
-smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender is not a supported dating criterion.
+gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
+other attributes compare canonical values. Gender criteria accept a single `m`, `w`, or `nb` value in either
+partner-criteria environment; empty values and gender lists are rejected.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
 when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.
@@ -633,7 +634,8 @@ Use an isolated writable JAR home folder with test data, not real client records
 JSON inspection and fixtures below are confined to that folder's `data/addressbook.json`.
 Back up the test file before changing it, close the app before editing JSON, and restore
 the valid backup between invalid-file tests. In steps using `edit 1`, first run
-`find Criteria` and check that only the named test client is displayed.
+`find Criteria` and check that only the named test client is displayed. Repeat this before each edit,
+because a successful edit restores the full list and changes the displayed indexes.
 
 1. Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no rg/long t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
    Expected: One client is added with own religion Jainism, preference religion Buddhism
@@ -660,8 +662,8 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
    Expected: The excluded religion is updated to canonical Christianity;
    the Baha'i Faith preference is preserved.
 6. Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
-   Expected: The supplied entries are updated in each bucket; other criteria are preserved. Then try
-   `edit 1 {r/ iSlAm }`.<br>
+   Expected: The supplied entries are updated in each bucket; other criteria are preserved.
+   Run `find Criteria` again, then try `edit 1 {r/ iSlAm }`.<br>
    Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
    Neither the existing preference map nor any other field changes. Also try
    `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
@@ -784,12 +786,13 @@ testers are expected to do more *exploratory* testing.
    1. Enter `find Nia`, then `edit 1 r/Christianity`.<br>
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
 
-   1. Enter each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
-      Expected: Each command is rejected because partner religion criteria are no longer
-      supported. Repeat with empty `rp/`, `rr/`, and `rx/`; these are also rejected.
+   1. Enter `find Nia`, then each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
+      Expected: Each command is rejected because the obsolete `rp/`, `rr/`, and `rx/` prefixes
+      are no longer supported. Partner religion criteria use `{r/RELIGION}` and `<r/RELIGION>`.
+      Repeat with empty `rp/`, `rr/`, and `rx/`; these are also rejected.
       The contact's religion and other details remain unchanged.
 
-   1. Enter `edit 1 r/`, then close and relaunch the app and enter `find Nia`.<br>
+   1. Enter `find Nia`, then `edit 1 r/`, then close and relaunch the app and enter `find Nia`.<br>
       Expected: Religion remains unknown, not `No religion`; the other details are retained.
 
 1. Rejecting unsupported categories
@@ -833,7 +836,7 @@ testers are expected to do more *exploratory* testing.
    1. Enter `find Rae`, then `edit 1 rg/short-open`.<br>
       Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
 
-   1. Enter `edit 1 p/99999999`.<br>
+   1. Enter `find Rae`, then `edit 1 p/99999999`.<br>
       Expected: The phone number changes and the relationship goal is unchanged.
 
    1. Close and relaunch the app.<br>

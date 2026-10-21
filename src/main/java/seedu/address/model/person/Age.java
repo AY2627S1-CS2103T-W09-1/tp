@@ -3,9 +3,13 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
-/** Represents a person's age in the address book. */
+/**
+ * Represents a person's age in the address book.
+ */
 public class Age {
     public static final String MESSAGE_CONSTRAINTS = "Age must be an integer between 18 and 99.";
+    public static final String MESSAGE_INVALID_RANGE =
+            "The lower age bound cannot be greater than the upper age bound.";
     private static final String VALIDATION_REGEX = "\\d+";
     private static final int MINIMUM_AGE = 18;
     private static final int MAXIMUM_AGE = 99;
@@ -34,6 +38,26 @@ public class Age {
     /** Returns true if {@code age} is within the supported range. */
     public static boolean isValidAge(int age) {
         return age >= MINIMUM_AGE && age <= MAXIMUM_AGE;
+    }
+
+    /**
+     * Validates and canonicalizes an exact age or inclusive age range.
+     *
+     * @throws IllegalArgumentException If either bound is invalid or the lower bound exceeds the upper bound.
+     */
+    public static String normalizeRange(String value) {
+        requireNonNull(value);
+        String[] bounds = value.trim().split("-", -1);
+        if (bounds.length > 2 || !isValidAge(bounds[0])
+                || (bounds.length == 2 && !isValidAge(bounds[1]))) {
+            throw new IllegalArgumentException(MESSAGE_CONSTRAINTS);
+        }
+        int lowerBound = Integer.parseInt(bounds[0]);
+        int upperBound = bounds.length == 2 ? Integer.parseInt(bounds[1]) : lowerBound;
+        if (lowerBound > upperBound) {
+            throw new IllegalArgumentException(MESSAGE_INVALID_RANGE);
+        }
+        return bounds.length == 1 ? Integer.toString(lowerBound) : lowerBound + "-" + upperBound;
     }
 
     @Override

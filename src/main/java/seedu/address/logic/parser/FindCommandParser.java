@@ -89,16 +89,14 @@ public class FindCommandParser implements Parser<Command> {
      * Parses an exact age or inclusive age range using the existing age search rules.
      */
     private FindCommand parseAgeSearch(String value) throws ParseException {
-        String[] bounds = value.trim().split("-", -1);
-        if (bounds.length > 2 || !Age.isValidAge(bounds[0])
-                || (bounds.length == 2 && !Age.isValidAge(bounds[1]))) {
-            throw new ParseException(Age.MESSAGE_CONSTRAINTS);
+        String[] bounds;
+        try {
+            bounds = Age.normalizeRange(value).split("-");
+        } catch (IllegalArgumentException exception) {
+            throw new ParseException(exception.getMessage(), exception);
         }
         int lowerBound = Integer.parseInt(bounds[0]);
         int upperBound = bounds.length == 2 ? Integer.parseInt(bounds[1]) : lowerBound;
-        if (lowerBound > upperBound) {
-            throw new ParseException("The lower age bound cannot be greater than the upper age bound.");
-        }
         return new FindCommand(new AgeMatchesPredicate(lowerBound, upperBound));
     }
 

@@ -180,20 +180,17 @@ public final class DatingCriteriaParser {
         DEALBREAKERS
     }
 
-    /** Parsed environments together with the ordinary command arguments. */
+    /**
+     * Parsed environments together with the ordinary command arguments.
+     */
     public record ParsedCriteria(String outsideArguments, Map<DatingAttribute, String> preferences,
-                                 Map<DatingAttribute, String> dealbreakers, boolean preferencesSupplied,
-                                 boolean dealbreakersSupplied) {
+            Map<DatingAttribute, String> dealbreakers, boolean preferencesSupplied,
+            boolean dealbreakersSupplied) {
         /** Makes defensive copies of the parsed preference and dealbreaker maps. */
         public ParsedCriteria {
             requireNonNull(outsideArguments);
             preferences = Map.copyOf(preferences);
             dealbreakers = Map.copyOf(dealbreakers);
-        }
-
-        /** Returns whether either criteria environment was supplied, including an empty one. */
-        public boolean hasCriteria() {
-            return preferencesSupplied || dealbreakersSupplied;
         }
     }
 }

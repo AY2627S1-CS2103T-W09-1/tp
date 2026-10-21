@@ -46,6 +46,8 @@ public class Messages {
                 .append(person.getEmail())
                 .append("; Address: ")
                 .append(person.getAddress())
+                .append("; Age: ")
+                .append(person.getAge())
                 .append("; Gender: ")
                 .append(person.getGender())
                 .append("; Smoking: ")

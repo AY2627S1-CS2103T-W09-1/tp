@@ -27,7 +27,7 @@ You can reach us at the email `e1525605@u.nus.edu`
 * Role: Developer
 * Responsibilities: UI
 
-### Satapathy Pulastya 
+### Satapathy Pulastya
 
 <img src="images/pulas2345.png" width="200px">
 

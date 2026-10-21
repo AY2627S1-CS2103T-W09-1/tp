@@ -77,7 +77,7 @@ public final class DatingCriteria {
      * @throws IllegalArgumentException If stored criteria are invalid or contradictory.
      */
     public static DatingCriteria fromStorage(Map<String, String> preferences,
-                                             Map<String, String> dealbreakers) {
+            Map<String, String> dealbreakers) {
         return new DatingCriteria(fromStorageMap(preferences), fromStorageMap(dealbreakers));
     }
 

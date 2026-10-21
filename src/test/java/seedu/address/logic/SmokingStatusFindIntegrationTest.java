@@ -23,7 +23,9 @@ import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
 
-/** Tests smoking searches through command parsing, filtering and file-backed application logic. */
+/**
+ * Tests smoking searches through command parsing, filtering and file-backed application logic.
+ */
 public class SmokingStatusFindIntegrationTest {
     @TempDir
     public Path temporaryFolder;
