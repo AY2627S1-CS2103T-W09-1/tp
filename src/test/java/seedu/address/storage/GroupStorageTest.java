@@ -74,7 +74,7 @@ public class GroupStorageTest {
     }
 
     @Test
-    public void save_withoutGroups_omitsGroupsField() throws Exception {
+    public void save_withoutGroups_preservesEmptyGroupsField() throws Exception {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(folder.resolve("book.json"));
         AddressBook book = new AddressBook();
         book.addPerson(ALICE);
@@ -82,7 +82,8 @@ public class GroupStorageTest {
         storage.saveAddressBook(book);
 
         JsonNode json = new ObjectMapper().readTree(Files.readString(storage.getAddressBookFilePath()));
-        assertTrue(json.get("groups") == null);
+        assertTrue(json.get("groups").isArray());
+        assertEquals(0, json.get("groups").size());
         assertEquals(book, storage.readAddressBook().orElseThrow());
     }
 
