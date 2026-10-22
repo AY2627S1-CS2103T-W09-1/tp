@@ -4,7 +4,9 @@ import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
 
-/** Tests whether a person's age is within an inclusive range. */
+/**
+ * Tests whether a person's age is within an inclusive range.
+ */
 public class AgeMatchesPredicate implements Predicate<Person> {
     private final int lowerBound;
     private final int upperBound;

@@ -62,9 +62,10 @@ public class EditCommand extends Command {
             + "[" + PREFIX_AGE + "AGE] "
             + "[" + PREFIX_TAG + "TAG]... "
             + "[" + PREFIX_RELIGION + "RELIGION] "
-            + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL]\n"
+            + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL] [{CRITERIA}] [<CRITERIA>]\n"
             + "Gender: m, w, nb, or empty for unspecified.\n"
-            + "Partner religion: {r/RELIGION} prefers; <r/RELIGION> excludes (must not have).\n"
+            + "Partner criteria: {...} prefers; <...> excludes (must not have). "
+            + "Use age/, g/, s/, r/, or rg/ once per block, each with a value.\n"
             + "Supplied criteria add or update entries; {} or <> clears that entire set.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
@@ -159,7 +160,7 @@ public class EditCommand extends Command {
      * An explicitly empty environment clears all criteria of that type.
      */
     private static Map<DatingAttribute, String> mergeCriteria(Map<DatingAttribute, String> existingCriteria,
-                                                               Optional<Map<DatingAttribute, String>> editedCriteria) {
+            Optional<Map<DatingAttribute, String>> editedCriteria) {
         if (editedCriteria.filter(Map::isEmpty).isPresent()) {
             return Map.of();
         }
@@ -380,11 +381,6 @@ public class EditCommand extends Command {
             return Optional.ofNullable(preferences);
         }
 
-        /** Returns whether the preference environment was supplied, including an empty one. */
-        public boolean isPreferencesEdited() {
-            return preferencesEdited;
-        }
-
         /** Records partner dealbreakers to add or update. */
         public void setDealbreakers(Map<DatingAttribute, String> dealbreakers) {
             this.dealbreakers = Map.copyOf(requireNonNull(dealbreakers));
@@ -394,11 +390,6 @@ public class EditCommand extends Command {
         /** Returns dealbreakers to add or update when the dealbreaker environment was supplied. */
         public Optional<Map<DatingAttribute, String>> getDealbreakers() {
             return Optional.ofNullable(dealbreakers);
-        }
-
-        /** Returns whether the dealbreaker environment was supplied, including an empty one. */
-        public boolean isDealbreakersEdited() {
-            return dealbreakersEdited;
         }
 
         @Override

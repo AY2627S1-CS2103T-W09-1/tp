@@ -38,20 +38,52 @@ public class FindCommandParserTest {
     public void parse_validArgs_returnsFindCommand() {
         assertParseSuccess(parser, "age/18", new FindCommand(new AgeMatchesPredicate(18, 18)));
         assertParseSuccess(parser, " age/18-35 ", new FindCommand(new AgeMatchesPredicate(18, 35)));
+        assertParseSuccess(parser, "age/018-099", new FindCommand(new AgeMatchesPredicate(18, 99)));
     }
 
     @Test
     public void parse_invalidAge_throwsParseException() {
-        assertParseFailure(parser, "age/17", Age.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "age/100", Age.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "age/18-100", Age.MESSAGE_CONSTRAINTS);
+        for (String value : new String[] {"", "17", "100", "18-100", "18-", "-25", "18-25-30",
+            "18 -25", "18- 25", "twenty", "999999999999999999999"}) {
+            assertParseFailure(parser, "age/" + value, Age.MESSAGE_CONSTRAINTS);
+        }
         assertParseFailure(parser, "age/35-18", "The lower age bound cannot be greater than the upper age bound.");
     }
 
     @Test
-    public void parse_nameKeywords_returnsNameSearch() {
-        assertParseSuccess(parser, " Alice Bob ",
-                new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob"))));
+    public void parse_namePrefix_returnsNameSearch() {
+        FindCommand expected = new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob")));
+        assertParseSuccess(parser, "n/Alice Bob", expected);
+        assertParseSuccess(parser, " n/ \n Alice \t Bob  ", expected);
+    }
+
+    @Test
+    public void parse_bareNameKeywords_throwsParseException() {
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "Alice", usage);
+        assertParseFailure(parser, "Alice Bob", usage);
+        assertParseFailure(parser, "Alice n/Bob", usage);
+    }
+
+    @Test
+    public void parse_blankOrPrefixLikeNameKeywords_throwsParseException() {
+        assertParseFailure(parser, "n/", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
+        assertParseFailure(parser, "n/   ", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"n/Alice x/1", "N/Alice", "n /Alice", "name/Alice"}) {
+            assertParseFailure(parser, args, usage);
+        }
+    }
+
+    @Test
+    public void parse_repeatedOrCombinedNamePrefix_throwsParseException() {
+        assertParseFailure(parser, "n/Alice n/Bob",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NAME));
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String criterion : new String[] {"age/25", "g/m", "r/Jainism", "rg/long", "s/yes", "match/1"}) {
+            assertParseFailure(parser, "n/Alice " + criterion, usage);
+            assertParseFailure(parser, criterion + " n/Alice", usage);
+        }
     }
 
     @Test

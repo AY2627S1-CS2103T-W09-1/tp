@@ -209,6 +209,18 @@ Automated tests cover value validation/immutability, atomic failures, filtered a
 matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
 persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
 
+### Prefixed name search
+
+`FindCommandParser` tokenizes `n/` together with the other search prefixes (`age/`, `g/`, `r/`, `rg/`, `s/` and
+`match/`) and counts how many are present. Exactly one prefix and an empty preamble are required, so `find Alice`,
+`find Alice g/m` and `find n/Alice age/25` are all rejected with the usage message. This replaces AB3's bare-keyword
+form and removes the special case that previously treated any unprefixed text as a name search.
+
+`parseNameSearch` trims the `n/` value, rejects a blank value with a specific message, and rejects values containing
+`/` so that a mistyped prefix (e.g. `n/Alice x/1`) is never searched for as a name. The remaining text is split on
+whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
+any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
+
 ### Client gender
 
 `Person` stores a `Gender` enum (`MAN`, `WOMAN`, `NON_BINARY`, or `UNSPECIFIED`). Its command and JSON values are `m`, `w`, `nb`, and the empty string respectively. `Gender.parseValue` is the shared validation and normalization method; `ParserUtil.parseGender` translates invalid input into the existing `ParseException` flow. Gender is included in full person equality, but does not change the name-based duplicate-client check.
@@ -359,8 +371,8 @@ Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matchi
 `MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
 gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
-inside each preference or dealbreaker environment.
+other attributes compare canonical values. Gender criteria accept a single `m`, `w`, or `nb` value in either
+partner-criteria environment; empty values and gender lists are rejected.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
 when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.
@@ -684,8 +696,7 @@ The draft feature notes disagree on some validation rules. Resolve these before 
 
 * The implemented age range is 18–99 for client data and age searches. Draft ranges up to 120 and age-range client records are not supported.
 * Religion data uses the 21 fixed categories in the User Guide, with no free-text or `Other` value. Future filtering must use the same canonical representation.
-* Name-only `find` is retained alongside gender-only `find g/`. Exact-age and age-range searches are also supported separately. Combining characteristics into an OR search remains pending.
-* The proposed `find` command uses OR logic for characteristics, but AB3 already uses `find` for name search. Decide how to preserve or replace the inherited behavior.
+* Name search now uses `find n/KEYWORD [MORE_KEYWORDS]`, so every `find` mode is selected by exactly one prefix. Bare keywords inherited from AB3 are rejected rather than treated as a name search. Combining characteristics into an OR search remains pending.
 * `show NAME` displays members of a known group. Listing all group names, group rename and whole-group deletion
   remain deferred; no command syntax is reserved for these operations.
 
@@ -723,7 +734,8 @@ Use an isolated writable JAR home folder with test data, not real client records
 JSON inspection and fixtures below are confined to that folder's `data/addressbook.json`.
 Back up the test file before changing it, close the app before editing JSON, and restore
 the valid backup between invalid-file tests. In steps using `edit 1`, first run
-`find Criteria` and check that only the named test client is displayed.
+`find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
+because a successful edit restores the full list and changes the displayed indexes.
 
 1. Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no rg/long t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
    Expected: One client is added with own religion Jainism, preference religion Buddhism
@@ -731,7 +743,7 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
    relationship goal and tag are recorded normally. Inspect the saved JSON: outer
    `religion` is `Jainism`, `preferences` contains `religion: Buddhism` and `age: 25`,
    and `dealbreakers` contains `religion: Islam` (JSON keys and values are strings).
-2. Run `find Criteria`, then `edit 1 p/92345678`.<br>
+2. Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
    Expected: Only the phone changes. Own religion and both entire criteria maps remain
    unchanged. In the remaining steps, check that name, this phone, email, address,
    age, gender, smoking status, relationship goal and tag remain unchanged unless
@@ -750,8 +762,8 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
    Expected: The excluded religion is updated to canonical Christianity;
    the Baha'i Faith preference is preserved.
 6. Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
-   Expected: The supplied entries are updated in each bucket; other criteria are preserved. Then try
-   `edit 1 {r/ iSlAm }`.<br>
+   Expected: The supplied entries are updated in each bucket; other criteria are preserved.
+   Run `find n/Criteria` again, then try `edit 1 {r/ iSlAm }`.<br>
    Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
    Neither the existing preference map nor any other field changes. Also try
    `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
@@ -806,7 +818,7 @@ No partner preferences, combined-trait OR/AND search or compatibility assessment
 Manual checks (use distinct test names):
 
 1. Add `Religion Jain` with `add n/Religion Jain p/91234567 e/jain@example.com a/Test Lane age/25 r/jAiNiSm`, `Religion None` with `add n/Religion None p/91234567 e/none@example.com a/Test Lane age/25 r/No religion`, and `Religion Unknown` with `add n/Religion Unknown p/91234567 e/unknown@example.com a/Test Lane age/25`.
-2. Run `find Unknown`, then `find r/JAINISM`. The Jainism client appears even though the prior list contained only the unknown client. The count equals the displayed matches across the full book.
+2. Run `find n/Unknown`, then `find r/JAINISM`. The Jainism client appears even though the prior list contained only the unknown client. The count equals the displayed matches across the full book.
 3. Run `find r/No religion`. Only explicitly recorded No religion clients appear; unknown clients are excluded. Try a supported category absent from the book: the list is empty and the count is zero. Run `list` to restore all contacts.
 4. With a non-empty result list, try `find r/`, `find r/Other`, `find r/Jainism r/Islam`, `find Religion r/Jainism`, `find r/Jainism age/25`, and `find r/Jainism g/nb`. Each fails without changing records or the previous results.
 5. Restart and repeat the religion searches. Own religion and ordinary client details remain unchanged. Confirm that name, age and gender searches still work independently.
@@ -816,7 +828,7 @@ Manual checks (use distinct test names):
 Use a test data file and distinct client names for these checks.
 
 1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be “Unspecified”.
-2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find Gender` still searches names.
+2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find n/Gender` searches names, while `find Gender` without `n/` is rejected.
 3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
 4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.
 5. Restart the application and verify that recorded and cleared genders persist. An older valid data file containing ages but no gender fields should still load with all clients' genders unspecified.
@@ -884,17 +896,17 @@ testers are expected to do more *exploratory* testing.
       Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
       non-binary gender and a long-term relationship goal. No partner criteria appear.
 
-   1. Enter `find Nia`, then `edit 1 r/Christianity`.<br>
+   1. Enter `find n/Nia`, then `edit 1 r/Christianity`.<br>
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
 
-   1. Enter each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
+   1. Enter `find n/Nia`, then each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
       Expected: Each command is rejected because the legacy prefixes are no longer
       supported. The error explains outer `r/` for own religion, `{r/RELIGION}` for a
       preference and `<r/RELIGION>` for an exclusion (must not have).
       Repeat with empty `rp/`, `rr/`, and `rx/`; these are also rejected.
       The contact's religion and other details remain unchanged.
 
-   1. Enter `edit 1 r/`, then close and relaunch the app and enter `find Nia`.<br>
+   1. Enter `find n/Nia`, then `edit 1 r/`, then close and relaunch the app and enter `find n/Nia`.<br>
       Expected: Religion remains unknown, not `No religion`; the other details are retained.
 
 1. Rejecting unsupported categories
@@ -935,16 +947,16 @@ testers are expected to do more *exploratory* testing.
       Expected: The contact card shows `Relationship goal: Long-term relationship`. The keyword
       is converted to the goal's full name.
 
-   1. Enter `find Rae`, then `edit 1 rg/short-open`.<br>
+   1. Enter `find n/Rae`, then `edit 1 rg/short-open`.<br>
       Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
 
-   1. Enter `edit 1 p/99999999`.<br>
+   1. Enter `find n/Rae`, then `edit 1 p/99999999`.<br>
       Expected: The phone number changes and the relationship goal is unchanged.
 
    1. Close and relaunch the app.<br>
       Expected: Rae's relationship goal is still `Short-term relationship, open to long`.
 
-   1. Enter `find Rae`, then `edit 1 rg/`.<br>
+   1. Enter `find n/Rae`, then `edit 1 rg/`.<br>
       Expected: The contact card shows `Relationship goal: Not specified`.
 
 1. Rejecting unsupported and repeated values
@@ -963,7 +975,7 @@ testers are expected to do more *exploratory* testing.
    1. Enter `find rg/Long-term relationship`.<br>
       Expected: The same clients are listed as for `find rg/long`.
 
-   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find Rae rg/long` in turn.<br>
+   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
 
 ### Finding clients by smoking status
@@ -979,7 +991,7 @@ Manual checks (use a separate test data set):
    Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
 2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
    even though the previous search hid that client. Check that the displayed count is correct.
-3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find Alice s/yes`.
+3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find n/Alice s/yes`.
    Each should report an error and preserve the previous results and records.
 4. Run `list` to restore all three clients. Restart the application and repeat the searches;
    the results should remain the same. With no clients of the searched status, expect zero matches.

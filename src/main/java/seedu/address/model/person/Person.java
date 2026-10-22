@@ -44,7 +44,7 @@ public class Person {
      * Creates a person whose relationship goal has not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
-                  SmokingStatus smokingStatus) {
+            SmokingStatus smokingStatus) {
         this(name, phone, email, address, age, tags, smokingStatus, Gender.UNSPECIFIED);
     }
 
@@ -52,7 +52,7 @@ public class Person {
      * Creates a person with the given details. Use {@code Gender.UNSPECIFIED} for an unrecorded gender.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
-                  SmokingStatus smokingStatus, Gender gender) {
+            SmokingStatus smokingStatus, Gender gender) {
         this(name, phone, email, address, age, tags, smokingStatus, gender, null, null);
     }
 

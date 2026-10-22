@@ -65,7 +65,7 @@ public class GenderIntegrationTest {
     @Test
     public void find_nameSearchRemainsAvailableAndGenderSearchCanReturnNoMatches() throws Exception {
         logic.execute("find g/w");
-        logic.execute("find aLeX Sam");
+        logic.execute("find n/aLeX Sam");
         assertEquals(List.of(NON_BINARY, UNSPECIFIED), model.getFilteredPersonList());
         model.deletePerson(MAN);
         logic.execute("find g/m");

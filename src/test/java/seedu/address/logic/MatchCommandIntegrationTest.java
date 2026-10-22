@@ -117,7 +117,7 @@ public class MatchCommandIntegrationTest {
 
     @Test
     public void execute_emptyDisplayedList_rejectsIndexes() throws Exception {
-        logic.execute("find Nobody");
+        logic.execute("find n/Nobody");
         assertThrows(CommandException.class, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX, ()
             -> logic.execute("match 1 2"));
         assertTrue(model.getFilteredPersonList().isEmpty());
