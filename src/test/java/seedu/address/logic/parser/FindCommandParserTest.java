@@ -51,9 +51,39 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_nameKeywords_returnsNameSearch() {
-        assertParseSuccess(parser, " Alice Bob ",
-                new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob"))));
+    public void parse_namePrefix_returnsNameSearch() {
+        FindCommand expected = new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob")));
+        assertParseSuccess(parser, "n/Alice Bob", expected);
+        assertParseSuccess(parser, " n/ \n Alice \t Bob  ", expected);
+    }
+
+    @Test
+    public void parse_bareNameKeywords_throwsParseException() {
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "Alice", usage);
+        assertParseFailure(parser, "Alice Bob", usage);
+        assertParseFailure(parser, "Alice n/Bob", usage);
+    }
+
+    @Test
+    public void parse_blankOrPrefixLikeNameKeywords_throwsParseException() {
+        assertParseFailure(parser, "n/", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
+        assertParseFailure(parser, "n/   ", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String args : new String[] {"n/Alice x/1", "N/Alice", "n /Alice", "name/Alice"}) {
+            assertParseFailure(parser, args, usage);
+        }
+    }
+
+    @Test
+    public void parse_repeatedOrCombinedNamePrefix_throwsParseException() {
+        assertParseFailure(parser, "n/Alice n/Bob",
+                Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NAME));
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String criterion : new String[] {"age/25", "g/m", "r/Jainism", "rg/long", "s/yes", "match/1"}) {
+            assertParseFailure(parser, "n/Alice " + criterion, usage);
+            assertParseFailure(parser, criterion + " n/Alice", usage);
+        }
     }
 
     @Test

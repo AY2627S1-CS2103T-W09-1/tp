@@ -85,7 +85,7 @@ public class LogicManagerTest {
         model.addPerson(unknown);
         AddressBook original = new AddressBook(model.getAddressBook());
 
-        logic.execute("find Unknown");
+        logic.execute("find n/Unknown");
         assertEquals(List.of(unknown), model.getFilteredPersonList());
         CommandResult result = logic.execute("find r/jAiNiSm");
         assertEquals(String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
