@@ -86,7 +86,8 @@ public class PersonCard extends UiPart<Region> {
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
-        groupNames.stream().sorted(Comparator.comparing(GroupName::toString, String.CASE_INSENSITIVE_ORDER))
+        groupNames.stream()
+                .sorted(Comparator.comparing(GroupName::toString, String.CASE_INSENSITIVE_ORDER))
                 .forEach(groupName -> groups.getChildren().add(new Label("Group: " + groupName)));
         groups.setVisible(!groupNames.isEmpty());
         groups.setManaged(!groupNames.isEmpty());
