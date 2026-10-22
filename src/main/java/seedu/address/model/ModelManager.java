@@ -158,6 +158,7 @@ public class ModelManager implements Model {
         sortedPersons.setComparator(comparator);
     }
 
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {

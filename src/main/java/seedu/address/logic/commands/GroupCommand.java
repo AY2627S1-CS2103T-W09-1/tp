@@ -49,19 +49,8 @@ public class GroupCommand extends Command {
         ClientGroup replacement;
         int changed;
         if (operation == Operation.MATCHES) {
-            if (existing != null) {
-                throw new CommandException("Group already exists: " + existing.getName());
-            }
-            Person target = selected.getFirst();
-            List<Person> matches = model.getAddressBook().getPersonList().stream()
-                    .filter(candidate -> !candidate.isSamePerson(target))
-                    .filter(candidate -> new MatchAssessment(target, candidate).getOutcome()
-                            != MatchAssessment.Outcome.INCOMPATIBLE).toList();
-            if (matches.isEmpty()) {
-                throw new CommandException("No matching candidates; no group was created.");
-            }
-            replacement = new ClientGroup(name, matches);
-            changed = matches.size();
+            replacement = createMatchGroup(model, existing, selected);
+            changed = replacement.getMembers().size();
         } else {
             replacement = changeMembership(existing, selected);
             changed = selected.size();
@@ -75,6 +64,23 @@ public class GroupCommand extends Command {
         return new CommandResult(String.format("Group %s: %d client(s) %s. Total members: %d.",
                 replacement.getName(), changed, operation == Operation.REMOVE ? "removed" : "added",
                 replacement.getMembers().size()));
+    }
+
+    private ClientGroup createMatchGroup(Model model, ClientGroup existing, List<Person> selected)
+            throws CommandException {
+        if (existing != null) {
+            throw new CommandException("Group already exists: " + existing.getName());
+        }
+
+        Person target = selected.getFirst();
+        List<Person> matches = model.getAddressBook().getPersonList().stream()
+                .filter(candidate -> !candidate.isSamePerson(target))
+                .filter(candidate -> new MatchAssessment(target, candidate).getOutcome()
+                        != MatchAssessment.Outcome.INCOMPATIBLE).toList();
+        if (matches.isEmpty()) {
+            throw new CommandException("No matching candidates; no group was created.");
+        }
+        return new ClientGroup(name, matches);
     }
 
     private List<Person> resolveMembers(List<Person> displayed) throws CommandException {
