@@ -197,10 +197,15 @@ Unsafe log destinations fall back to console logging rather than another directo
 
 `Main` configures JavaFX's native-library cache and temporary-file directory inside
 that same home before starting JavaFX. These settings are JVM-process properties,
-not persistent OS configuration changes. An unsafe or unwritable runtime-cache
-folder prevents startup instead of falling back outside the sandbox. Class-directory
-runs have no JAR home and retain working-directory behavior for development and
-JUnit fixtures; the sandbox must also be verified against the packaged JAR.
+not persistent OS configuration changes. The private `.javafx/` and `.tmp/` runtime
+folders must be ordinary directories: all symbolic links at either root or any
+descendant are rejected, including inward links that could hide outward-linked
+children in their targets. This stricter rule applies only to these runtime folders;
+normal in-home data and preferences links retain the existing path-validation behavior.
+An unsafe or unwritable runtime layout aborts startup before JavaFX starts, without
+falling back outside the sandbox or automatically deleting or rewriting existing
+caches or client data. Class-directory runs have no JAR home and retain working-directory
+behavior for development and JUnit fixtures; verify the sandbox against the packaged JAR.
 
 ### Religion attributes
 
@@ -301,8 +306,9 @@ Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matchi
 `MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
 `MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
-smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender is not a supported dating criterion.
+gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
+other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
+inside each preference or dealbreaker environment.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
 when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.
@@ -773,6 +779,19 @@ testers are expected to do more *exploratory* testing.
       Expected: External data is not loaded or overwritten. Saving is rejected;
       the sentinel file is unchanged. Restore the real in-home data folder afterward.
 
+1. Reject all runtime-folder symbolic links (where supported by the OS)
+
+   1. Use an isolated packaged-JAR home and back up its test data. With the app closed,
+      test `.javafx` and `.tmp` separately: place a symbolic link at the runtime-folder
+      root, then in a separate run place a link below an ordinary runtime folder.
+      Repeat both cases with targets inside and outside the JAR home. For an inward
+      directory target, also place an outward-linked child in that target.<br>
+      Expected: Every layout is rejected before JavaFX starts, including inward links.
+      No links, cache contents, client data, or external sentinel files are deleted or
+      rewritten. Restore the test layout manually between cases. Finally, restore
+      ordinary runtime folders with no symbolic links anywhere inside and relaunch;
+      startup succeeds and runtime files remain inside the JAR home.
+
 ### Religion attributes
 
 1. Adding, editing and retaining the client's own religion
@@ -785,8 +804,10 @@ testers are expected to do more *exploratory* testing.
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
 
    1. Enter each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
-      Expected: Each command is rejected because partner religion criteria are no longer
-      supported. Repeat with empty `rp/`, `rr/`, and `rx/`; these are also rejected.
+      Expected: Each command is rejected because the legacy prefixes are no longer
+      supported. The error explains outer `r/` for own religion, `{r/RELIGION}` for a
+      preference and `<r/RELIGION>` for an exclusion (must not have).
+      Repeat with empty `rp/`, `rr/`, and `rx/`; these are also rejected.
       The contact's religion and other details remain unchanged.
 
    1. Enter `edit 1 r/`, then close and relaunch the app and enter `find Nia`.<br>
