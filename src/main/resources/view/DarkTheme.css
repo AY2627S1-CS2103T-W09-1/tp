@@ -398,3 +398,11 @@
     -fx-background-radius: 2;
     -fx-font-size: 11;
 }
+
+/* Group memberships are visually distinct from ordinary tags. */
+#groups .label {
+    -fx-text-fill: white;
+    -fx-background-color: #546b8a;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 4;
+}

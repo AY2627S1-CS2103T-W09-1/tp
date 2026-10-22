@@ -119,12 +119,15 @@ How the parsing works:
 ### Model component
 **API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<img src="images/ModelClassDiagram.png" width="450" />
+<img src="images/ModelClassDiagram.png" width="800" />
 
 
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores named `ClientGroup` objects in `AddressBook`. Each immutable group has a `GroupName` and references
+  existing persons; membership does not duplicate client records or reuse ordinary tags. Dating attributes
+  and criteria are omitted from this overview diagram for readability.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -156,6 +159,55 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Named client groups
+
+`grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
+`GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
+Group names use the shared `GroupName` validation: 1–30 ASCII letters, digits, hyphens or underscores,
+with an alphanumeric first character. Equality and hashing use a `Locale.ROOT` lowercase key, while
+display and storage retain the original spelling. Operations and command words remain case-sensitive.
+
+`ClientGroup` is an immutable value containing a name and an immutable, duplicate-free membership list.
+`AddressBook` owns the observable group list and exposes an unmodifiable view. `setGroups` snapshots and
+validates the complete replacement (unique group names and members present in the book) before publishing it.
+
+The command flow is:
+
+1. Parse the operation and distinct positive indexes. Compare their numeric values, since `Index` does not
+   implement value-based hashing.
+2. Resolve **all** indexes against the displayed list before any mutation. This matters when removing multiple
+   members from a shown group: the first removal must not shift the meaning of later indexes.
+3. Build a replacement membership list and validate the operation. Add creates a missing group; remove
+   requires an existing group. Any already-present member on add or absent member on remove rejects the
+   whole command. Single-member groups and empty groups after removal are valid.
+4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
+
+Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
+`INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
+including insufficient-information candidates, but does not apply its preference-score ordering. An existing
+group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
+
+`ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
+order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
+clear the selected-group state. `AddressBook.setPerson` replaces membership references when immutable
+persons are edited; `removePerson` removes references but retains empty groups. Bulk person replacement
+prunes obsolete references. `resetData` validates a complete copy before replacing persons and groups;
+clearing the book therefore clears groups too. Existing add/edit commands still restore the full list.
+
+`JsonAdaptedGroup` stores `name` and `memberNames`, resolving members against the loaded persons' unique
+names. This uses the existing name-based client identity and is independent of displayed or file-array
+positions. App-driven renames are saved consistently; manual JSON renames must update group references.
+Missing groups in legacy files default to an empty collection. Malformed entries, duplicate group names
+or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
+
+`Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
+change. `PersonCard` displays alphabetically ordered `Group: NAME` badges separately from tags, hiding the
+badge container when empty. No additional client fields or external dependencies are required.
+
+Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
+matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
+persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
 
 ### Client gender
 
@@ -571,27 +623,29 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
 
 **MSS**
 
-1. The matchmaker requests `group create g/VIP`.
-2. CupidMaxxing creates an empty group named VIP.
-3. The matchmaker requests `group add g/VIP 2 5` using indexes in the displayed list.
-4. CupidMaxxing adds the two distinct clients and confirms the number added.
-5. The matchmaker requests `group show g/VIP`.
-6. CupidMaxxing shows only the group's clients without changing their records.
+1. The matchmaker requests `grp VIP add 2 5` using indexes in the displayed list.
+2. CupidMaxxing creates VIP if needed, adds both clients and confirms the number added.
+3. The matchmaker requests `show VIP`.
+4. CupidMaxxing shows only the group's clients without changing their records.
+5. The matchmaker requests `grp VIP remove 1` using the group's displayed indexes.
+6. CupidMaxxing removes that membership and refreshes the list, retaining the client record.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. A group with the same name already exists, ignoring letter case.
-    * 2a1. CupidMaxxing reports the duplicate and creates no group.
+* 2a. An index is invalid, repeated, or already belongs to the group.
+    * 2a1. CupidMaxxing reports the problem and makes no partial membership change.
 
       Use case ends.
-* 4a. An index is invalid, repeated, or already belongs to the group.
-    * 4a1. CupidMaxxing reports the problem and makes no partial membership change.
+* 4a. The requested group does not exist.
+    * 4a1. CupidMaxxing reports the problem and leaves the displayed list unchanged.
 
       Use case ends.
 
-A client may belong to several different groups. Renaming or deleting a group does not delete its clients.
+A client may belong to several different groups. Removing the last member retains an empty group.
+`grp Candidates matches INDEX` instead creates a new snapshot of all eligible candidates for a displayed
+client, excluding the source. It rejects an existing name or zero candidates. Group rename/delete is deferred.
 
 ### Non-Functional Requirements
 
@@ -625,13 +679,36 @@ The draft feature notes disagree on some validation rules. Resolve these before 
 * Religion data uses the 21 fixed categories in the User Guide, with no free-text or `Other` value. Future filtering must use the same canonical representation.
 * Name-only `find` is retained alongside gender-only `find g/`. Exact-age and age-range searches are also supported separately. Combining characteristics into an OR search remains pending.
 * The proposed `find` command uses OR logic for characteristics, but AB3 already uses `find` for name search. Decide how to preserve or replace the inherited behavior.
-* Group-list output is described, but the command format for listing all groups is not yet specified.
+* `show NAME` displays members of a known group. Listing all group names, group rename and whole-group deletion
+  remain deferred; no command syntax is reserved for these operations.
 
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Appendix: Instructions for manual testing**
 
 Given below are instructions to test the app manually.
+
+### Named groups and badges
+
+Use an isolated writable JAR folder with test data. Do not clear a real client database.
+
+1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
+   Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
+2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, with separate
+   `Group: VIP` badges. Alice's ordinary VIP tag should still appear. Check at a narrow window size that badges
+   wrap and the client details remain readable.
+3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
+   records remain and their VIP group badges disappear, while Alice's ordinary tag remains.
+4. Run `grp VIP add 2` then `grp VIP add 1 2`. Expect the second command to fail without adding Alice.
+   `show VIP` should display only Bob. Run `grp VIP remove 1 2`; it must fail without removing Bob.
+5. Run `edit 1 n/Group Robert`, then `show VIP`. Expect Robert still in VIP. Restart the app and run `show VIP`
+   again; membership and the new name must survive. `delete 1` should retain an empty VIP group.
+6. Run `list`, then `grp Candidates matches 1`. With only Alice and Cara remaining, expect an error because
+   Alice excludes smokers. Add a fourth client with unknown smoking status, run `list` and repeat the command.
+   Expect a new Candidates group containing only the fourth client, with Alice excluded.
+7. Edit the fourth client's smoking status to `yes`, then `show Candidates`. The client should remain a member:
+   membership is a snapshot. `grp candidates matches 1` must reject the existing group name.
+8. Restart and check both groups. Finally run `clear`, restart and run `show VIP`; expect an unknown-group error.
 
 ### Recording religion preferences and exclusions
 
