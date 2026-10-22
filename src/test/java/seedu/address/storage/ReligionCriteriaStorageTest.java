@@ -24,7 +24,7 @@ public class ReligionCriteriaStorageTest {
             + "\"tags\":[],\"religion\":\"Jainism\"";
 
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void roundTrip_religionCriteria_preservesIndependentOwnReligion() throws Exception {

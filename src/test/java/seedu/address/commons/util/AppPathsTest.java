@@ -17,7 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 public class AppPathsTest {
 
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     /**
      * Checks that missing data files resolve under the home folder.
