@@ -81,14 +81,14 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GEND
 
 * `{CRITERIA}` records partner preferences and `<CRITERIA>` records dealbreakers. Each block accepts `age/`, `g/`, `s/`, `r/`, and `rg/`. See [Matching two clients](#matching-two-clients-match) for values and examples.
 * `AGE` is compulsory and must be an integer from 18 to 99 (inclusive).
-* `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one `g/` prefix are allowed per command.
+* `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one outer `g/` prefix are allowed per command. Each preference or dealbreaker block may also contain one separate gender criterion.
 * `rg/RELATIONSHIP_GOAL` is the client's own relationship goal. See [Relationship goal field](#relationship-goal-field) below.
 
 The optional `s/SMOKING` field records the client's **own smoking habit**:
 
 * Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
 * Omit the field if the status is unknown. The person card displays `Smoking: Not specified`.
-* A supplied `s/` must have a value, and may appear only once per command. Blank, invalid, or repeated values reject the command without changing any records.
+* A supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records.
 * Smoking status is saved between sessions. Older records without this field remain usable and display `Not specified`.
 * This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
@@ -151,7 +151,7 @@ Keyword | Relationship goal
 
 * Keywords and goal names are matched without regard to letter case or repeated spaces: for example, `rg/LONG` and `rg/long-term   RELATIONSHIP` are both saved as `Long-term relationship`.
 * Omit the field if the goal is not known. The client card then displays `Relationship goal: Not specified`. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
-* A supplied `rg/` may appear only once per command. Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
+* A supplied outer `rg/` may appear only once per command. Each preference or dealbreaker block may also contain one separate relationship-goal criterion. Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
 * The relationship goal is saved between sessions. Older records without this field remain usable and display `Not specified`.
 * This field records the client's own goal. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 

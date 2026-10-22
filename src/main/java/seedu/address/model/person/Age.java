@@ -48,8 +48,10 @@ public class Age {
     public static String normalizeRange(String value) {
         requireNonNull(value);
         String[] bounds = value.trim().split("-", -1);
-        if (bounds.length > 2 || !isValidAge(bounds[0])
-                || (bounds.length == 2 && !isValidAge(bounds[1]))) {
+        boolean isValidLength = bounds.length <= 2;
+        boolean isFirstBoundValid = isValidAge(bounds[0]);
+        boolean isSecondBoundValid = bounds.length != 2 || isValidAge(bounds[1]);
+        if (!isValidLength || !isFirstBoundValid || !isSecondBoundValid) {
             throw new IllegalArgumentException(MESSAGE_CONSTRAINTS);
         }
         int lowerBound = Integer.parseInt(bounds[0]);
