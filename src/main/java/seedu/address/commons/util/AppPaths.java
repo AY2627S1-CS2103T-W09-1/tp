@@ -64,21 +64,28 @@ public final class AppPaths {
      * @throws IOException If a cache folder is unsafe or cannot be used.
      */
     public static void configureRuntimeCaches() throws IOException {
-        Path cache = prepareRuntimeFolder(".javafx");
-        Path temporary = prepareRuntimeFolder(".tmp");
+        Path cache = prepareRuntimeFolder(HOME_FOLDER, ".javafx");
+        Path temporary = prepareRuntimeFolder(HOME_FOLDER, ".tmp");
         System.setProperty("javafx.cachedir", cache.toString());
         System.setProperty("java.io.tmpdir", temporary.toString());
     }
 
     /**
-     * Creates a usable runtime folder and checks its existing entries for outward links.
+     * Creates a usable runtime folder without symbolic links.
+     * JavaFX accesses cache entries directly, so even inward directory links must be rejected
+     * rather than hiding descendants from the non-link-following directory walk.
+     *
+     * @throws IOException If the folder contains a link or cannot safely be used.
      */
-    private static Path prepareRuntimeFolder(String name) throws IOException {
-        Path folder = resolveWithinHome(HOME_FOLDER, Path.of(name));
+    static Path prepareRuntimeFolder(Path homeFolder, String name) throws IOException {
+        Path folder = resolveWithinHome(homeFolder, Path.of(name));
         Files.createDirectories(folder);
         try (var entries = Files.walk(folder)) {
             for (Path entry : entries.toList()) {
-                resolveWithinHome(HOME_FOLDER, entry);
+                if (Files.isSymbolicLink(entry)) {
+                    throw new IOException("Runtime cache folders must not contain symbolic links.");
+                }
+                resolveWithinHome(homeFolder, entry);
             }
         }
         if (!Files.isReadable(folder) || !Files.isWritable(folder)) {
