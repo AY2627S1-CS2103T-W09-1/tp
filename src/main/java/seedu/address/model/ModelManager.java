@@ -126,8 +126,8 @@ public class ModelManager implements Model {
         List<Person> members = addressBook.getGroupList().stream()
                 .filter(group -> group.getName().equals(displayedGroup))
                 .flatMap(group -> group.getMembers().stream()).toList();
-        filteredPersons.setPredicate(members::contains);
         sortedPersons.setComparator(null);
+        filteredPersons.setPredicate(members::contains);
     }
 
     //=========== Filtered Person List Accessors =============================================================
