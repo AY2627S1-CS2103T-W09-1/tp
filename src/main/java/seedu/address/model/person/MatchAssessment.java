@@ -117,7 +117,7 @@ public final class MatchAssessment {
      * One criterion and the candidate's actual value, absent when it has not been recorded.
      */
     public record Comparison(DatingAttribute attribute, String criterion, Optional<String> actual,
-                             boolean isDealbreaker, Status status) {
+            boolean isDealbreaker, Status status) {
         public String getTypeLabel() {
             return isDealbreaker ? "Dealbreaker" : "Preference";
         }

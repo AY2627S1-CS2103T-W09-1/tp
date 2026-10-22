@@ -371,8 +371,8 @@ Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matchi
 `MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
 gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
-inside each preference or dealbreaker environment.
+other attributes compare canonical values. Gender criteria accept a single `m`, `w`, or `nb` value in either
+partner-criteria environment; empty values and gender lists are rejected.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
 when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.
@@ -727,7 +727,8 @@ Use an isolated writable JAR home folder with test data, not real client records
 JSON inspection and fixtures below are confined to that folder's `data/addressbook.json`.
 Back up the test file before changing it, close the app before editing JSON, and restore
 the valid backup between invalid-file tests. In steps using `edit 1`, first run
-`find n/Criteria` and check that only the named test client is displayed.
+`find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
+because a successful edit restores the full list and changes the displayed indexes.
 
 1. Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no rg/long t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
    Expected: One client is added with own religion Jainism, preference religion Buddhism
@@ -754,8 +755,8 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
    Expected: The excluded religion is updated to canonical Christianity;
    the Baha'i Faith preference is preserved.
 6. Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
-   Expected: The supplied entries are updated in each bucket; other criteria are preserved. Then try
-   `edit 1 {r/ iSlAm }`.<br>
+   Expected: The supplied entries are updated in each bucket; other criteria are preserved.
+   Run `find n/Criteria` again, then try `edit 1 {r/ iSlAm }`.<br>
    Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
    Neither the existing preference map nor any other field changes. Also try
    `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
@@ -891,14 +892,14 @@ testers are expected to do more *exploratory* testing.
    1. Enter `find n/Nia`, then `edit 1 r/Christianity`.<br>
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
 
-   1. Enter each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
+   1. Enter `find n/Nia`, then each of `edit 1 rp/Buddhism`, `edit 1 rr/Buddhism`, and `edit 1 rx/Islam`.<br>
       Expected: Each command is rejected because the legacy prefixes are no longer
       supported. The error explains outer `r/` for own religion, `{r/RELIGION}` for a
       preference and `<r/RELIGION>` for an exclusion (must not have).
       Repeat with empty `rp/`, `rr/`, and `rx/`; these are also rejected.
       The contact's religion and other details remain unchanged.
 
-   1. Enter `edit 1 r/`, then close and relaunch the app and enter `find n/Nia`.<br>
+   1. Enter `find n/Nia`, then `edit 1 r/`, then close and relaunch the app and enter `find n/Nia`.<br>
       Expected: Religion remains unknown, not `No religion`; the other details are retained.
 
 1. Rejecting unsupported categories
@@ -942,7 +943,7 @@ testers are expected to do more *exploratory* testing.
    1. Enter `find n/Rae`, then `edit 1 rg/short-open`.<br>
       Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
 
-   1. Enter `edit 1 p/99999999`.<br>
+   1. Enter `find n/Rae`, then `edit 1 p/99999999`.<br>
       Expected: The phone number changes and the relationship goal is unchanged.
 
    1. Close and relaunch the app.<br>
@@ -967,7 +968,7 @@ testers are expected to do more *exploratory* testing.
    1. Enter `find rg/Long-term relationship`.<br>
       Expected: The same clients are listed as for `find rg/long`.
 
-   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find Rae rg/long` in turn.<br>
+   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
 
 ### Finding clients by smoking status
@@ -983,7 +984,7 @@ Manual checks (use a separate test data set):
    Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
 2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
    even though the previous search hid that client. Check that the displayed count is correct.
-3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find Alice s/yes`.
+3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find n/Alice s/yes`.
    Each should report an error and preserve the previous results and records.
 4. Run `list` to restore all three clients. Restart the application and repeat the searches;
    the results should remain the same. With no clients of the searched status, expect zero matches.

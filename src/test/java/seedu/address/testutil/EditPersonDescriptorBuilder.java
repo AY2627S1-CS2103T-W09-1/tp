@@ -47,7 +47,10 @@ public class EditPersonDescriptorBuilder {
         }
         descriptor.setAge(person.getAge());
         descriptor.setTags(person.getTags());
+        descriptor.setReligion(person.getReligion().orElse(null));
         person.getRelationshipGoal().ifPresent(descriptor::setRelationshipGoal);
+        descriptor.setPreferences(person.getDatingCriteria().getPreferences());
+        descriptor.setDealbreakers(person.getDatingCriteria().getDealbreakers());
     }
 
     /**

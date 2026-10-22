@@ -38,13 +38,15 @@ public class FindCommandParserTest {
     public void parse_validArgs_returnsFindCommand() {
         assertParseSuccess(parser, "age/18", new FindCommand(new AgeMatchesPredicate(18, 18)));
         assertParseSuccess(parser, " age/18-35 ", new FindCommand(new AgeMatchesPredicate(18, 35)));
+        assertParseSuccess(parser, "age/018-099", new FindCommand(new AgeMatchesPredicate(18, 99)));
     }
 
     @Test
     public void parse_invalidAge_throwsParseException() {
-        assertParseFailure(parser, "age/17", Age.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "age/100", Age.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "age/18-100", Age.MESSAGE_CONSTRAINTS);
+        for (String value : new String[] {"", "17", "100", "18-100", "18-", "-25", "18-25-30",
+            "18 -25", "18- 25", "twenty", "999999999999999999999"}) {
+            assertParseFailure(parser, "age/" + value, Age.MESSAGE_CONSTRAINTS);
+        }
         assertParseFailure(parser, "age/35-18", "The lower age bound cannot be greater than the upper age bound.");
     }
 
