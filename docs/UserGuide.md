@@ -131,6 +131,7 @@ use the listed spelling, although its letter case can vary. There is no free-tex
 * `find r/RELIGION` searches only the client's own religion. Searching criteria environments is not implemented. Use [match](#matching-two-clients-match) to assess recorded preferences and exclusions; recording an exclusion alone does not run a comparison.
 
 Example:
+
 * `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>` Adds a 25-year-old client with the client's own religion, preference and exclusion described above. The required contact details and age are outside the environments.
 
 #### Relationship goal field
@@ -256,7 +257,7 @@ and excludes smokers. Ordinary fields outside the blocks describe the client's o
 
 Each block is optional and may appear once. Inside a block, use each of `age/`, `g/`, `s/`, `r/`, or `rg/` at most once.
 Age accepts an exact age or inclusive range, with bounds from 18 to 99.
-Gender accepts one value: `m`, `w`, or `nb`, ignoring case. Empty values and gender lists are rejected inside blocks.
+Gender accepts one value: `g/m`, `g/w`, or `g/nb`, ignoring case. Empty values and gender lists are rejected inside blocks.
 Other criteria use the same values as the client's own fields and compare exact normalized categories.
 Different relationship-goal categories are not treated as equivalent.
 When editing, a non-empty block adds or updates only its supplied criteria; other criteria are preserved.
