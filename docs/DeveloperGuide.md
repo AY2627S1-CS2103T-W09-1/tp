@@ -391,6 +391,13 @@ unknown details stay listed. Each remaining client is scored by the number of pr
 with status `MET` in both directions, and the list is sorted by score, highest first. Scores are
 computed once before sorting, and ties keep insertion order because the sort is stable.
 
+The sequence diagram below shows how `find match/1` is parsed and executed.
+
+![Interactions inside the Logic and Model components for the `find match/1` command](images/FindMatchSequenceDiagram.png)
+
+<div markdown="span" class="alert alert-info">:information_source: **Note:** One `MatchAssessment` is created per candidate; the diagram shows a single lifeline for brevity. The source client is skipped using `isSamePerson`, so it never appears in its own results.
+</div>
+
 To support sorting, `ModelManager` wraps its `FilteredList` in a `SortedList`, and
 `getFilteredPersonList()` returns the sorted view. Every index-based command therefore uses the order
 the user sees. `Model#updateFilteredPersonList(Predicate, Comparator)` sets both the filter and the
