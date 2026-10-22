@@ -18,8 +18,8 @@ public class FindCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons whose names contain any of "
             + "the specified keywords (case-insensitive) and displays them as a list with index numbers.\n"
-            + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
-            + "Example: " + COMMAND_WORD + " alice bob charlie\n"
+            + "Parameters: n/KEYWORD [MORE_KEYWORDS]...\n"
+            + "Example: " + COMMAND_WORD + " n/alice bob charlie\n"
             + "Or search by gender: find g/m,w (m, w, nb; comma-separated without duplicates).\n"
             + "Use find g/ to list all persons with a specified gender.\n"
             + "Or search by age: find age/25 or find age/25-35 (18 to 99, inclusive).\n"

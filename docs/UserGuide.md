@@ -199,7 +199,7 @@ Search by name, age, or the client's own gender, religion, relationship goal or 
 
 Formats:
 
-* `find KEYWORD [MORE_KEYWORDS]` searches names. Matching is case-insensitive and uses whole words; a client is returned if any keyword matches.
+* `find n/KEYWORD [MORE_KEYWORDS]` searches names. Matching is case-insensitive and uses whole words; a client is returned if any keyword matches. The `n/` prefix is required, like the other search modes: `find Alex` without it is rejected. A blank `n/` and repeated `n/` prefixes are also rejected.
 * `find age/AGE` or `find age/MIN-MAX` searches an exact age or an inclusive range. Ages must be integers from 18 to 99, with no spaces within the range and `MIN` no greater than `MAX`.
 * `find g/GENDER[,GENDER]…` returns clients matching any listed gender: `m`, `w`, or `nb`, in any order, ignoring case and surrounding whitespace.
 * `find g/` returns every client with a specified gender, equivalent to `find g/m,w,nb`. Unspecified genders are excluded from gender searches.
@@ -210,7 +210,6 @@ Formats:
 * A blank `s/`, unsupported values (such as `unknown`), repeated `s/` prefixes and lists such as `s/yes,no` are rejected.
 * `find match/INDEX` lists clients compatible with the client at `INDEX` in the displayed list, best matches first. It uses the same rules as [`match`](#matching-two-clients-match): a client is hidden if either of the two has a dealbreaker the other is known to have (for example, a client saved with `<s/yes>` never sees smokers). The rest are sorted by how many of each other's preferences they meet. Unrecorded details never hide anyone. Use `match INDEX_A INDEX_B` to see the full breakdown for one pair. `list` or any other `find` restores the normal order.
 * A blank `r/`, an unsupported category, repeated `r/` prefixes or a list of religions are rejected. Partial category names do not match.
-* A blank `r/`, an unsupported category, repeated `r/` prefixes or a list of religions are rejected. Partial category names do not match.
 
 Use one search mode at a time. Name keywords, age, gender, religion, relationship-goal, smoking and match criteria cannot be combined. Combined-trait searches and searches within preference/dealbreaker environments are not supported in this increment.
 
@@ -218,7 +217,7 @@ Use each prefix only once. Duplicate gender values (including `m,M`), unsupporte
 
 Examples:
 
-* `find Alex Sam` finds clients whose names contain Alex or Sam.
+* `find n/Alex Sam` finds clients whose names contain Alex or Sam.
 * `find age/25-35` finds clients aged 25 to 35, inclusive.
 * `find g/w` finds women.
 * `find g/m,nb` finds men or non-binary clients.
@@ -438,7 +437,7 @@ Action | Format, Examples
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{r/PREFERRED_RELIGION}] [<r/EXCLUDED_RELIGION>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, `find s/no`, or `find match/INDEX`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`, `find match/2`
+**Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, `find s/no`, or `find match/INDEX`<br> e.g., `find n/James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`, `find match/2`
 **List** | `list`
 **Group members** | `grp NAME add INDEX [MORE_INDEXES]` or `grp NAME remove INDEX [MORE_INDEXES]`<br> e.g., `grp VIP add 1 3`, `grp VIP remove 2`
 **Group matches** | `grp NAME matches INDEX`<br> e.g., `grp Candidates matches 1`

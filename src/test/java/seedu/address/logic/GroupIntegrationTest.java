@@ -49,7 +49,7 @@ public class GroupIntegrationTest {
     @Test
     public void addAndShow_useDisplayedIndexesAndCaseInsensitiveNames() throws Exception {
         AddressBook original = new AddressBook(model.getAddressBook());
-        logic.execute("find Bob Cara");
+        logic.execute("find n/Bob Cara");
         assertEquals("Group VIP: 2 client(s) added. Total members: 2.",
                 logic.execute("grp VIP add 1 2").getFeedbackToUser());
         logic.execute("list");
@@ -154,7 +154,7 @@ public class GroupIntegrationTest {
 
     @Test
     public void matches_usesFullBookAndExistingAssessmentWithoutChangingCurrentView() throws Exception {
-        logic.execute("find Alice");
+        logic.execute("find n/Alice");
         logic.execute("grp Candidates matches 1");
         assertDisplayed("Alice");
         List<Person> members = group().getMembers();

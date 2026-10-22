@@ -46,7 +46,7 @@ public class SmokingStatusFindIntegrationTest {
         String saved = Files.readString(storage.getAddressBookFilePath());
         assertSearch("find s/YES", "Alice", "Dana");
         assertSearch("find s/ no ", "Bob");
-        assertSearch("find Cara", "Cara");
+        assertSearch("find n/Cara", "Cara");
         assertSearch("find s/yes", "Alice", "Dana");
         logic.execute("list");
         assertEquals(before.getPersonList(), model.getFilteredPersonList());

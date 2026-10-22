@@ -4,6 +4,7 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_MATCH;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
@@ -32,29 +33,33 @@ public class FindCommandParser implements Parser<Command> {
 
     public static final String MESSAGE_INVALID_GENDER_LIST =
             "Use distinct genders separated by commas (m, w, nb), or leave g/ empty for any specified gender.";
+    public static final String MESSAGE_EMPTY_NAME_KEYWORDS = "Provide at least one name keyword after n/, "
+            + "e.g. find n/alice bob.";
 
     /**
-     * Parses name keywords or a single age, gender, religion, relationship-goal, smoking or match criterion.
+     * Parses a single name, age, gender, religion, relationship-goal, smoking or match criterion.
      *
      * @throws ParseException if the input is invalid or combines search modes.
      */
     public Command parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + trimmedArgs,
-                PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING, PREFIX_MATCH);
+                PREFIX_NAME, PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING,
+                PREFIX_MATCH);
+        boolean hasName = argMultimap.getValue(PREFIX_NAME).isPresent();
         boolean hasAge = argMultimap.getValue(PREFIX_AGE).isPresent();
         boolean hasGender = argMultimap.getValue(PREFIX_GENDER).isPresent();
         boolean hasReligion = argMultimap.getValue(PREFIX_RELIGION).isPresent();
         boolean hasGoal = argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).isPresent();
         boolean hasSmoking = argMultimap.getValue(PREFIX_SMOKING).isPresent();
         boolean hasMatch = argMultimap.getValue(PREFIX_MATCH).isPresent();
-        int searchModes = (hasAge ? 1 : 0) + (hasGender ? 1 : 0) + (hasReligion ? 1 : 0)
+        int searchModes = (hasName ? 1 : 0) + (hasAge ? 1 : 0) + (hasGender ? 1 : 0) + (hasReligion ? 1 : 0)
                 + (hasGoal ? 1 : 0) + (hasSmoking ? 1 : 0) + (hasMatch ? 1 : 0);
-        if (trimmedArgs.isEmpty() || searchModes > 1
-                || (searchModes == 1 && !argMultimap.getPreamble().isEmpty())) {
+        // Every search mode, including name search, needs exactly one prefix and no bare keywords.
+        if (searchModes != 1 || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION,
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION,
                 PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING, PREFIX_MATCH);
         if (hasSmoking) {
             return new FindCommand(new SmokingStatusMatchesPredicate(
@@ -77,12 +82,25 @@ public class FindCommandParser implements Parser<Command> {
         if (hasAge) {
             return parseAgeSearch(argMultimap.getValue(PREFIX_AGE).get());
         }
+        assert hasName : "Exactly one search mode should remain";
+        return parseNameSearch(argMultimap.getValue(PREFIX_NAME).get());
+    }
 
-        // Prefix-like input must not silently become a name search.
-        if (trimmedArgs.contains("/")) {
+    /**
+     * Parses whitespace-separated name keywords supplied after {@code n/}.
+     *
+     * @throws ParseException if no keyword is supplied or a keyword looks like another prefix.
+     */
+    private FindCommand parseNameSearch(String value) throws ParseException {
+        String keywords = value.trim();
+        if (keywords.isEmpty()) {
+            throw new ParseException(MESSAGE_EMPTY_NAME_KEYWORDS);
+        }
+        // Prefix-like input such as "n/alice x/1" must not silently become a name keyword.
+        if (keywords.contains("/")) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
-        return new FindCommand(new NameContainsKeywordsPredicate(List.of(trimmedArgs.split("\\s+"))));
+        return new FindCommand(new NameContainsKeywordsPredicate(List.of(keywords.split("\\s+"))));
     }
 
     /**
