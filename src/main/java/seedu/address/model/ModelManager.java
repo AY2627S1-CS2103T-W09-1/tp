@@ -157,7 +157,7 @@ public class ModelManager implements Model {
         updateFilteredPersonList(predicate);
         sortedPersons.setComparator(comparator);
     }
-  
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {
