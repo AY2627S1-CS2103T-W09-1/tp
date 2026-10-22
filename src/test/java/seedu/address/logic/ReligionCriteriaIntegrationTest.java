@@ -31,7 +31,7 @@ public class ReligionCriteriaIntegrationTest {
             + " s/no g/nb rg/long r/Jainism";
 
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     private Model model;
     private Logic logic;
@@ -134,15 +134,16 @@ public class ReligionCriteriaIntegrationTest {
     public void execute_invalidReligionEnvironments_preservesRecordsAndDisplayedResults() throws Exception {
         logic.execute(ADD_CLIENT + " {r/Buddhism} <r/Islam>");
         AddressBook before = new AddressBook(model.getAddressBook());
-        List<Person> shown = List.copyOf(model.getFilteredPersonList());
-        for (String fields : new String[] {"{r/}", "<r/>", "{r/Other}", "<r/Other>",
-            "{r/Islam r/islam}", "<r/Islam r/Buddhism>", "{r/Buddhism} {r/Jainism}",
-            "{r/Buddhism>", "{<r/Islam>}", "{rp/Islam}", "<rx/Islam>"}) {
+        List<Person> displayedPersons = List.copyOf(model.getFilteredPersonList());
+        List<String> invalidEnvironments = List.of("{r/}", "<r/>", "{r/Other}", "<r/Other>",
+                "{r/Islam r/islam}", "<r/Islam r/Buddhism>", "{r/Buddhism} {r/Jainism}",
+                "{r/Buddhism>", "{<r/Islam>}", "{rp/Islam}", "<rx/Islam>");
+        for (String fields : invalidEnvironments) {
             assertThrows(ParseException.class, () -> logic.execute("edit 1 " + fields));
             assertThrows(ParseException.class, () -> logic.execute(
                     ADD_CLIENT.replace("Religion Demo", "Invalid Demo") + " " + fields));
             assertEquals(before, model.getAddressBook());
-            assertEquals(shown, model.getFilteredPersonList());
+            assertEquals(displayedPersons, model.getFilteredPersonList());
         }
         assertEquals(before, storage.readAddressBook().orElseThrow());
     }

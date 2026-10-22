@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import seedu.address.model.group.GroupName;
 import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.RelationshipGoal;
@@ -53,6 +55,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private FlowPane tags;
     @FXML
+    private FlowPane groups;
+    @FXML
     private Label relationshipGoal;
     @FXML
     private Label preferences;
@@ -63,6 +67,11 @@ public class PersonCard extends UiPart<Region> {
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
      */
     public PersonCard(Person person, int displayedIndex) {
+        this(person, displayedIndex, List.of());
+    }
+
+    /** Creates a card with separate, clearly labelled group badges. */
+    public PersonCard(Person person, int displayedIndex, List<GroupName> groupNames) {
         super(FXML);
         this.person = person;
         id.setText(displayedIndex + ". ");
@@ -77,6 +86,11 @@ public class PersonCard extends UiPart<Region> {
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+        groupNames.stream()
+                .sorted(Comparator.comparing(GroupName::toString, String.CASE_INSENSITIVE_ORDER))
+                .forEach(groupName -> groups.getChildren().add(new Label("Group: " + groupName)));
+        groups.setVisible(!groupNames.isEmpty());
+        groups.setManaged(!groupNames.isEmpty());
         relationshipGoal.setText("Relationship goal: "
                 + person.getRelationshipGoal().map(Object::toString).orElse(RelationshipGoal.NOT_SPECIFIED_LABEL));
         preferences.setText(formatCriteria("Preferences", person.getDatingCriteria().getPreferences()));

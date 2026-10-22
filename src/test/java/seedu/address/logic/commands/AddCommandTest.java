@@ -89,6 +89,16 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public void setGroups(java.util.List<seedu.address.model.group.ClientGroup> groups) {
+            throw new AssertionError("Unexpected group mutation.");
+        }
+
+        @Override
+        public void showGroup(seedu.address.model.group.GroupName name) {
+            throw new AssertionError("Unexpected group display.");
+        }
+
+        @Override
         public ReadOnlyUserPrefs getUserPrefs() {
             throw new AssertionError("This method should not be called.");
         }

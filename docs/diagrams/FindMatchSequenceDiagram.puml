@@ -1,0 +1,95 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":FindCommandParser" as FindCommandParser LOGIC_COLOR
+participant "f:FindMatchCommand" as FindMatchCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "a:MatchAssessment" as MatchAssessment MODEL_COLOR
+end box
+
+[-> LogicManager : execute("find match/1")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("find match/1")
+activate AddressBookParser
+
+create FindCommandParser
+AddressBookParser -> FindCommandParser
+activate FindCommandParser
+
+FindCommandParser --> AddressBookParser
+deactivate FindCommandParser
+
+AddressBookParser -> FindCommandParser : parse("match/1")
+activate FindCommandParser
+
+create FindMatchCommand
+FindCommandParser -> FindMatchCommand
+activate FindMatchCommand
+
+FindMatchCommand --> FindCommandParser
+deactivate FindMatchCommand
+
+FindCommandParser --> AddressBookParser : f
+deactivate FindCommandParser
+'Hidden arrow to position the destroy marker below the end of the activation bar.
+FindCommandParser -[hidden]-> AddressBookParser
+destroy FindCommandParser
+
+AddressBookParser --> LogicManager : f
+deactivate AddressBookParser
+
+LogicManager -> FindMatchCommand : execute(m)
+activate FindMatchCommand
+
+FindMatchCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> FindMatchCommand : displayed list
+deactivate Model
+
+note right of FindMatchCommand
+target = displayed list[0]
+end note
+
+loop each other client c in the address book
+    create MatchAssessment
+    FindMatchCommand -> MatchAssessment : new MatchAssessment(target, c)
+    activate MatchAssessment
+    MatchAssessment --> FindMatchCommand
+    deactivate MatchAssessment
+
+    FindMatchCommand -> MatchAssessment : getOutcome()
+    activate MatchAssessment
+    MatchAssessment --> FindMatchCommand : outcome
+    deactivate MatchAssessment
+
+    opt outcome != INCOMPATIBLE
+        FindMatchCommand -> FindMatchCommand : scores.put(c, preferences met)
+    end
+end
+
+FindMatchCommand -> Model : updateFilteredPersonList(scores::containsKey, score descending)
+activate Model
+Model --> FindMatchCommand
+deactivate Model
+
+create CommandResult
+FindMatchCommand -> CommandResult
+activate CommandResult
+CommandResult --> FindMatchCommand
+deactivate CommandResult
+
+FindMatchCommand --> LogicManager : r
+deactivate FindMatchCommand
+
+[<--LogicManager
+deactivate LogicManager
+@enduml

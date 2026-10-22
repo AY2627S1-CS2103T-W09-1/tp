@@ -132,7 +132,7 @@ use the listed spelling, although its letter case can vary. There is no free-tex
 
 Example:
 
-* `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>` Adds a 25-year-old client with the own religion, preference and exclusion described above. The required contact details and age are outside the environments.
+* `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>` Adds a 25-year-old client with the client's own religion, preference and exclusion described above. The required contact details and age are outside the environments.
 
 #### Relationship goal field
 
@@ -177,7 +177,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
-* Use outer `r/RELIGION` to update the client's own religion. Empty outer `r/` clears only the own religion; omitting it preserves it. Partner criteria and other contact details remain unchanged unless separately edited.
+* Use outer `r/RELIGION` to update the client's own religion. Empty outer `r/` clears only the client's own religion; omitting it preserves it. Partner criteria and other contact details remain unchanged unless separately edited.
 * Use `{r/RELIGION}` to set the preferred partner religion and `<r/RELIGION>` to set an excluded partner religion. The same validation rules as [Religion fields](#religion-fields) apply, including checking the resulting record for a religion that is both preferred and excluded.
 * **A non-empty environment adds or updates only the supplied criteria.** For example, `{r/Buddhism}` changes the preferred religion while preserving existing age, gender, smoking and relationship-goal preferences. The same rule applies to exclusions/dealbreakers in `<...>`.
 * Omit an environment to preserve its entire bucket. Use `{}` to clear all preferences, or `<>` to clear all exclusions/dealbreakers. These do not clear the client's own religion. `{r/}` and `<r/>` are invalid, not clearing commands. A rejected edit leaves the whole record unchanged.
@@ -257,7 +257,7 @@ and excludes smokers. Ordinary fields outside the blocks describe the client's o
 
 Each block is optional and may appear once. Inside a block, use each of `age/`, `g/`, `s/`, `r/`, or `rg/` at most once.
 Age accepts an exact age or inclusive range, with bounds from 18 to 99.
-Gender accepts one value: `m`, `w`, or `nb`, ignoring case. Empty values and gender lists are rejected inside blocks.
+Gender accepts one value: `g/m`, `g/w`, or `g/nb`, ignoring case. Empty values and gender lists are rejected inside blocks.
 Other criteria use the same values as the client's own fields and compare exact normalized categories.
 Different relationship-goal categories are not treated as equivalent.
 When editing, a non-empty block adds or updates only its supplied criteria; other criteria are preserved.
@@ -276,6 +276,62 @@ An omitted criterion adds no constraint. `No religion` and `unsure` are explicit
 
 Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
 
+### Organising clients into groups: `grp` and `show`
+
+Keep named collections of clients, such as event invitations or a shortlist. A client can belong to
+several groups. Membership is shown as a separate `Group: NAME` badge; ordinary `t/` tags are unchanged.
+
+Action | Format | Example
+-------|--------|--------
+Create a group or add members | `grp NAME add INDEX [MORE_INDEXES]` | `grp VIP add 1 3`
+Remove members | `grp NAME remove INDEX [MORE_INDEXES]` | `grp VIP remove 2`
+Create a matching shortlist | `grp NAME matches INDEX` | `grp Candidates matches 1`
+Show a group's members | `show NAME` | `show VIP`
+
+**Names and indexes**
+
+* A name has 1–30 ASCII letters (`A`–`Z`, `a`–`z`), digits, hyphens or underscores, and starts with a letter or digit.
+  Spaces and prefixes such as `/` or `g/` are not accepted. Names are case-insensitive: `VIP` and `vip` identify
+  the same group. The spelling used when the group was created is retained on badges and in feedback.
+* Every index refers to the **currently displayed list**, including after `find` or `show`. Use positive integers
+  separated by spaces, not commas. A repeated, invalid or out-of-range index rejects the entire command.
+* Commands and operation words are lowercase (`grp`, `add`, `remove`, `matches`, `show`).
+
+**Adding, removing and showing members**
+
+* `add` creates a missing group with the selected clients. One member is sufficient. For an existing group,
+  it adds the selected clients; if any selected client is already a member, nothing is added.
+* `remove` requires an existing group. If any selected client is not a member, nothing is removed.
+  Removing membership does **not** delete the client. Removing the last member retains an empty group.
+* `show` searches all clients and displays the group's members in address-book order. An unknown group reports
+  an error and leaves the current list unchanged; an empty group shows zero clients. `list` restores all clients.
+* Membership changes update the list immediately when that group is being shown. Otherwise, they leave the
+  current list unchanged. To add someone outside a shown group, run `list` or `find` first.
+* Editing a client, including their name or tags, preserves their memberships. The existing `edit` and `add`
+  commands restore the full client list; use `show NAME` again to return to the group.
+  `delete INDEX` deletes the client record and removes it from every group. Re-adding that client later does
+  not restore old memberships. `clear` removes both all clients and all groups.
+* Group renaming, deleting an entire group, and listing all group names are not supported in this version.
+
+Example: With at least three clients displayed, run `grp VIP add 1 3`, then `show VIP`.
+The two members now have displayed indexes 1 and 2. `grp VIP remove 2` removes the second displayed member
+from VIP, leaving their client record intact. `list` shows all clients again.
+
+**Creating a matching shortlist**
+
+`grp Candidates matches 1` creates a **new** group using the same eligibility rule as `find match/1`:
+it checks the first displayed client against every other client and excludes known dealbreaker violations.
+The source client is not included. Candidates with insufficient information are included, so group membership
+is **not a guarantee of compatibility**. Unmet preferences alone do not exclude a candidate.
+
+The command takes exactly one displayed index. An existing group name or no eligible candidates causes an
+error without changing any group. The current displayed list stays unchanged; run `show Candidates` to see
+the members in address-book order, rather than the preference ranking used by `find match/1`.
+
+Membership is a snapshot: adding clients or changing dating attributes and criteria does not automatically
+recompute the shortlist. Edits still update the member's details, and deleting a member removes them from
+the group. Use `add`/`remove` to adjust membership or create another shortlist with a new name.
+
 ### Deleting a person: `delete`
 
 Deletes the specified client from CupidMaxxing.
@@ -293,7 +349,7 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the address book.
+Clears all clients and groups from the address book.
 
 Format: `clear`
 
@@ -307,6 +363,9 @@ Format: `exit`
 
 CupidMaxxing automatically saves data after every successful command. You do not need to save manually. Gender is saved with each client; valid existing records without a gender load as unspecified. The existing required-age rule still applies.
 
+Groups and memberships are saved in the same file as the clients and restored when the app restarts.
+Older valid files without a `groups` field load with no groups.
+
 The app's **home folder** is the folder containing its JAR, even if you launch it
 from a different working folder. Keep that folder writable. Client data is stored
 in `data/addressbook.json`, window preferences in `preferences.json`, and rotating
@@ -315,9 +374,29 @@ temporary files also stay there, in `.javafx/` and `.tmp/`. The app does not cha
 OS-level settings. Paths and symbolic links leading outside the home folder are
 not supported for application data; move the data itself into the home folder instead.
 
+The private `.javafx/` and `.tmp/` runtime folders must be ordinary folders, with no
+symbolic links at either folder's root or anywhere inside, even links pointing back
+inside the home folder. This prevents inward links from hiding outward links in their
+targets. An unsafe or unwritable runtime layout stops startup before JavaFX starts;
+the app does not automatically delete or rewrite existing caches or client data.
+In-home symbolic links for normal data and preferences retain their existing behavior;
+the stricter no-symbolic-link rule applies only to these two runtime folders.
+
 ### Editing the data file
 
 CupidMaxxing data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+
+Groups use a top-level array alongside `persons`, for example:
+
+```json
+"groups": [{"name": "VIP", "memberNames": ["Alice Pauline", "Benson Meier"]}]
+```
+
+Each member name must exactly match one existing client's name, including letter case. Reordering the
+`persons` array does not change group membership. If you manually rename or remove a client, also update
+every group's `memberNames` references; edits made through the app handle this automatically. Empty
+`memberNames` arrays are valid. Duplicate group names (ignoring case), repeated or missing members,
+invalid names and malformed entries reject the data file. Back up the file and close the app before editing it.
 
 Records with valid required fields but no own-religion property load with unknown
 own religion, not `No religion`. Partner criteria are saved in the `preferences` and
@@ -370,6 +449,9 @@ Action | Format, Examples
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, `find s/no`, or `find match/INDEX`<br> e.g., `find James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`, `find match/2`
 **List** | `list`
+**Group members** | `grp NAME add INDEX [MORE_INDEXES]` or `grp NAME remove INDEX [MORE_INDEXES]`<br> e.g., `grp VIP add 1 3`, `grp VIP remove 2`
+**Group matches** | `grp NAME matches INDEX`<br> e.g., `grp Candidates matches 1`
+**Show group** | `show NAME`<br> e.g., `show VIP`
 **Match** | `match INDEX_A INDEX_B`<br> e.g., `match 1 3`
 **Help** | `help`
 **Exit** | `exit`

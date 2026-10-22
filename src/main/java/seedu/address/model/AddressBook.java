@@ -2,10 +2,15 @@ package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.group.ClientGroup;
+import seedu.address.model.group.GroupName;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
 
@@ -16,6 +21,8 @@ import seedu.address.model.person.UniquePersonList;
 public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
+    private final ObservableList<ClientGroup> groups = FXCollections.observableArrayList();
+    private final ObservableList<ClientGroup> unmodifiableGroups = FXCollections.unmodifiableObservableList(groups);
 
     public AddressBook() {}
 
@@ -35,6 +42,8 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void setPersons(List<Person> persons) {
         this.persons.setPersons(persons);
+        groups.setAll(groups.stream().map(group -> group.withMembers(group.getMembers().stream()
+                .filter(persons::contains).toList())).toList());
     }
 
     /**
@@ -43,7 +52,13 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void resetData(ReadOnlyAddressBook newData) {
         requireNonNull(newData);
 
-        setPersons(newData.getPersonList());
+        // Validate a complete snapshot before changing either observable collection.
+        UniquePersonList replacement = new UniquePersonList();
+        replacement.setPersons(newData.getPersonList());
+        List<ClientGroup> replacementGroups = List.copyOf(newData.getGroupList());
+        validateGroups(replacementGroups, replacement.asUnmodifiableObservableList());
+        persons.setPersons(replacement);
+        groups.setAll(replacementGroups);
     }
 
     //// person-level operations
@@ -73,6 +88,8 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(editedPerson);
 
         persons.setPerson(target, editedPerson);
+        groups.setAll(groups.stream().map(group -> group.withMembers(group.getMembers().stream()
+                .map(member -> member.equals(target) ? editedPerson : member).toList())).toList());
     }
 
     /**
@@ -81,6 +98,32 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+        groups.setAll(groups.stream().map(group -> group.withMembers(group.getMembers().stream()
+                .filter(member -> !member.equals(key)).toList())).toList());
+    }
+
+    /** Replaces groups only after validating names and membership against this address book. */
+    public void setGroups(List<ClientGroup> replacement) {
+        List<ClientGroup> snapshot = List.copyOf(replacement);
+        validateGroups(snapshot, getPersonList());
+        groups.setAll(snapshot);
+    }
+
+    private static void validateGroups(List<ClientGroup> replacement, List<Person> persons) {
+        HashSet<GroupName> names = new HashSet<>();
+        for (ClientGroup group : replacement) {
+            if (!names.add(group.getName())) {
+                throw new IllegalArgumentException("Duplicate group name: " + group.getName());
+            }
+            if (!persons.containsAll(group.getMembers())) {
+                throw new IllegalArgumentException("Group contains a client absent from the address book.");
+            }
+        }
+    }
+
+    @Override
+    public ObservableList<ClientGroup> getGroupList() {
+        return unmodifiableGroups;
     }
 
     //// util methods
@@ -108,11 +151,11 @@ public class AddressBook implements ReadOnlyAddressBook {
             return false;
         }
 
-        return persons.equals(otherAddressBook.persons);
+        return persons.equals(otherAddressBook.persons) && groups.equals(otherAddressBook.groups);
     }
 
     @Override
     public int hashCode() {
-        return persons.hashCode();
+        return Objects.hash(persons, groups);
     }
 }

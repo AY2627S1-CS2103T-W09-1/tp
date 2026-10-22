@@ -90,8 +90,9 @@ public class LogicManagerTest {
         CommandResult result = logic.execute("find r/jAiNiSm");
         assertEquals(String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
         assertEquals(List.of(jain), model.getFilteredPersonList());
-        for (String query : new String[] {"find r/", "find r/Other", "find r/Jainism r/Islam",
-            "find Jain r/Jainism", "find r/Jainism age/25", "find r/Jainism g/nb"}) {
+        List<String> invalidQueries = List.of("find r/", "find r/Other", "find r/Jainism r/Islam",
+                "find Jain r/Jainism", "find r/Jainism age/25", "find r/Jainism g/nb");
+        for (String query : invalidQueries) {
             assertThrows(ParseException.class, () -> logic.execute(query));
             assertEquals(List.of(jain), model.getFilteredPersonList());
             assertEquals(original, model.getAddressBook());

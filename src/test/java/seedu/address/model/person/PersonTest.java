@@ -103,9 +103,6 @@ public class PersonTest {
         assertFalse(ALICE.equals(editedAlice));
     }
 
-    /**
-     * Checks that the person string includes unset religion fields.
-     */
     @Test
     public void gender_affectsEqualityButNotIdentity() {
         Person specified = new PersonBuilder(ALICE).withGender("w").build();
@@ -137,6 +134,9 @@ public class PersonTest {
         assertEquals(aliceWithGoal.hashCode(), aliceWithSameGoal.hashCode());
     }
 
+    /**
+     * Checks that the person string includes an unset religion.
+     */
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
