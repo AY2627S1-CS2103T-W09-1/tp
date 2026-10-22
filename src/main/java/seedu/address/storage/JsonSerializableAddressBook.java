@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
@@ -24,19 +25,18 @@ class JsonSerializableAddressBook {
     public static final String MESSAGE_DUPLICATE_PERSON = "Persons list contains duplicate person(s).";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<JsonAdaptedGroup> groups = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonSerializableAddressBook} with the given persons.
+     * Older address books may omit the groups field, so groups are populated by the
+     * annotated setter only when Jackson encounters that field.
      */
     @JsonCreator
-    public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons,
-                                      @JsonProperty("groups") List<JsonAdaptedGroup> groups) {
+    public JsonSerializableAddressBook(@JsonProperty("persons") List<JsonAdaptedPerson> persons) {
         this.persons.addAll(persons);
-        // Older address books have no groups field.
-        if (groups != null) {
-            this.groups.addAll(groups);
-        }
     }
 
     /**
@@ -48,6 +48,18 @@ class JsonSerializableAddressBook {
         persons.addAll(source.getPersonList().stream().map(JsonAdaptedPerson::new).collect(Collectors.toList()));
         groups.addAll(source.getGroupList().stream()
                 .map(JsonAdaptedGroup::new).toList());
+    }
+
+    /**
+     * Loads the groups field when it is present in JSON. An explicitly null groups field is malformed;
+     * an omitted field is accepted for compatibility with older address books.
+     */
+    @JsonProperty("groups")
+    public void setGroupsFromJson(List<JsonAdaptedGroup> groups) {
+        if (groups == null) {
+            throw new IllegalArgumentException("Groups field must be an array when present.");
+        }
+        this.groups.addAll(groups);
     }
 
     /**

@@ -74,6 +74,19 @@ public class GroupStorageTest {
     }
 
     @Test
+    public void save_withoutGroups_omitsGroupsField() throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(folder.resolve("book.json"));
+        AddressBook book = new AddressBook();
+        book.addPerson(ALICE);
+
+        storage.saveAddressBook(book);
+
+        JsonNode json = new ObjectMapper().readTree(Files.readString(storage.getAddressBookFilePath()));
+        assertTrue(json.get("groups") == null);
+        assertEquals(book, storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void read_malformedGroups_reportsDataLoadingErrorWithoutChangingFile() throws Exception {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(folder.resolve("book.json"));
         AddressBook book = new AddressBook();
@@ -81,7 +94,7 @@ public class GroupStorageTest {
         storage.saveAddressBook(book);
         ObjectNode json = (ObjectNode) new ObjectMapper().readTree(Files.readString(storage.getAddressBookFilePath()));
         for (String groups : new String[] {
-            "[null]", "[{\"name\":\"VIP\"}]", "[{\"memberNames\":[]}]",
+            "null", "[null]", "[{\"name\":\"VIP\"}]", "[{\"memberNames\":[]}]",
             "[{\"name\":123,\"memberNames\":[]}]",
             "[{\"name\":true,\"memberNames\":[]}]",
             "[{\"name\":null,\"memberNames\":[]}]",
