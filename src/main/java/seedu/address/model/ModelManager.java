@@ -144,6 +144,8 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
+        // A normal search replaces any previously displayed group.
+        displayedGroup = null;
         // The previous comparator may not support persons admitted by the new filter.
         sortedPersons.setComparator(null);
         filteredPersons.setPredicate(predicate);
