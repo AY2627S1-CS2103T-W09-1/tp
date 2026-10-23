@@ -45,11 +45,17 @@ AddressBook *--> "*" ClientGroup
 ClientGroup *-left-> "1" GroupName
 ClientGroup --> "0..*" Person : members
 UniquePersonList --> "0..*" Person : all clients
-Person *--> Name
-Person *--> Phone
-Person *--> Email
-Person *--> Address
+Person *--> "1" Name
+Person *--> "1" Phone
+Person *--> "1" Email
+Person *--> "1" Address
+Person *--> "1" Age
+Person *--> "0..1" Smoking Status
+Person *--> "0..1" Religion
+Person *--> "0..1" Relationship Goal
+Person *--> "0..1" "Gender
 Person *--> "*" Tag
+
 
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Address
