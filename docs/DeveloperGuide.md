@@ -302,6 +302,17 @@ prefer and exclude the same normalized religion, including when an edit updates 
 one bucket and retains the other. The own religion is independent: it may equal or differ
 from either partner criterion. A failed add or edit leaves stored records unchanged.
 
+The class diagram below focuses on the religion-related model. Unrelated `Person`
+members and the other `DatingAttribute` enum values are omitted.
+
+<img src="images/ReligionCriteriaClassDiagram.png" width="450" alt="Religion model: a Person has an optional own Religion and separate DatingCriteria maps keyed by DatingAttribute." />
+
+The `0..1` multiplicity represents an unknown or recorded own religion, while
+`DatingCriteria` is always present, even when both maps are empty. Religion criteria
+are canonical strings in those maps, not references to the client's own `Religion`.
+The dashed dependencies show the map key type and the shared religion validation;
+they do not represent additional stored associations.
+
 `DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an
 explicitly empty one. `EditPersonDescriptor` carries these optional bucket updates;
 `EditCommand` preserves an omitted bucket and merges a non-empty update by attribute.
