@@ -22,9 +22,37 @@ Class Address
 Class Email
 Class Name
 Class Phone
+Class Age
+Enum Gender <<enumeration>> {
+    MAN
+    WOMAN
+    NON_BINARY
+    UNSPECIFIED
+}
+Class SmokingStatus
+Class Religion
+Enum RelationshipGoal <<enumeration>> {
+    LIFE_PARTNER
+    LONG_TERM
+    LONG_TERM_OPEN_TO_SHORT
+    SHORT_TERM_OPEN_TO_LONG
+    SHORT_TERM_FUN
+    FIGURING_OUT
+}
 Class Tag
 Class ClientGroup
 Class GroupName
+Class DatingCriteria {
+    -preferences: Map<DatingAttribute, String>
+    -dealbreakers: Map<DatingAttribute, String>
+}
+Enum DatingAttribute <<enumeration>> {
+    AGE
+    GENDER
+    SMOKING
+    RELIGION
+    RELATIONSHIP_GOAL
+}
 
 }
 
@@ -45,11 +73,23 @@ AddressBook *--> "*" ClientGroup
 ClientGroup *-left-> "1" GroupName
 ClientGroup --> "0..*" Person : members
 UniquePersonList --> "0..*" Person : all clients
-Person *--> Name
-Person *--> Phone
-Person *--> Email
-Person *--> Address
+Person *--> "1" Name
+Person *--> "1" Phone
+Person *--> "1" Email
+Person *--> "1" Address
+Person *--> "1" Age
+Person *--> "1" SmokingStatus
+Person *--> "0..1" Religion
+Person *--> "1" Gender
+Person *--> "0..1" RelationshipGoal
 Person *--> "*" Tag
+Person *--> "1" DatingCriteria : dating criteria
+DatingCriteria ..> DatingAttribute : preference/dealbreaker keys
+
+show DatingCriteria fields
+show DatingAttribute members
+show Gender members
+show RelationshipGoal members
 
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Address
