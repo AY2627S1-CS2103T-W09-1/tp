@@ -21,6 +21,7 @@ import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
+import seedu.address.model.person.Remark;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 
@@ -43,9 +44,20 @@ class JsonAdaptedPerson {
     private final String relationshipGoal;
     private final Map<String, String> preferences;
     private final Map<String, String> dealbreakers;
+    private final String remark;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
+     */
+    public JsonAdaptedPerson(String name, String phone, String email, String address, String age,
+            List<JsonAdaptedTag> tags, String smokingStatus, String gender, String religion, String relationshipGoal,
+            Map<String, String> preferences, Map<String, String> dealbreakers) {
+        this(name, phone, email, address, age, tags, smokingStatus, gender, religion, relationshipGoal,
+                preferences, dealbreakers, null);
+    }
+
+    /**
+     * Constructs an adapted person, allowing legacy data to omit the tutorial remark.
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
@@ -56,7 +68,8 @@ class JsonAdaptedPerson {
             @JsonProperty("religion") String religion,
             @JsonProperty("relationshipGoal") String relationshipGoal,
             @JsonProperty("preferences") Map<String, String> preferences,
-            @JsonProperty("dealbreakers") Map<String, String> dealbreakers) {
+            @JsonProperty("dealbreakers") Map<String, String> dealbreakers,
+            @JsonProperty("remark") String remark) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -71,6 +84,7 @@ class JsonAdaptedPerson {
         this.relationshipGoal = relationshipGoal;
         this.preferences = preferences;
         this.dealbreakers = dealbreakers;
+        this.remark = remark;
     }
 
     /**
@@ -114,6 +128,7 @@ class JsonAdaptedPerson {
         relationshipGoal = source.getRelationshipGoal().map(RelationshipGoal::toString).orElse(null);
         preferences = source.getDatingCriteria().getPreferencesForStorage();
         dealbreakers = source.getDatingCriteria().getDealbreakersForStorage();
+        remark = source.getRemark().value;
     }
 
     /**
@@ -193,7 +208,8 @@ class JsonAdaptedPerson {
             Religion modelReligion = religion == null ? null : new Religion(religion);
             DatingCriteria modelDatingCriteria = DatingCriteria.fromStorage(preferences, dealbreakers);
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags,
-                    modelSmokingStatus, modelGender, modelReligion, modelRelationshipGoal, modelDatingCriteria);
+                    modelSmokingStatus, modelGender, modelReligion, modelRelationshipGoal, modelDatingCriteria,
+                    remark == null ? Remark.EMPTY : new Remark(remark));
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(exception.getMessage());
         }

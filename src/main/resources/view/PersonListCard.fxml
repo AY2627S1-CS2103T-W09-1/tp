@@ -39,6 +39,7 @@
       <Label fx:id="relationshipGoal" styleClass="cell_small_label" text="\$relationshipGoal" />
       <Label fx:id="preferences" styleClass="cell_small_label" wrapText="true" />
       <Label fx:id="dealbreakers" styleClass="cell_small_label" wrapText="true" />
+      <Label fx:id="remark" styleClass="cell_small_label" wrapText="true" />
     </VBox>
   </GridPane>
 </HBox>

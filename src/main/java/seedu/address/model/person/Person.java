@@ -32,6 +32,7 @@ public class Person {
     private final Religion religion;
     private final RelationshipGoal relationshipGoal;
     private final DatingCriteria datingCriteria;
+    private final Remark remark;
 
     /**
      * Creates a person whose smoking status and relationship goal have not been recorded.
@@ -88,7 +89,26 @@ public class Person {
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus, Gender gender, Religion religion, RelationshipGoal relationshipGoal,
             DatingCriteria datingCriteria) {
-        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender, datingCriteria);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, religion, relationshipGoal,
+                datingCriteria, Remark.EMPTY);
+    }
+
+    /**
+     * Copies all client characteristics, replacing only the tutorial remark.
+     */
+    public Person(Person source, Remark remark) {
+        this(source.getName(), source.getPhone(), source.getEmail(), source.getAddress(), source.getAge(),
+                source.getTags(), source.getSmokingStatus(), source.getGender(), source.getReligion().orElse(null),
+                source.getRelationshipGoal().orElse(null), source.getDatingCriteria(), remark);
+    }
+
+    /**
+     * Creates a person with all supported characteristics, partner criteria and a tutorial remark.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
+            SmokingStatus smokingStatus, Gender gender, Religion religion, RelationshipGoal relationshipGoal,
+            DatingCriteria datingCriteria, Remark remark) {
+        requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender, datingCriteria, remark);
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -100,6 +120,14 @@ public class Person {
         this.religion = religion;
         this.relationshipGoal = relationshipGoal;
         this.datingCriteria = datingCriteria;
+        this.remark = remark;
+    }
+
+    /**
+     * Returns the optional tutorial remark, represented by an empty value when absent.
+     */
+    public Remark getRemark() {
+        return remark;
     }
 
     public Name getName() {
@@ -195,7 +223,8 @@ public class Person {
                 && gender == otherPerson.gender
                 && Objects.equals(religion, otherPerson.religion)
                 && Objects.equals(relationshipGoal, otherPerson.relationshipGoal)
-                && datingCriteria.equals(otherPerson.datingCriteria);
+                && datingCriteria.equals(otherPerson.datingCriteria)
+                && remark.equals(otherPerson.remark);
     }
 
     /**
@@ -205,7 +234,7 @@ public class Person {
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
         return Objects.hash(name, phone, email, address, tags, religion, age, smokingStatus, gender,
-                relationshipGoal, datingCriteria);
+                relationshipGoal, datingCriteria, remark);
     }
 
     /**
@@ -226,6 +255,9 @@ public class Person {
                 .add("relationshipGoal", relationshipGoal);
         if (!datingCriteria.isEmpty()) {
             builder.add("datingCriteria", datingCriteria);
+        }
+        if (!remark.value.isEmpty()) {
+            builder.add("remark", remark);
         }
         return builder.toString();
     }

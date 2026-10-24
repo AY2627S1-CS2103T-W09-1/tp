@@ -62,6 +62,8 @@ public class PersonCard extends UiPart<Region> {
     private Label preferences;
     @FXML
     private Label dealbreakers;
+    @FXML
+    private Label remark;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -76,6 +78,9 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
+        remark.setText("Remark: " + person.getRemark().value);
+        remark.setVisible(!person.getRemark().value.isEmpty());
+        remark.setManaged(!person.getRemark().value.isEmpty());
         phone.setText(person.getPhone().value);
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);

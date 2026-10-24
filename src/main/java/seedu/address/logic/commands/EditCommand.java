@@ -152,7 +152,8 @@ public class EditCommand extends Command {
                 ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
 
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
-                updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal, updatedDatingCriteria);
+                updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal, updatedDatingCriteria,
+                personToEdit.getRemark());
     }
 
     /**
