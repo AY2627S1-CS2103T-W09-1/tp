@@ -20,14 +20,21 @@ class MainAppTest {
     Path temporaryFolder;
 
     @Test
-    void initModelManager_invalidAddressBookFile_startsWithEmptyAddressBook() throws Exception {
+    void initModelManager_nullPersonOrTagEntry_startsWithEmptyAddressBook() throws Exception {
         Path addressBookFile = temporaryFolder.resolve("addressbook.json");
-        Files.writeString(addressBookFile, "{\"persons\":[null]}");
-        StorageManager storage = new StorageManager(new JsonAddressBookStorage(addressBookFile),
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json")));
+        String personWithTags = "{\"name\":\"Alice\",\"phone\":\"12345678\","
+                + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"age\":\"25\","
+                + "\"tags\":%s}";
+        for (String contents : new String[] {
+            "{\"persons\":[null]}",
+            "{\"persons\":[" + String.format(personWithTags, "[null]") + "]}"}) {
+            Files.writeString(addressBookFile, contents);
+            StorageManager storage = new StorageManager(new JsonAddressBookStorage(addressBookFile),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json")));
 
-        Model model = new MainApp().initModelManager(storage, new UserPrefs());
+            Model model = new MainApp().initModelManager(storage, new UserPrefs());
 
-        assertTrue(model.getAddressBook().getPersonList().isEmpty());
+            assertTrue(model.getAddressBook().getPersonList().isEmpty());
+        }
     }
 }
