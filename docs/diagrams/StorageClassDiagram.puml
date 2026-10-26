@@ -1,4 +1,5 @@
 @startuml
+!pragma layout smetana
 !include style.puml
 skinparam arrowThickness 1.1
 skinparam arrowColor STORAGE_COLOR
@@ -17,6 +18,7 @@ package "AddressBook Storage" #F4F6F6{
 Class JsonAddressBookStorage
 Class JsonSerializableAddressBook
 Class JsonAdaptedPerson
+Class JsonAdaptedGroup
 Class JsonAdaptedTag
 }
 
@@ -31,6 +33,11 @@ StorageManager -down-> "1" JsonAddressBookStorage
 
 JsonAddressBookStorage ..> JsonSerializableAddressBook
 JsonSerializableAddressBook --> "*" JsonAdaptedPerson
+JsonSerializableAddressBook --> "*" JsonAdaptedGroup
+note right of JsonAdaptedGroup
+  Membership stores client names,
+  resolved against loaded persons.
+end note
 JsonAdaptedPerson --> "*" JsonAdaptedTag
 
 @enduml
