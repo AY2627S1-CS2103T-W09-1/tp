@@ -93,13 +93,16 @@ The optional `s/SMOKING` field records the client's **own smoking habit**:
 * This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 <div markdown="span" class="alert alert-primary">:bulb: **Tip:**
-A person can have any number of tags, including zero.
+A person can have any number of tags, including zero. Tags are user-defined labels, such as
+`newclient`, `referral` and `consultationpending`, for organising client records. They are not
+updated automatically and do not affect compatibility results. Named groups are managed separately
+using [`grp` and `show`](#organising-clients-into-groups-grp-and-show).
 </div>
 
 Examples:
 
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 age/25`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 age/30 t/criminal`
+* `add n/Betsy Crowe t/referral e/betsycrowe@example.com a/12 Clementi Road p/1234567 age/30 t/newclient`
 * `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd age/28 g/w` Records Sarah as a woman.
 * `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi age/30 s/no` Records Alice as a non-smoker.
 * `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 rg/long` Records Priya as looking for a long-term relationship.
