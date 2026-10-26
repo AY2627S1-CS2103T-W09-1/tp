@@ -6,39 +6,53 @@
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <GridPane HBox.hgrow="ALWAYS">
-    <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" />
-    </columnConstraints>
-    <VBox alignment="CENTER_LEFT" minHeight="105" GridPane.columnIndex="0">
-      <padding>
-        <Insets top="5" right="5" bottom="5" left="15" />
-      </padding>
-      <HBox spacing="0.5" alignment="CENTER_LEFT">
-        <Label fx:id="id" styleClass="cell_big_label">
-          <minWidth>
-            <!-- Ensures that the label text is never truncated -->
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minWidth>
-        </Label>
-        <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
-      </HBox>
-      <FlowPane fx:id="tags" />
+  <VBox spacing="8" HBox.hgrow="ALWAYS" styleClass="person-card">
+    <padding>
+      <Insets top="12" right="16" bottom="12" left="16" />
+    </padding>
+    <HBox spacing="0.5" styleClass="person-card-header">
+      <Label fx:id="id" styleClass="cell_big_label" />
+      <Label fx:id="name" styleClass="cell_big_label" />
+    </HBox>
+    <FlowPane fx:id="tags" />
+    <GridPane hgap="28" vgap="4">
+      <columnConstraints>
+        <ColumnConstraints hgrow="ALWAYS" minWidth="180" />
+        <ColumnConstraints hgrow="ALWAYS" minWidth="180" />
+        <ColumnConstraints hgrow="ALWAYS" minWidth="180" />
+      </columnConstraints>
+      <VBox spacing="3" GridPane.columnIndex="0">
+        <Label text="Profile" styleClass="person-card-section-title" />
+        <Label fx:id="age" styleClass="cell_small_label" />
+        <Label fx:id="gender" styleClass="cell_small_label" />
+        <Label fx:id="religion" styleClass="cell_small_label" />
+        <Label fx:id="smokingStatus" styleClass="cell_small_label" />
+        <Label fx:id="phone" styleClass="cell_small_label" />
+        <Label fx:id="email" styleClass="cell_small_label" />
+      </VBox>
+      <VBox spacing="3" GridPane.columnIndex="1">
+        <Label text="Preferences" styleClass="person-card-section-title" />
+        <Label fx:id="preferredAge" styleClass="cell_small_label" />
+        <Label fx:id="preferredGender" styleClass="cell_small_label" />
+        <Label fx:id="preferredReligion" styleClass="cell_small_label" />
+        <Label fx:id="preferredSmoking" styleClass="cell_small_label" />
+        <Label fx:id="preferredRelationshipGoal" styleClass="cell_small_label" />
+      </VBox>
+      <VBox spacing="3" GridPane.columnIndex="2">
+        <Label text="Dealbreakers" styleClass="person-card-section-title" />
+        <Label fx:id="dealbreakerAge" styleClass="cell_small_label" />
+        <Label fx:id="dealbreakerGender" styleClass="cell_small_label" />
+        <Label fx:id="dealbreakerReligion" styleClass="cell_small_label" />
+        <Label fx:id="dealbreakerSmoking" styleClass="cell_small_label" />
+        <Label fx:id="dealbreakerRelationshipGoal" styleClass="cell_small_label" />
+      </VBox>
+    </GridPane>
+    <HBox spacing="6">
+      <Label text="Groups:" styleClass="person-card-section-title" />
       <FlowPane fx:id="groups" hgap="4" vgap="4" />
-      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
-      <Label fx:id="gender" styleClass="cell_small_label" text="\$gender" />
-      <Label fx:id="smokingStatus" styleClass="cell_small_label" text="\$smokingStatus" />
-      <Label fx:id="age" styleClass="cell_small_label" text="\$age" />
-      <Label fx:id="religion" styleClass="cell_small_label" text="\$religion" />
-      <Label fx:id="relationshipGoal" styleClass="cell_small_label" text="\$relationshipGoal" />
-      <Label fx:id="preferences" styleClass="cell_small_label" wrapText="true" />
-      <Label fx:id="dealbreakers" styleClass="cell_small_label" wrapText="true" />
-    </VBox>
-  </GridPane>
+    </HBox>
+  </VBox>
 </HBox>
