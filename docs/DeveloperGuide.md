@@ -211,8 +211,8 @@ Missing groups in legacy files default to an empty collection. Malformed entries
 or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
 
 `Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
-change. `PersonCard` displays alphabetically ordered `Group: NAME` badges separately from tags, hiding the
-badge container when empty. No additional client fields or external dependencies are required.
+change. `PersonCard` displays alphabetically ordered group chips after a **Groups** label, separately from tag chips,
+in a strip below the card's columns that is hidden when the client has no tags or groups. No additional client fields or external dependencies are required.
 
 Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
 matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
@@ -401,8 +401,10 @@ Any known violation makes the pair incompatible, even if another comparison is u
 comparison or no criteria on either client gives insufficient information. All other pairs are compatible with
 recorded dealbreakers, including pairs with unmet preferences.
 
-`MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome and
-a table per direction in the command-result area. Plain-text feedback uses the same labels for logs.
+`MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome with a
+one-line reason, then a three-column table per direction: requirement, the candidate's value, and assessment.
+`MainWindow` hides the client list while a match result is shown, so the tables have room on small screens, and
+shows it again after any other command or error. Plain-text feedback uses the same labels for logs.
 Other commands and errors retain their text display. Matching does not change model data,
 the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
 save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
@@ -731,11 +733,11 @@ Use an isolated writable JAR folder with test data. Do not clear a real client d
 
 1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
    Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
-2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, with separate
-   `Group: VIP` badges. Alice's ordinary VIP tag should still appear. Check at a narrow window size that badges
-   wrap and the client details remain readable.
+2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, each with a
+   `VIP` chip after **Groups**. Alice's ordinary VIP tag chip should still appear after **Tags**. Check at a narrow
+   window size that the chips wrap and the client details remain readable.
 3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
-   records remain and their VIP group badges disappear, while Alice's ordinary tag remains.
+   records remain and their VIP group chips disappear, while Alice's ordinary tag remains.
 4. Run `grp VIP add 2` then `grp VIP add 1 2`. Expect the second command to fail without adding Alice.
    `show VIP` should display only Bob. Run `grp VIP remove 1 2`; it must fail without removing Bob.
 5. Run `edit 1 n/Group Robert`, then `show VIP`. Expect Robert still in VIP. Restart the app and run `show VIP`
