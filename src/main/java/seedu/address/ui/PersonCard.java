@@ -99,6 +99,7 @@ public class PersonCard extends UiPart<Region> {
      */
     private Label addAttribute(String label, Optional<String> value) {
         Label fieldLabel = createLabel(label, "card-field-label");
+        fieldLabel.setMinWidth(Region.USE_PREF_SIZE);
         Label valueLabel = createLabel(value.orElse(NOT_SET_LABEL),
                 value.isPresent() ? "card-field-value" : "card-field-unset");
         attributes.addRow(attributes.getRowCount(), fieldLabel, valueLabel);

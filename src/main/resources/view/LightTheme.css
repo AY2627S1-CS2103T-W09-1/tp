@@ -1,11 +1,11 @@
 /*
  * CupidMaxxing light theme.
- * Font: the platform's system font at three sizes: 13px (captions), 15px (body), 18px (titles).
+ * Font: Arial, which JavaFX spaces evenly on every OS, at three sizes: 13px (captions), 15px (body), 18px (titles).
  * Text: #1f1f23 (primary), #6b6b74 (muted). Borders: #c9c9d0. Panels: #f4f4f6. Accent: #9d174d.
  */
 
 .root {
-    -fx-font-family: "System";
+    -fx-font-family: "Arial";
     -fx-font-size: 15px;
     -fx-focus-color: #9d174d;
     -fx-faint-focus-color: transparent;
