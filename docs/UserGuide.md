@@ -87,9 +87,9 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GEND
 The optional `s/SMOKING` field records the client's **own smoking habit**:
 
 * Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
-* Omit the field if the status is unknown. The person card displays `Smoking: Not specified`.
+* Omit the field if the status is unknown. The client card shows Smoking as *not set* under Attributes.
 * A supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records.
-* Smoking status is saved between sessions. Older records without this field remain usable and display `Not specified`.
+* Smoking status is saved between sessions. Older records without this field remain usable and show *not set*.
 * This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 <div markdown="span" class="alert alert-primary">:bulb: **Tip:**
@@ -165,9 +165,9 @@ Keyword | Relationship goal
 `unsure` | Figuring out my goals
 
 * Keywords and goal names are matched without regard to letter case or repeated spaces: for example, `rg/LONG` and `rg/long-term   RELATIONSHIP` are both saved as `Long-term relationship`.
-* Omit the field if the goal is not known. The client card then displays `Relationship goal: Not specified`. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
+* Omit the field if the goal is not known. The client card then shows Goal as *not set* under Attributes. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
 * A supplied outer `rg/` may appear only once per command. Each preference or dealbreaker block may also contain one separate relationship-goal criterion. Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
-* The relationship goal is saved between sessions. Older records without this field remain usable and display `Not specified`.
+* The relationship goal is saved between sessions. Older records without this field remain usable and show *not set*.
 * This field records the client's own goal. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 ### Listing all clients: `list`
