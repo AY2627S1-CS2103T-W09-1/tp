@@ -130,8 +130,7 @@ Use one of these 21 categories: `Christianity`, `Islam`, `Hinduism`, `Buddhism`,
   both preferred and excluded; this is checked against the **resulting record**, including
   criteria retained from a previous command.
 * A non-empty edit environment updates only supplied entries; other criteria remain.
-  All values persist across restarts. Recording criteria does not itself run a comparison;
-  use [match](#matching-two-clients-match). Searching criteria environments is unsupported.
+  All values persist across restarts.
 
 Example: `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>`
 records own Jainism, preferred Buddhism and excluded Islam; contact details and age stay outside the environments.
