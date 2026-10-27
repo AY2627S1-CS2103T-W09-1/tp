@@ -19,6 +19,7 @@ import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -50,7 +51,7 @@ public class PersonUtil {
         person.getTags().stream().forEach(
             s -> sb.append(PREFIX_TAG + s.tagName + " ")
         );
-        person.getRelationshipGoal().ifPresent(goal -> sb.append(PREFIX_RELATIONSHIP_GOAL + goal.toString() + " "));
+        person.getRelationshipGoal().ifPresent(goal -> sb.append(PREFIX_RELATIONSHIP_GOAL + goal.getKeyword() + " "));
         person.getReligion().ifPresent(religion -> sb.append(PREFIX_RELIGION).append(religion).append(" "));
         appendCriteria(sb, person.getDatingCriteria().getPreferences(), '{', '}');
         appendCriteria(sb, person.getDatingCriteria().getDealbreakers(), '<', '>');
@@ -79,7 +80,7 @@ public class PersonUtil {
         }
         if (descriptor.isRelationshipGoalEdited()) {
             sb.append(PREFIX_RELATIONSHIP_GOAL);
-            descriptor.getRelationshipGoal().ifPresent(sb::append);
+            descriptor.getRelationshipGoal().map(RelationshipGoal::getKeyword).ifPresent(sb::append);
             sb.append(" ");
         }
         if (descriptor.isReligionEdited()) {
@@ -95,8 +96,14 @@ public class PersonUtil {
     private static void appendCriteria(StringBuilder builder, Map<DatingAttribute, String> criteria,
             char openingDelimiter, char closingDelimiter) {
         builder.append(openingDelimiter);
-        criteria.forEach((attribute, value) -> builder.append(getPrefix(attribute)).append(value).append(" "));
+        criteria.forEach((attribute, value) -> builder.append(getPrefix(attribute))
+                .append(toCommandValue(attribute, value)).append(" "));
         builder.append(closingDelimiter).append(" ");
+    }
+
+    private static String toCommandValue(DatingAttribute attribute, String value) {
+        return attribute == DatingAttribute.RELATIONSHIP_GOAL
+                ? RelationshipGoal.fromStoredValue(value).getKeyword() : value;
     }
 
     private static Prefix getPrefix(DatingAttribute attribute) {

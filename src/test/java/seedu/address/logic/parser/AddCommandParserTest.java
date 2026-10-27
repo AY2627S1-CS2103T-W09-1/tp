@@ -263,14 +263,9 @@ public class AddCommandParserTest {
         assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB
                 + TAG_DESC_FRIEND + RELATIONSHIP_GOAL_DESC_BOB, new AddCommand(expectedPerson));
 
-        // letter case and repeated spaces are ignored, and the listed spelling is stored
+        // letter case and surrounding spaces are ignored, and the full category is stored
         assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB
-                + TAG_DESC_FRIEND + " " + PREFIX_RELATIONSHIP_GOAL + "SHORT-TERM relationship,   open to LONG",
-                new AddCommand(expectedPerson));
-
-        // short keyword is stored as the full category
-        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB
-                + TAG_DESC_FRIEND + " " + PREFIX_RELATIONSHIP_GOAL + "short-open", new AddCommand(expectedPerson));
+                + TAG_DESC_FRIEND + " " + PREFIX_RELATIONSHIP_GOAL + " SHORT-Open ", new AddCommand(expectedPerson));
     }
 
     @Test
@@ -283,6 +278,14 @@ public class AddCommandParserTest {
 
         // empty value
         assertParseFailure(parser, validPersonString + " " + PREFIX_RELATIONSHIP_GOAL,
+                RelationshipGoal.MESSAGE_CONSTRAINTS);
+
+        // full category name instead of keyword
+        assertParseFailure(parser, validPersonString + " " + PREFIX_RELATIONSHIP_GOAL + VALID_RELATIONSHIP_GOAL_BOB,
+                RelationshipGoal.MESSAGE_CONSTRAINTS);
+
+        // misspelled category name
+        assertParseFailure(parser, validPersonString + " " + PREFIX_RELATIONSHIP_GOAL + "long-term relationsip ",
                 RelationshipGoal.MESSAGE_CONSTRAINTS);
 
         // repeated prefix

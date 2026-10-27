@@ -43,7 +43,19 @@ public enum DatingAttribute {
         throw new IllegalArgumentException("Unsupported dating attribute: " + storageKey);
     }
 
-    /** Validates and canonicalizes a criterion value for this attribute. */
+    /**
+     * Validates a criterion value typed by a user and returns its canonical form.
+     * Relationship goals are typed as keywords, while every other attribute accepts its canonical form.
+     */
+    public String parseCriterion(String input) {
+        requireNonNull(input);
+        if (this == RELATIONSHIP_GOAL && !input.isBlank()) {
+            return RelationshipGoal.fromKeyword(input).toString();
+        }
+        return normalizeCriterion(input);
+    }
+
+    /** Validates and canonicalizes a stored criterion value for this attribute. */
     public String normalizeCriterion(String value) {
         requireNonNull(value);
         if (value.isBlank()) {
@@ -54,7 +66,7 @@ public enum DatingAttribute {
             case GENDER -> Gender.parseValue(value).getValue();
             case SMOKING -> new SmokingStatus(value.trim()).value;
             case RELIGION -> new Religion(value).toString();
-            case RELATIONSHIP_GOAL -> RelationshipGoal.fromString(value).toString();
+            case RELATIONSHIP_GOAL -> RelationshipGoal.fromStoredValue(value).toString();
         };
     }
 }

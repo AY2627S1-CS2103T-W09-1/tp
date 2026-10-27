@@ -121,7 +121,7 @@ public class PersonTest {
 
         // recorded -> present
         Person aliceWithGoal = new PersonBuilder(ALICE).withRelationshipGoal(VALID_RELATIONSHIP_GOAL_BOB).build();
-        assertEquals(RelationshipGoal.fromString(VALID_RELATIONSHIP_GOAL_BOB),
+        assertEquals(RelationshipGoal.fromStoredValue(VALID_RELATIONSHIP_GOAL_BOB),
                 aliceWithGoal.getRelationshipGoal().get());
 
         // different relationship goal -> returns false

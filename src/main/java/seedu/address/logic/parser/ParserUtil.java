@@ -200,14 +200,14 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a supported relationship goal category.
+     * Parses the keyword of a supported relationship goal category.
      *
-     * @throws ParseException if the value is not a supported category
+     * @throws ParseException if the value is not a supported keyword
      */
     public static RelationshipGoal parseRelationshipGoal(String value) throws ParseException {
         requireNonNull(value);
         try {
-            return RelationshipGoal.fromString(value);
+            return RelationshipGoal.fromKeyword(value);
         } catch (IllegalArgumentException exception) {
             throw new ParseException(RelationshipGoal.MESSAGE_CONSTRAINTS);
         }

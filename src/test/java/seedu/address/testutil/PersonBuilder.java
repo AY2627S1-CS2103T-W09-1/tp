@@ -153,7 +153,7 @@ public class PersonBuilder {
      * Sets the {@code RelationshipGoal} of the {@code Person} that we are building.
      */
     public PersonBuilder withRelationshipGoal(String relationshipGoal) {
-        this.relationshipGoal = RelationshipGoal.fromString(relationshipGoal);
+        this.relationshipGoal = RelationshipGoal.fromStoredValue(relationshipGoal);
         return this;
     }
 

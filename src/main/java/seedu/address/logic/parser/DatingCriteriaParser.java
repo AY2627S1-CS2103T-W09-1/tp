@@ -152,7 +152,7 @@ public final class DatingCriteriaParser {
 
     private static String validateAndNormalize(Prefix prefix, String value) throws ParseException {
         try {
-            return toDatingAttribute(prefix).normalizeCriterion(value);
+            return toDatingAttribute(prefix).parseCriterion(value);
         } catch (IllegalArgumentException exception) {
             throw new ParseException(exception.getMessage(), exception);
         }

@@ -131,7 +131,7 @@ public class EditPersonDescriptorBuilder {
      * Sets the {@code RelationshipGoal} of the {@code EditPersonDescriptor} that we are building.
      */
     public EditPersonDescriptorBuilder withRelationshipGoal(String relationshipGoal) {
-        descriptor.setRelationshipGoal(RelationshipGoal.fromString(relationshipGoal));
+        descriptor.setRelationshipGoal(RelationshipGoal.fromStoredValue(relationshipGoal));
         return this;
     }
 

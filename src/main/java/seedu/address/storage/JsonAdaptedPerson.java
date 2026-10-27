@@ -187,7 +187,8 @@ class JsonAdaptedPerson {
 
         final RelationshipGoal modelRelationshipGoal;
         try {
-            modelRelationshipGoal = relationshipGoal == null ? null : RelationshipGoal.fromString(relationshipGoal);
+            modelRelationshipGoal = relationshipGoal == null
+                    ? null : RelationshipGoal.fromStoredValue(relationshipGoal);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(RelationshipGoal.MESSAGE_CONSTRAINTS);
         }
