@@ -261,9 +261,12 @@ Format: `match INDEX_A INDEX_B`
 
 * Use two different positive indexes from the **currently displayed list**, including after `find`.
 * Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
-* The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
-  and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
-  and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
+* The result replaces the client list until your next command. An **Overall result** box names both clients and shows
+  the outcome in color (green for compatible, red for incompatible, amber for insufficient information) with a
+  one-line reason.
+* Below it, each client's criteria are checked against the other client in a table with three columns: the
+  requirement (for example, `dealbreaker — excludes smoking: yes`), the other client's value, and the assessment
+  (**Met**, **Unmet**, **Violated**, or **Unknown**).
 * The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
 
 Set partner criteria with `add` or `edit`: `{...}` contains preferences and `<...>` contains **excluded values**.
@@ -294,7 +297,8 @@ Example: `list` followed by `match 1 3` assesses the first and third clients wit
 ### Organising clients into groups: `grp` and `show`
 
 Keep named collections of clients, such as event invitations or a shortlist. A client can belong to
-several groups. Membership is shown as a separate `Group: NAME` badge; ordinary `t/` tags are unchanged.
+several groups. Membership is shown as a chip after **Groups** at the bottom of the client card, separate from the
+chips for ordinary `t/` tags.
 
 Action | Format | Example
 -------|--------|--------
@@ -307,7 +311,7 @@ Show a group's members | `show NAME` | `show VIP`
 
 * A name has 1–30 ASCII letters (`A`–`Z`, `a`–`z`), digits, hyphens or underscores, and starts with a letter or digit.
   Spaces and prefixes such as `/` or `g/` are not accepted. Names are case-insensitive: `VIP` and `vip` identify
-  the same group. The spelling used when the group was created is retained on badges and in feedback.
+  the same group. The spelling used when the group was created is retained on the card and in feedback.
 * Every index refers to the **currently displayed list**, including after `find` or `show`. Use positive integers
   separated by spaces, not commas. A repeated, invalid or out-of-range index rejects the entire command.
 * Commands and operation words are lowercase (`grp`, `add`, `remove`, `matches`, `show`).
