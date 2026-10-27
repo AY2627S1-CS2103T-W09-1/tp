@@ -1,11 +1,12 @@
 /*
  * CupidMaxxing light theme.
+ * Font: the platform's system font at three sizes: 13px (captions), 15px (body), 18px (titles).
  * Text: #1f1f23 (primary), #6b6b74 (muted). Borders: #c9c9d0. Panels: #f4f4f6. Accent: #9d174d.
  */
 
 .root {
-    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    -fx-font-size: 13px;
+    -fx-font-family: "System";
+    -fx-font-size: 15px;
     -fx-focus-color: #9d174d;
     -fx-faint-focus-color: transparent;
     -fx-accent: #f3d4df;
@@ -21,7 +22,7 @@
 }
 
 .section-caption {
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-text-fill: #6b6b74;
 }
 
@@ -32,7 +33,6 @@
     -fx-background-insets: 0, 1;
     -fx-background-radius: 4, 3;
     -fx-padding: 7 10 7 10;
-    -fx-font-size: 14px;
     -fx-text-fill: #1f1f23;
     -fx-prompt-text-fill: #9a9aa3;
     -fx-highlight-fill: #f3d4df;
@@ -51,7 +51,6 @@
     -fx-background-insets: 0, 1;
     -fx-background-radius: 4, 3;
     -fx-padding: 2;
-    -fx-font-size: 13px;
     -fx-text-fill: #1f1f23;
     -fx-highlight-fill: #f3d4df;
     -fx-highlight-text-fill: #1f1f23;
@@ -118,14 +117,14 @@
 }
 
 .card-section-caption {
-    -fx-font-size: 10px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #8e8e96;
     -fx-padding: 0 0 2 0;
 }
 
 .card-subcaption {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-text-fill: #6b6b74;
 }
 
@@ -134,29 +133,25 @@
 }
 
 .cell_big_label {
-    -fx-font-size: 15px;
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #1f1f23;
 }
 
 .cell_small_label, .card-criterion {
-    -fx-font-size: 12px;
     -fx-text-fill: #1f1f23;
 }
 
 .card-field-label {
-    -fx-font-size: 12px;
     -fx-text-fill: #6b6b74;
 }
 
 .card-field-value {
-    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-text-fill: #1f1f23;
 }
 
 .card-field-unset {
-    -fx-font-size: 12px;
     -fx-font-style: italic;
     -fx-text-fill: #8e8e96;
 }
@@ -176,7 +171,7 @@
 }
 
 .tag-badge {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-text-fill: #9d174d;
     -fx-background-color: #f8e3ea;
     -fx-background-radius: 3;
@@ -185,7 +180,7 @@
 
 /* Group memberships are visually distinct from ordinary tags. */
 .group-badge {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-text-fill: #1f1f23;
     -fx-background-color: #c9c9d0, #f4f4f6;
     -fx-background-insets: 0, 1;
@@ -212,12 +207,12 @@
 }
 
 .match-caption {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-text-fill: #6b6b74;
 }
 
 .match-outcome {
-    -fx-font-size: 17px;
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
 }
 
@@ -234,12 +229,10 @@
 }
 
 .match-reason, .match-empty {
-    -fx-font-size: 12px;
     -fx-text-fill: #3f3f46;
 }
 
 .match-direction {
-    -fx-font-size: 13px;
     -fx-font-weight: bold;
 }
 
@@ -250,23 +243,19 @@
 }
 
 .match-table-header {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #6b6b74;
     -fx-border-color: transparent transparent #8e8e96 transparent;
 }
 
-.match-table-cell {
-    -fx-font-size: 12px;
-}
-
 .match-requirement-type {
-    -fx-font-size: 12px;
+    -fx-font-size: 15px;
     -fx-fill: #6b6b74;
 }
 
 .match-requirement {
-    -fx-font-size: 12px;
+    -fx-font-size: 15px;
     -fx-fill: #1f1f23;
 }
 
@@ -287,7 +276,7 @@
 }
 
 .status-bar .label {
-    -fx-font-size: 11px;
+    -fx-font-size: 13px;
     -fx-text-fill: #6b6b74;
     -fx-padding: 4 16 4 16;
 }
@@ -301,7 +290,6 @@
 }
 
 .menu-bar .label {
-    -fx-font-size: 13px;
     -fx-text-fill: #1f1f23;
 }
 
@@ -353,7 +341,7 @@
 }
 
 .dialog-pane:header .header-panel .label {
-    -fx-font-size: 15px;
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #1f1f23;
 }
