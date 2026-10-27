@@ -254,7 +254,8 @@ not a non-smoker. The parsers reject empty, invalid, and repeated `s/` parameter
 `EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
 `JsonAdaptedPerson` saves the `smokingStatus` string and reads absent or null fields in older JSON files as unspecified.
 An empty stored string also means unspecified. Other invalid stored values are rejected using the existing storage-error path.
-The person card and command feedback display the status, including `Not specified` for missing information.
+The person card and command feedback display the status. Missing information is shown as `not set` on the card and
+`Not specified` in command feedback.
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
@@ -372,8 +373,8 @@ and edits to other fields preserve it.
 
 `JsonAdaptedPerson` saves the full category name as the `relationshipGoal` string and reads absent
 or null fields in older JSON files as unknown. Other invalid stored values are rejected using the
-existing storage-error path. The person card and command feedback display the goal, including
-`Not specified` for missing information.
+existing storage-error path. The person card and command feedback display the goal. Missing information is shown as `not set` on the
+card and `Not specified` in command feedback.
 
 `find rg/GOAL` searches by relationship goal. `FindCommandParser` treats `rg/` as one more search
 mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
@@ -845,7 +846,7 @@ Manual checks (use distinct test names):
 
 Use a test data file and distinct client names for these checks.
 
-1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be “Unspecified”.
+1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card shows Gender “Non-binary” under Attributes and its feedback shows “Gender: Non-binary”. Add another client with a different name and no `g/`; its card should show Gender “not set” and its feedback “Unspecified”.
 2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find n/Gender` searches names, while `find Gender` without `n/` is rejected.
 3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
 4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.
@@ -912,8 +913,8 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 - [ ] Adding, editing and retaining the client's own religion
 
   - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb rg/long r/jAiNiSm`.<br>
-      Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
-      non-binary gender and a long-term relationship goal. No partner criteria appear.
+      Expected: The card's Attributes column shows religion Jainism, age 25, non-smoking,
+      non-binary gender and a long-term relationship goal. Both partner criteria lists show `none`.
 
   - Enter `find n/Nia`, then `edit 1 r/Christianity`.<br>
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
@@ -963,11 +964,11 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 1. Adding and retaining a relationship goal
 
    1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 rg/LONG`.<br>
-      Expected: The contact card shows `Relationship goal: Long-term relationship`. The keyword
+      Expected: The contact card shows Goal `Long-term relationship`. The keyword
       is converted to the goal's full name.
 
    1. Enter `find n/Rae`, then `edit 1 rg/short-open`.<br>
-      Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
+      Expected: The contact card shows Goal `Short-term relationship, open to long`.
 
    1. Enter `find n/Rae`, then `edit 1 p/99999999`.<br>
       Expected: The phone number changes and the relationship goal is unchanged.
@@ -976,7 +977,7 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
       Expected: Rae's relationship goal is still `Short-term relationship, open to long`.
 
    1. Enter `find n/Rae`, then `edit 1 rg/`.<br>
-      Expected: The contact card shows `Relationship goal: Not specified`.
+      Expected: The contact card shows Goal `not set`.
 
 1. Rejecting unsupported and repeated values
 
