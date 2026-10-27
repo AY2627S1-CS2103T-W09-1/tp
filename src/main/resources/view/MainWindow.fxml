@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="CupidMaxxing" minWidth="450" minHeight="450" onCloseRequest="#handleExit">
+         title="CupidMaxxing" minWidth="640" minHeight="450" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/cupidmaxxing_32.png" />
     <Image url="@/images/cupidmaxxing_64.png" />
