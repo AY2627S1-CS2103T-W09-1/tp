@@ -22,6 +22,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.ExitCommand;
+import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.FindCommandParser;
@@ -121,6 +123,58 @@ public class LogicManagerTest {
     public void execute_storageThrowsAdException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(DUMMY_AD_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, DUMMY_AD_EXCEPTION.getMessage()));
+    }
+
+    @Test
+    public void execute_emailEdits_supportedAndLongValuesPersist() throws Exception {
+        logic.execute("add n/Alpha p/81234567 e/alpha@example.com a/10 Orchard Road age/25");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        List<String> emails = List.of("first_+last@example.com", "user@xn--bcher-kva.de",
+                "a+".repeat(5000) + "a@example.com", "a@" + "a.".repeat(15000) + "com");
+        for (String email : emails) {
+            logic.execute("edit 1 e/" + email);
+            assertEquals(email, model.getAddressBook().getPersonList().getFirst().getEmail().value);
+            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        }
+    }
+
+    @Test
+    public void execute_helpAndExitWithUnavailableStorage_success() throws Exception {
+        AddressBook original = new AddressBook(model.getAddressBook());
+        for (IOException failure : List.of(DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION)) {
+            int[] saveAttempts = {0};
+            StorageManager storage = new StorageManager(
+                    new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")),
+                    new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"))) {
+                @Override
+                public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                    saveAttempts[0]++;
+                    throw failure;
+                }
+            };
+            Logic unavailableStorageLogic = new LogicManager(model, storage);
+
+            // UI control actions must reach MainWindow without attempting to save client data.
+            assertEquals(new CommandResult(HelpCommand.SHOWING_HELP_MESSAGE, true, false),
+                    unavailableStorageLogic.execute("help"));
+            assertEquals(new CommandResult(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, false, true),
+                    unavailableStorageLogic.execute("exit"));
+            assertEquals(0, saveAttempts[0]);
+            assertEquals(original, model.getAddressBook());
+        }
+    }
+
+    @Test
+    public void execute_dataChangingCommands_savesAfterEachCommand() throws Exception {
+        List<String> commands = List.of(
+                "add n/Alpha p/81234567 e/alpha@example.com a/10 Orchard Road age/25",
+                "add n/Beta p/81234568 e/beta@example.com a/20 Orchard Road age/30",
+                "edit 1 p/82345678", "grp VIP add 1", "grp VIP remove 1", "delete 2", "clear");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        for (String command : commands) {
+            logic.execute(command);
+            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        }
     }
 
     @Test

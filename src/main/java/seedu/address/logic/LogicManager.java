@@ -48,6 +48,10 @@ public class LogicManager implements Logic {
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
         commandResult = command.execute(model);
+        // Help and exit do not change client data and must remain available when saving fails.
+        if (commandResult.isShowHelp() || commandResult.isExit()) {
+            return commandResult;
+        }
 
         try {
             storage.saveAddressBook(model.getAddressBook());

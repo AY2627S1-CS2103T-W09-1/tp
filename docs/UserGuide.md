@@ -361,7 +361,10 @@ Format: `exit`
 
 ### Saving the data
 
-CupidMaxxing automatically saves data after every successful command. You do not need to save manually. Gender is saved with each client; valid existing records without a gender load as unspecified. The existing required-age rule still applies.
+CupidMaxxing automatically saves client data after every successful command except `help` and `exit`,
+which do not change client records. These two commands remain available if the client data file cannot
+be saved. You do not need to save manually. Gender is saved with each client; valid existing records
+without a gender load as unspecified. The existing required-age rule still applies.
 
 Groups and memberships are saved in the same file as the clients and restored when the app restarts.
 Older valid files without a `groups` field load with no groups.
@@ -413,7 +416,7 @@ data before migrating it; replace an obsolete `Other` religion only with an accu
 supported category, or remove that optional property if the religion is unknown.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. A successful command other than `help` or `exit` can overwrite the invalid file with the current data. Back up the file before editing it.<br>
 Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </div>
 

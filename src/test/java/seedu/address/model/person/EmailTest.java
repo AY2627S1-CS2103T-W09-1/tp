@@ -67,6 +67,26 @@ public class EmailTest {
     }
 
     @Test
+    public void isValidEmail_consecutivePermittedCharacters_returnsTrue() {
+        assertTrue(Email.isValidEmail("first_+last@example.com"));
+        assertTrue(Email.isValidEmail("first+-last@example.com"));
+        assertTrue(Email.isValidEmail("user@xn--bcher-kva.de"));
+        assertTrue(Email.isValidEmail("user@example--domain.com"));
+    }
+
+    @Test
+    public void isValidEmail_longValues_doesNotOverflow() {
+        String longLocalPart = "a+".repeat(5000) + "a@example.com";
+        String longDomain = "a@" + "a.".repeat(15000) + "com";
+
+        // Large pastes must use normal validation rather than exhaust the regex stack.
+        assertTrue(Email.isValidEmail(longLocalPart));
+        assertTrue(Email.isValidEmail(longDomain));
+        assertFalse(Email.isValidEmail(longLocalPart + "!"));
+        assertFalse(Email.isValidEmail(longDomain + "-"));
+    }
+
+    @Test
     public void equals() {
         Email email = new Email("valid@email");
 
