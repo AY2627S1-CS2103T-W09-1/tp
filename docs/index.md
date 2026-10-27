@@ -7,7 +7,9 @@ title: CupidMaxxing
 
 CupidMaxxing is a desktop address book for independent professional matchmakers managing a small pool of clients and potential matches. Its command-line interface helps matchmakers organise and retrieve client information quickly to identify suitable introductions.
 
-![CupidMaxxing UI](images/Ui.png)
+![CupidMaxxing UI mockup](images/Ui.png)
+
+*Mockup of the intended interface; the features below are planned and under development.*
 
 ## Planned features
 
