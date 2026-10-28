@@ -50,7 +50,7 @@ public enum DatingAttribute {
      */
     public String parseCriterion(String input) {
         requireNonNull(input);
-        if (this == RELATIONSHIP_GOAL && !input.isBlank()) {
+        if (this == RELATIONSHIP_GOAL) {
             return RelationshipGoal.formatCriterion(RelationshipGoal.parseKeywordList(input));
         }
         return normalizeCriterion(input);

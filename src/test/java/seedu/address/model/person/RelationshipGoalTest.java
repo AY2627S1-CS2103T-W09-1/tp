@@ -104,4 +104,15 @@ public class RelationshipGoalTest {
         assertEquals("Long-term relationship, open to short or Short-term fun", criterion);
         assertEquals(goals, RelationshipGoal.parseStoredCriterion(criterion));
     }
+
+    @Test
+    public void parseStoredCriterion_repeatedGoal_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, RelationshipGoal.MESSAGE_INVALID_LIST, () ->
+                RelationshipGoal.parseStoredCriterion("long or Long-term relationship"));
+    }
+
+    @Test
+    public void formatCriterion_noGoals_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> RelationshipGoal.formatCriterion(Set.of()));
+    }
 }

@@ -290,6 +290,11 @@ public class JsonAdaptedPersonTest {
         person = JsonUtil.fromJsonString(String.format(json, "\"dealbreakers\":{\"relationshipGoal\":\"long\"}"),
                 JsonAdaptedPerson.class).toModelType();
         assertTrue(person.getRelationshipGoals().isEmpty());
+
+        // a legacy goal different from the excluded goals is still migrated
+        person = JsonUtil.fromJsonString(String.format(json, "\"dealbreakers\":{\"relationshipGoal\":\"life\"}"),
+                JsonAdaptedPerson.class).toModelType();
+        assertEquals(Set.of(RelationshipGoal.LONG_TERM), person.getRelationshipGoals());
     }
 
     @Test

@@ -117,6 +117,14 @@ public class PersonTest {
     }
 
     @Test
+    public void constructor_withoutCriteria_hasEmptyCriteria() {
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getAge(), ALICE.getTags(), ALICE.getSmokingStatus(), ALICE.getGender(), null);
+        assertEquals(DatingCriteria.EMPTY, person.getDatingCriteria());
+        assertTrue(person.getRelationshipGoals().isEmpty());
+    }
+
+    @Test
     public void relationshipGoals() {
         // no goal preference -> empty
         assertTrue(ALICE.getRelationshipGoals().isEmpty());

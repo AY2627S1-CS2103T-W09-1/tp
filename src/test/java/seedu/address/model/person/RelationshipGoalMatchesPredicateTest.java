@@ -1,7 +1,9 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.Set;
 
@@ -29,5 +31,20 @@ public class RelationshipGoalMatchesPredicateTest {
         assertTrue(predicate.equals(new RelationshipGoalMatchesPredicate(Set.of(RelationshipGoal.LONG_TERM))));
         assertFalse(predicate.equals(null));
         assertFalse(predicate.equals(new RelationshipGoalMatchesPredicate(Set.of(RelationshipGoal.LIFE_PARTNER))));
+        assertEquals(predicate.hashCode(),
+                new RelationshipGoalMatchesPredicate(Set.of(RelationshipGoal.LONG_TERM)).hashCode());
+    }
+
+    @Test
+    public void constructor_noGoals_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> new RelationshipGoalMatchesPredicate(Set.of()));
+    }
+
+    @Test
+    public void toStringMethod() {
+        RelationshipGoalMatchesPredicate predicate = new RelationshipGoalMatchesPredicate(
+                Set.of(RelationshipGoal.LONG_TERM));
+        assertEquals(RelationshipGoalMatchesPredicate.class.getCanonicalName() + "{goals=[Long-term relationship]}",
+                predicate.toString());
     }
 }
