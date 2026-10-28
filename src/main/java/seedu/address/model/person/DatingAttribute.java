@@ -32,6 +32,11 @@ public enum DatingAttribute {
         return displayName;
     }
 
+    /** Returns whether this attribute may record more than one partner criterion. */
+    public boolean allowsMultipleValues() {
+        return this == GENDER || this == RELIGION || this == RELATIONSHIP_GOAL;
+    }
+
     /** Returns the attribute associated with a JSON property name. */
     public static DatingAttribute fromStorageKey(String storageKey) {
         requireNonNull(storageKey);
