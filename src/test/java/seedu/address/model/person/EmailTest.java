@@ -1,8 +1,11 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -64,6 +67,82 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+    }
+
+    @Test
+    public void isValidEmail_consecutivePermittedCharacters_returnsTrue() {
+        assertTrue(Email.isValidEmail("first_+last@example.com"));
+        assertTrue(Email.isValidEmail("first+-last@example.com"));
+        assertTrue(Email.isValidEmail("user@xn--bcher-kva.de"));
+        assertTrue(Email.isValidEmail("user@example--domain.com"));
+    }
+
+    @Test
+    public void isValidEmail_longValues_doesNotOverflow() {
+        String longLocalPart = "a+".repeat(5000) + "a@example.com";
+        String longDomain = "a@" + "a.".repeat(15000) + "com";
+
+        // Large pastes must use normal validation rather than exhaust the regex stack.
+        assertTrue(Email.isValidEmail(longLocalPart));
+        assertTrue(Email.isValidEmail(longDomain));
+        assertFalse(Email.isValidEmail(longLocalPart + "!"));
+        assertFalse(Email.isValidEmail(longDomain + "-"));
+    }
+
+    @Test
+    public void isValidEmail_localPunctuation_respectsBoundaries() {
+        for (char first : "+_.-".toCharArray()) {
+            for (char second : "+_.-".toCharArray()) {
+                String email = "first" + first + second + "last@example.com";
+                // Only adjacent periods are forbidden; other supported pairs may be consecutive.
+                boolean isExpectedValid = first != '.' || second != '.';
+                assertEquals(isExpectedValid, Email.isValidEmail(email), email);
+            }
+            assertFalse(Email.isValidEmail(first + "first@example.com"));
+            assertFalse(Email.isValidEmail("first" + first + "@example.com"));
+        }
+    }
+
+    @Test
+    public void isValidEmail_domainLabels_respectsBoundaries() {
+        List<String> validEmails = List.of("a@b.cd", "a@bc", "a@0.12", "a@x--y.cd",
+                "a@XN--BCHER-KVA.DE", "a@xn--bcher-kva");
+        for (String email : validEmails) {
+            assertTrue(Email.isValidEmail(email), email);
+        }
+        List<String> invalidEmails = List.of("a@b.c", "a@.bc", "a@bc.", "a@b..cd", "a@-b.cd",
+                "a@b-.cd", "a@b.-cd", "a@b.cd-", "a@b_c.de");
+        for (String email : invalidEmails) {
+            assertFalse(Email.isValidEmail(email), email);
+        }
+    }
+
+    @Test
+    public void isValidEmail_whitespaceAndUnsupportedCharacters_returnsFalse() {
+        List<String> invalidEmails = List.of(" a@bc", "a@bc ", "a\tb@cd", "a@b\tcd", "a@bc\n",
+                "a@bc\r", "a@bc\r\n", "a@bc\u2028", "a@bc\u2029", "a\u0000b@cd", "a\u00e9@bc",
+                "a@b\u00e9", "a\u2003b@cd", "a@b\u2003cd", "a@b/cd", "a@b:cd", "a@b\u200bcd");
+        for (String email : invalidEmails) {
+            assertFalse(Email.isValidEmail(email), email);
+        }
+    }
+
+    @Test
+    public void isValidEmail_longBoundaryValues_doesNotOverflow() {
+        String punctuation = "+".repeat(30000);
+        String hyphens = "-".repeat(30000);
+        String letters = "a".repeat(30000);
+
+        // Long runs without separators exercise different paths from many short domain labels.
+        assertTrue(Email.isValidEmail("a" + punctuation + "b@example.com"));
+        assertTrue(Email.isValidEmail("a@b" + hyphens + "c"));
+        assertTrue(Email.isValidEmail(letters + "@" + letters));
+        assertFalse(Email.isValidEmail("a" + punctuation + "@example.com"));
+        assertFalse(Email.isValidEmail("a@b" + hyphens));
+        assertFalse(Email.isValidEmail("a@" + hyphens + "bc"));
+        assertFalse(Email.isValidEmail(letters));
+        assertFalse(Email.isValidEmail(letters + "..b@example.com"));
+        assertFalse(Email.isValidEmail("a@" + "a.".repeat(15000) + "c"));
     }
 
     @Test

@@ -93,13 +93,16 @@ The optional `s/SMOKING` field records the client's **own smoking habit**:
 * This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 <div markdown="span" class="alert alert-primary">:bulb: **Tip:**
-A person can have any number of tags, including zero.
+A person can have any number of tags, including zero. Tags are user-defined labels, such as
+`newclient`, `referral` and `consultationpending`, for organising client records. They are not
+updated automatically and do not affect compatibility results. Named groups are managed separately
+using [`grp` and `show`](#organising-clients-into-groups-grp-and-show).
 </div>
 
 Examples:
 
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 age/25`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 age/30 t/criminal`
+* `add n/Betsy Crowe t/referral e/betsycrowe@example.com a/12 Clementi Road p/1234567 age/30 t/newclient`
 * `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd age/28 g/w` Records Sarah as a woman.
 * `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi age/30 s/no` Records Alice as a non-smoker.
 * `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 rg/long` Records Priya as looking for a long-term relationship.
@@ -107,32 +110,44 @@ Examples:
 
 #### Religion fields
 
-Religion is optional. Omit `r/` when a client's religion is not known; this is different from
-`r/No religion`, which records an explicit answer. The accepted categories are
-`Christianity`, `Islam`, `Hinduism`, `Buddhism`, `Sikhism`, `Judaism`, `Jainism`,
-`Baha'i Faith`, `Shinto`, `Taoism`, `Confucianism`, `Zoroastrianism`, `Rastafari`,
-`Wicca`, `Paganism`, `Tenrikyo`, `Cao Dai`, `Druze`, `Atheism`, `Agnosticism`, and
-`No religion`. Use one of these names for `r/`.
-Names are matched without regard to letter case or repeated spaces: for example,
-`r/jAiNiSm` is accepted and displayed as `Jainism`. A misspelled name is not accepted;
-use the listed spelling, although its letter case can vary. There is no free-text or
-`Other` category. If none applies, leave the field unset rather than selecting
-`No religion`, which means the client explicitly has no religion.
+Use one of these 21 categories: `Christianity`, `Islam`, `Hinduism`, `Buddhism`,
+`Sikhism`, `Judaism`, `Jainism`, `Baha'i Faith`, `Shinto`, `Taoism`, `Confucianism`,
+`Zoroastrianism`, `Rastafari`, `Wicca`, `Paganism`, `Tenrikyo`, `Cao Dai`, `Druze`,
+`Atheism`, `Agnosticism`, or `No religion`. Case and repeated spaces are normalized:
+`r/jAiNiSm` is saved as `Jainism`. Partial names, misspellings, lists, free text and
+`Other` are not supported.
 
-* `r/RELIGION` outside braces records the client's **own religion**, not a partner preference.
-* `{r/RELIGION}` records a **soft partner preference**: a religion the client would like a partner to have.
-* `<r/RELIGION>` records an **excluded partner religion** (a dealbreaker): the partner **must not have** this religion. It does not mean the partner must have it.
-* Type the curly braces `{}` and angle brackets `<>` literally; square brackets in the format above only mark optional parts. For example, `r/Jainism {r/Buddhism} <r/Islam>` records own religion Jainism, a preference for Buddhism, and an exclusion of Islam.
-* Each command may contain at most one preference environment `{...}` and one exclusion environment `<...>`. Environments cannot be nested. Supply at most one `r/` outside the environments and at most one `r/` inside each environment; a list of religions is not accepted.
-* All three religion values use the same 21 categories and normalization above. A blank outer `r/` is rejected in `add`; a blank `r/` inside either environment is always rejected.
-* The same normalized religion cannot be both preferred and excluded: `{r/Islam} <r/islam>` is rejected without changing records. The client's own religion is independent and may equal or differ from either partner criterion.
-* Own religion and partner criteria are saved between sessions. The client's own religion is shown on the client card.
-* The former partner-criteria prefixes `rp/`, `rr/`, and `rx/` are no longer supported. Commands containing them are rejected without changing records.
-* `find r/RELIGION` searches only the client's own religion. Searching criteria environments is not implemented. Use [match](#matching-two-clients-match) to assess recorded preferences and exclusions; recording an exclusion alone does not run a comparison.
+| Scope | Syntax | Meaning | Leaving it unknown or clearing it |
+| ----- | ------ | ------- | --------------------------------- |
+| Client characteristic | Outer `r/RELIGION` | The client's own religion | Omit on `add`; empty outer `r/` clears it on `edit` |
+| Partner preference | `{r/RELIGION}` | A religion the client would like a partner to have | Omit to preserve on `edit`; `{}` clears **all** preferences |
+| Partner dealbreaker | `<r/RELIGION>` | A religion the partner **must not have** | Omit to preserve on `edit`; `<>` clears **all** dealbreakers |
+| Search | `find r/RELIGION` | Search the client's **own** religion only | Unknown religion never matches, including `find r/No religion` |
 
-Example:
+* Unknown religion is different from the explicit answer `No religion`. Do not select
+  `No religion` just because none of the listed categories applies.
+* Type `{}` and `<>` literally. A command permits one non-nested environment of each
+  type, one outer `r/`, and one `r/` within each environment. Blank religion values
+  are invalid except an outer `r/` in `edit`.
+* Own religion is independent of partner criteria. A normalized religion cannot be
+  both preferred and excluded; this is checked against the **resulting record**, including
+  criteria retained from a previous command.
+* A non-empty edit environment updates only supplied entries; other criteria remain.
+  All values persist across restarts.
 
-* `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>` Adds a 25-year-old client with the client's own religion, preference and exclusion described above. The required contact details and age are outside the environments.
+Example: `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>`
+records own Jainism, preferred Buddhism and excluded Islam; contact details and age stay outside the environments.
+
+| Invalid input | How to correct it |
+| ------------- | ----------------- |
+| `add ... r/` or `find r/` | Supply a listed category; omit `r/` on `add` if unknown |
+| `{r/}` or `<r/>` | Supply a category; use `{}` or `<>` only when clearing the entire corresponding bucket on `edit` |
+| `{r/Islam} <r/islam>` | Choose criteria that do not prefer and exclude the same religion |
+| Repeated `r/`, a list, or `r/Other` | Supply one listed category in each scope |
+| Legacy `rp/`, `rr/`, or `rx/`, including empty values | Use the current scope syntax in the table above |
+
+Rejected commands leave the stored records unchanged. See [Finding clients](#finding-clients-find)
+for the single-search-mode restriction.
 
 #### Relationship goal field
 
@@ -177,8 +192,9 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
-* Use outer `r/RELIGION` to update the client's own religion. Empty outer `r/` clears only the client's own religion; omitting it preserves it. Partner criteria and other contact details remain unchanged unless separately edited.
-* Use `{r/RELIGION}` to set the preferred partner religion and `<r/RELIGION>` to set an excluded partner religion. The same validation rules as [Religion fields](#religion-fields) apply, including checking the resulting record for a religion that is both preferred and excluded.
+* For own religion, partner religion and clearing rules, use the [religion reference table](#religion-fields).
+  Own religion and omitted criteria remain unchanged unless explicitly edited; conflicting preferred/excluded
+  religions reject the whole edit.
 * **A non-empty environment adds or updates only the supplied criteria.** For example, `{r/Buddhism}` changes the preferred religion while preserving existing age, gender, smoking and relationship-goal preferences. The same rule applies to exclusions/dealbreakers in `<...>`.
 * Omit an environment to preserve its entire bucket. Use `{}` to clear all preferences, or `<>` to clear all exclusions/dealbreakers. These do not clear the client's own religion. `{r/}` and `<r/>` are invalid, not clearing commands. A rejected edit leaves the whole record unchanged.
 * The removed `rp/`, `rr/`, and `rx/` prefixes are rejected, including empty values.
@@ -209,13 +225,12 @@ Formats:
 * `find age/AGE` or `find age/MIN-MAX` searches an exact age or an inclusive range. Ages must be integers from 18 to 99, with no spaces within the range and `MIN` no greater than `MAX`.
 * `find g/GENDER[,GENDER]…` returns clients matching any listed gender: `m`, `w`, or `nb`, in any order, ignoring case and surrounding whitespace.
 * `find g/` returns every client with a specified gender, equivalent to `find g/m,w,nb`. Unspecified genders are excluded from gender searches.
-* `find r/RELIGION` searches one of the supported [religion categories](#religion-fields), using the same case and whitespace normalization as `add` and `edit`. It matches the client's **own religion**, not partner criteria.
-* A client with unknown religion does not match any religion search. `find r/No religion` matches only clients explicitly recorded as `No religion`, not those with an unset `r/`.
+* `find r/RELIGION` searches the client's **own religion**, not partner criteria. Use one category from the
+  [religion reference table](#religion-fields), which also explains unknown values and invalid inputs.
 * `find rg/GOAL` returns clients with that relationship goal. `GOAL` accepts the same keywords and full names as `add` and `edit`, such as `life`, `long`, `long-open`, `short-open`, `short` or `unsure`. Clients with no recorded goal are excluded.
 * `find s/yes` or `find s/no` searches the client's **own smoking habit**, ignoring case and surrounding whitespace in the value. Clients with unspecified smoking status are excluded from both searches; unspecified does not mean non-smoker. Partner preferences and dealbreakers do not affect these results.
 * A blank `s/`, unsupported values (such as `unknown`), repeated `s/` prefixes and lists such as `s/yes,no` are rejected.
 * `find match/INDEX` lists clients compatible with the client at `INDEX` in the displayed list, best matches first. It uses the same rules as [`match`](#matching-two-clients-match): a client is hidden if either of the two has a dealbreaker the other is known to have (for example, a client saved with `<s/yes>` never sees smokers). The rest are sorted by how many of each other's preferences they meet. Unrecorded details never hide anyone. Use `match INDEX_A INDEX_B` to see the full breakdown for one pair. `list` or any other `find` restores the normal order.
-* A blank `r/`, an unsupported category, repeated `r/` prefixes or a list of religions are rejected. Partial category names do not match.
 
 Use one search mode at a time. Name keywords, age, gender, religion, relationship-goal, smoking and match criteria cannot be combined. Combined-trait searches and searches within preference/dealbreaker environments are not supported in this increment.
 
@@ -361,7 +376,10 @@ Format: `exit`
 
 ### Saving the data
 
-CupidMaxxing automatically saves data after every successful command. You do not need to save manually. Gender is saved with each client; valid existing records without a gender load as unspecified. The existing required-age rule still applies.
+CupidMaxxing automatically saves client data after every successful command except `help` and `exit`,
+which do not change client records. These two commands remain available if the client data file cannot
+be saved. You do not need to save manually. Gender is saved with each client; valid existing records
+without a gender load as unspecified. The existing required-age rule still applies.
 
 Groups and memberships are saved in the same file as the clients and restored when the app restarts.
 Older valid files without a `groups` field load with no groups.
@@ -413,7 +431,7 @@ data before migrating it; replace an obsolete `Other` religion only with an accu
 supported category, or remove that optional property if the religion is unknown.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. A successful command other than `help` or `exit` can overwrite the invalid file with the current data. Back up the file before editing it.<br>
 Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </div>
 

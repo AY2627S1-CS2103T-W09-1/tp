@@ -2,6 +2,8 @@
 
 [![CI Status](https://github.com/AY2627S1-CS2103T-W09-1/tp/actions/workflows/gradle.yml/badge.svg)](https://github.com/AY2627S1-CS2103T-W09-1/tp/actions/workflows/gradle.yml)
 
+[![codecov](https://codecov.io/github/AY2627S1-CS2103T-W09-1/tp/graph/badge.svg?token=3TQF82ZP2X)](https://codecov.io/github/AY2627S1-CS2103T-W09-1/tp)
+
 CupidMaxxing is a desktop address book for independent professional matchmakers managing a small pool of clients and potential matches. Its command-line interface helps matchmakers organise and retrieve client information quickly to identify suitable introductions.
 
 ![CupidMaxxing UI mockup](docs/images/Ui.png)
