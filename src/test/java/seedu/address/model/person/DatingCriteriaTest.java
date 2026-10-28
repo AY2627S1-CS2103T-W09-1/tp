@@ -19,8 +19,13 @@ public class DatingCriteriaTest {
                 case RELATIONSHIP_GOAL -> "long";
                 case AGE -> throw new AssertionError("Age must be tested as a range");
             };
-            String message = attribute == DatingAttribute.RELIGION
-                    ? DatingCriteria.MESSAGE_CONFLICTING_RELIGION : DatingCriteria.MESSAGE_CONFLICTING_CRITERIA;
+            String message = switch (attribute) {
+                case GENDER -> DatingCriteria.MESSAGE_CONFLICTING_GENDER;
+                case SMOKING -> DatingCriteria.MESSAGE_CONFLICTING_SMOKING;
+                case RELIGION -> DatingCriteria.MESSAGE_CONFLICTING_RELIGION;
+                case RELATIONSHIP_GOAL -> DatingCriteria.MESSAGE_CONFLICTING_RELATIONSHIP_GOAL;
+                case AGE -> throw new AssertionError("Age must be tested as a range");
+            };
             assertThrows(IllegalArgumentException.class, message, () -> new DatingCriteria(
                     of(attribute, value), of(attribute, value)));
         }
