@@ -122,6 +122,10 @@ public class PersonTest {
                 ALICE.getAge(), ALICE.getTags(), ALICE.getSmokingStatus(), ALICE.getGender(), null);
         assertEquals(DatingCriteria.EMPTY, person.getDatingCriteria());
         assertTrue(person.getRelationshipGoals().isEmpty());
+
+        // without a religion either
+        assertEquals(person, new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getAge(), ALICE.getTags(), ALICE.getSmokingStatus(), ALICE.getGender()));
     }
 
     @Test
