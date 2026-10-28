@@ -608,25 +608,25 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **MSS**
 
-1. The matchmaker requests `filter` with at least one criterion, such as an age range and smoking status.
-2. CupidMaxxing checks that each criterion is supported and has a valid value.
-3. CupidMaxxing searches the entire address book and shows each client who satisfies **all** supplied criteria exactly once.
+1. The matchmaker requests `find` using one recorded characteristic, such as `find age/25-35` or `find s/no`.
+2. CupidMaxxing checks that the search uses one supported mode and that its input is valid.
+3. CupidMaxxing searches the entire address book and shows each client who matches the search criterion exactly once.
 4. CupidMaxxing reports how many clients matched. The displayed indexes are updated to match the filtered list.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. No criterion is supplied, or a criterion is invalid or repeated.
+* 2a. No search mode is supplied, multiple modes are combined, a prefix is repeated, or the input is invalid.
     * 2a1. CupidMaxxing reports the problem and keeps the previously displayed list unchanged.
 
       Use case ends.
-* 3a. No client satisfies every criterion.
+* 3a. No client matches the search criterion.
     * 3a1. CupidMaxxing shows an empty list and reports that no clients match.
 
       Use case ends.
 
-A missing client attribute does not satisfy a filter criterion. Separate client records with the same name remain separate results.
+A missing client attribute does not satisfy a search criterion. Separate client records with the same name remain separate results.
 
 **Use case: Assess a pair of clients**
 
