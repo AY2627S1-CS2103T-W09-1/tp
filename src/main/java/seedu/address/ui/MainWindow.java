@@ -9,12 +9,15 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.MatchCommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -42,6 +45,9 @@ public class MainWindow extends UiPart<Stage> {
 
     @FXML
     private MenuItem helpMenuItem;
+
+    @FXML
+    private VBox personList;
 
     @FXML
     private StackPane personListPanelPlaceholder;
@@ -181,6 +187,7 @@ public class MainWindow extends UiPart<Stage> {
             CommandResult commandResult = logic.execute(commandText);
             logger.info("Result: " + commandResult.getFeedbackToUser());
             resultDisplay.setCommandResult(commandResult);
+            setClientListShown(!(commandResult instanceof MatchCommandResult));
 
             if (commandResult.isShowHelp()) {
                 handleHelp();
@@ -194,7 +201,17 @@ public class MainWindow extends UiPart<Stage> {
         } catch (CommandException | ParseException e) {
             logger.info("An error occurred while executing command: " + commandText);
             resultDisplay.setFeedbackToUser(e.getMessage());
+            setClientListShown(true);
             throw e;
         }
+    }
+
+    /**
+     * Shows the client list, or hides it so that a match result can use its space.
+     */
+    private void setClientListShown(boolean isShown) {
+        personList.setVisible(isShown);
+        personList.setManaged(isShown);
+        VBox.setVgrow(resultDisplayPlaceholder, isShown ? Priority.NEVER : Priority.ALWAYS);
     }
 }

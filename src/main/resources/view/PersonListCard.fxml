@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
@@ -9,35 +8,45 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <GridPane HBox.hgrow="ALWAYS">
+<VBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <HBox spacing="6" alignment="TOP_LEFT" styleClass="card-header">
+    <Label fx:id="id" styleClass="cell_big_label">
+      <minWidth>
+        <!-- Ensures that the label text is never truncated -->
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minWidth>
+    </Label>
+    <Label fx:id="name" text="\$first" styleClass="cell_big_label" wrapText="true" />
+  </HBox>
+
+  <GridPane styleClass="card-sections">
     <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" />
+      <ColumnConstraints percentWidth="33.34" />
+      <ColumnConstraints percentWidth="33.33" />
+      <ColumnConstraints percentWidth="33.33" />
     </columnConstraints>
-    <VBox alignment="CENTER_LEFT" minHeight="105" GridPane.columnIndex="0">
-      <padding>
-        <Insets top="5" right="5" bottom="5" left="15" />
-      </padding>
-      <HBox spacing="0.5" alignment="CENTER_LEFT">
-        <Label fx:id="id" styleClass="cell_big_label">
-          <minWidth>
-            <!-- Ensures that the label text is never truncated -->
-            <Region fx:constant="USE_PREF_SIZE" />
-          </minWidth>
-        </Label>
-        <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
-      </HBox>
-      <FlowPane fx:id="tags" />
-      <FlowPane fx:id="groups" hgap="4" vgap="4" />
-      <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
-      <Label fx:id="gender" styleClass="cell_small_label" text="\$gender" />
-      <Label fx:id="smokingStatus" styleClass="cell_small_label" text="\$smokingStatus" />
-      <Label fx:id="age" styleClass="cell_small_label" text="\$age" />
-      <Label fx:id="religion" styleClass="cell_small_label" text="\$religion" />
-      <Label fx:id="preferences" styleClass="cell_small_label" wrapText="true" />
-      <Label fx:id="dealbreakers" styleClass="cell_small_label" wrapText="true" />
+
+    <VBox styleClass="card-section" spacing="2" GridPane.columnIndex="0" maxHeight="Infinity">
+      <Label text="DETAILS" styleClass="card-section-caption" />
+      <Label fx:id="phone" styleClass="cell_small_label" wrapText="true" text="\$phone" />
+      <Label fx:id="email" styleClass="cell_small_label" wrapText="true" text="\$email" />
+      <Label fx:id="address" styleClass="cell_small_label" wrapText="true" text="\$address" />
+    </VBox>
+
+    <VBox styleClass="card-section" spacing="2" GridPane.columnIndex="1" maxHeight="Infinity">
+      <Label text="ATTRIBUTES" styleClass="card-section-caption" />
+      <GridPane fx:id="attributes" hgap="10" vgap="1" />
+    </VBox>
+
+    <VBox styleClass="card-section, card-section-last" spacing="2" GridPane.columnIndex="2"
+          maxHeight="Infinity">
+      <Label text="PARTNER CRITERIA" styleClass="card-section-caption" />
+      <Label text="Prefers" styleClass="card-subcaption" />
+      <VBox fx:id="preferences" styleClass="card-criteria" />
+      <Label text="Dealbreakers" styleClass="card-subcaption" />
+      <VBox fx:id="dealbreakers" styleClass="card-criteria" />
     </VBox>
   </GridPane>
-</HBox>
+
+  <FlowPane fx:id="badges" styleClass="card-badges" hgap="5" vgap="3" alignment="CENTER_LEFT" />
+</VBox>
