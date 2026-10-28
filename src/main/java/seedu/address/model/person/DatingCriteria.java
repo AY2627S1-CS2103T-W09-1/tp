@@ -15,6 +15,10 @@ public final class DatingCriteria {
 
     public static final String MESSAGE_CONFLICTING_RELIGION =
             "A partner religion cannot be both preferred and excluded.";
+    public static final String MESSAGE_CONFLICTING_CRITERIA =
+            "A partner attribute cannot be both preferred and excluded.";
+    public static final String MESSAGE_OVERLAPPING_AGE_RANGES =
+            "A preferred age range cannot overlap an excluded age range.";
 
     public static final DatingCriteria EMPTY = new DatingCriteria(Map.of(), Map.of());
 
@@ -25,15 +29,12 @@ public final class DatingCriteria {
      * Creates criteria after validating and canonicalizing all supplied values.
      * Dealbreaker values describe attributes a partner must not have.
      *
-     * @throws IllegalArgumentException If the same religion is both preferred and excluded.
+     * @throws IllegalArgumentException If a preference contradicts a dealbreaker.
      */
     public DatingCriteria(Map<DatingAttribute, String> preferences, Map<DatingAttribute, String> dealbreakers) {
         this.preferences = normalize(preferences);
         this.dealbreakers = normalize(dealbreakers);
-        String preferredReligion = this.preferences.get(DatingAttribute.RELIGION);
-        if (preferredReligion != null && preferredReligion.equals(this.dealbreakers.get(DatingAttribute.RELIGION))) {
-            throw new IllegalArgumentException(MESSAGE_CONFLICTING_RELIGION);
-        }
+        validateNoContradictions();
     }
 
     /**
@@ -89,6 +90,39 @@ public final class DatingCriteria {
             normalized.put(attribute, attribute.normalizeCriterion(requireNonNull(entry.getValue())));
         }
         return Collections.unmodifiableMap(normalized);
+    }
+
+    /** Rejects criteria that would both prefer and exclude the same potential partner. */
+    private void validateNoContradictions() {
+        for (DatingAttribute attribute : DatingAttribute.values()) {
+            String preference = preferences.get(attribute);
+            String dealbreaker = dealbreakers.get(attribute);
+            if (preference == null || dealbreaker == null) {
+                continue;
+            }
+            if (attribute == DatingAttribute.AGE && rangesOverlap(preference, dealbreaker)) {
+                throw new IllegalArgumentException(MESSAGE_OVERLAPPING_AGE_RANGES);
+            }
+            if (preference.equals(dealbreaker)) {
+                throw new IllegalArgumentException(attribute == DatingAttribute.RELIGION
+                        ? MESSAGE_CONFLICTING_RELIGION : MESSAGE_CONFLICTING_CRITERIA);
+            }
+        }
+    }
+
+    /** Returns whether two normalized inclusive age ranges share at least one age. */
+    private static boolean rangesOverlap(String firstRange, String secondRange) {
+        int[] firstBounds = toAgeBounds(firstRange);
+        int[] secondBounds = toAgeBounds(secondRange);
+        return firstBounds[0] <= secondBounds[1] && secondBounds[0] <= firstBounds[1];
+    }
+
+    /** Converts a normalized exact age or inclusive range into lower and upper bounds. */
+    private static int[] toAgeBounds(String range) {
+        String[] bounds = range.split("-");
+        int lowerBound = Integer.parseInt(bounds[0]);
+        int upperBound = bounds.length == 2 ? Integer.parseInt(bounds[1]) : lowerBound;
+        return new int[] {lowerBound, upperBound};
     }
 
     private static Map<String, String> toStorageMap(Map<DatingAttribute, String> criteria) {

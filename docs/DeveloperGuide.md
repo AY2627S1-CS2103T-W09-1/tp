@@ -298,9 +298,11 @@ environments and nested or unbalanced delimiters are rejected.
 `DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
 the own field. `Person` holds an immutable `DatingCriteria` with separate preference
 and dealbreaker maps indexed by `DatingAttribute`. The resulting criteria must not
-prefer and exclude the same normalized religion, including when an edit updates only
-one bucket and retains the other. The own religion is independent: it may equal or differ
-from either partner criterion. A failed add or edit leaves stored records unchanged.
+prefer and exclude the same normalized gender, smoking status, religion, or relationship
+goal. Preferred and excluded age ranges must not overlap. These checks also apply when
+an edit updates only one bucket and retains the other. Age ranges accept spaces around
+the hyphen, such as `age/25 - 30`. The own religion is independent: it may equal or
+differ from either partner criterion. A failed add or edit leaves stored records unchanged.
 
 The class diagram below focuses on the religion-related model. Unrelated `Person`
 members and the other `DatingAttribute` enum values are omitted.
