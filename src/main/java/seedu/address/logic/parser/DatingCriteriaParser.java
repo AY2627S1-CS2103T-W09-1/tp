@@ -7,6 +7,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,8 @@ public final class DatingCriteriaParser {
         boolean dealbreakersSupplied = false;
         Map<DatingAttribute, String> preferences = Map.of();
         Map<DatingAttribute, String> dealbreakers = Map.of();
+        Set<DatingAttribute> preferencesToRemove = Set.of();
+        Set<DatingAttribute> dealbreakersToRemove = Set.of();
 
         for (int index = 0; index < arguments.length(); index++) {
             char character = arguments.charAt(index);
@@ -82,11 +85,13 @@ public final class DatingCriteriaParser {
                 throw new ParseException(MESSAGE_INVALID_ENVIRONMENT);
             }
             if (isClosingDelimiter(character, currentEnvironment)) {
-                Map<DatingAttribute, String> criteria = parseEnvironment(environmentContents.toString());
+                ParsedEnvironment parsedEnvironment = parseEnvironment(environmentContents.toString());
                 if (currentEnvironment == Environment.PREFERENCES) {
-                    preferences = criteria;
+                    preferences = parsedEnvironment.criteria();
+                    preferencesToRemove = parsedEnvironment.attributesToRemove();
                 } else {
-                    dealbreakers = criteria;
+                    dealbreakers = parsedEnvironment.criteria();
+                    dealbreakersToRemove = parsedEnvironment.attributesToRemove();
                 }
                 currentEnvironment = Environment.OUTSIDE;
                 outsideArguments.append(' ');
@@ -102,7 +107,7 @@ public final class DatingCriteriaParser {
         }
 
         return new ParsedCriteria(outsideArguments.toString(), preferences, dealbreakers,
-                preferencesSupplied, dealbreakersSupplied);
+                preferencesToRemove, dealbreakersToRemove, preferencesSupplied, dealbreakersSupplied);
     }
 
     private static boolean isClosingDelimiter(char character, Environment environment) {
@@ -110,9 +115,9 @@ public final class DatingCriteriaParser {
                 || (environment == Environment.DEALBREAKERS && character == '>');
     }
 
-    private static Map<DatingAttribute, String> parseEnvironment(String contents) throws ParseException {
+    private static ParsedEnvironment parseEnvironment(String contents) throws ParseException {
         if (contents.isBlank()) {
-            return Map.of();
+            return new ParsedEnvironment(Map.of(), Set.of());
         }
         verifyOnlySupportedPrefixes(contents);
 
@@ -123,16 +128,18 @@ public final class DatingCriteriaParser {
         arguments.verifyNoDuplicatePrefixesFor(supportedPrefixes());
 
         Map<DatingAttribute, String> criteria = new LinkedHashMap<>();
+        Set<DatingAttribute> attributesToRemove = EnumSet.noneOf(DatingAttribute.class);
         for (Prefix prefix : supportedPrefixes()) {
             if (arguments.getValue(prefix).isPresent()) {
                 String value = arguments.getValue(prefix).get();
                 if (value.isEmpty()) {
-                    throw new ParseException(DatingAttribute.MESSAGE_EMPTY_VALUE);
+                    attributesToRemove.add(toDatingAttribute(prefix));
+                } else {
+                    criteria.put(toDatingAttribute(prefix), validateAndNormalize(prefix, value));
                 }
-                criteria.put(toDatingAttribute(prefix), validateAndNormalize(prefix, value));
             }
         }
-        return criteria;
+        return new ParsedEnvironment(criteria, attributesToRemove);
     }
 
     private static void verifyOnlySupportedPrefixes(String contents) throws ParseException {
@@ -180,17 +187,24 @@ public final class DatingCriteriaParser {
         DEALBREAKERS
     }
 
+    /** Criteria values to update and attributes to remove from a supplied environment. */
+    private record ParsedEnvironment(Map<DatingAttribute, String> criteria,
+            Set<DatingAttribute> attributesToRemove) {}
+
     /**
      * Parsed environments together with the ordinary command arguments.
      */
     public record ParsedCriteria(String outsideArguments, Map<DatingAttribute, String> preferences,
-            Map<DatingAttribute, String> dealbreakers, boolean preferencesSupplied,
+            Map<DatingAttribute, String> dealbreakers, Set<DatingAttribute> preferencesToRemove,
+            Set<DatingAttribute> dealbreakersToRemove, boolean preferencesSupplied,
             boolean dealbreakersSupplied) {
         /** Makes defensive copies of the parsed preference and dealbreaker maps. */
         public ParsedCriteria {
             requireNonNull(outsideArguments);
             preferences = Map.copyOf(preferences);
             dealbreakers = Map.copyOf(dealbreakers);
+            preferencesToRemove = Set.copyOf(preferencesToRemove);
+            dealbreakersToRemove = Set.copyOf(dealbreakersToRemove);
         }
     }
 }
