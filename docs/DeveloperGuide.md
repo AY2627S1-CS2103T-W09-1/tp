@@ -634,7 +634,7 @@ A missing client attribute does not satisfy a search criterion. Client records w
 
 1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
-3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
+3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, violated, or unknown, and an overall assessment.
 4. The displayed list and stored client records remain unchanged.
 
    Use case ends.
