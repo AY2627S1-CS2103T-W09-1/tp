@@ -14,7 +14,6 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
-import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -40,7 +39,6 @@ public class PersonBuilder {
     private Set<Tag> tags;
     private SmokingStatus smokingStatus;
     private Religion religion;
-    private RelationshipGoal relationshipGoal;
     private Map<DatingAttribute, String> preferences = new EnumMap<>(DatingAttribute.class);
     private Map<DatingAttribute, String> dealbreakers = new EnumMap<>(DatingAttribute.class);
 
@@ -70,7 +68,6 @@ public class PersonBuilder {
         age = personToCopy.getAge();
         tags = new HashSet<>(personToCopy.getTags());
         religion = personToCopy.getReligion().orElse(null);
-        relationshipGoal = personToCopy.getRelationshipGoal().orElse(null);
         preferences = new EnumMap<>(DatingAttribute.class);
         preferences.putAll(personToCopy.getDatingCriteria().getPreferences());
         dealbreakers = new EnumMap<>(DatingAttribute.class);
@@ -150,10 +147,10 @@ public class PersonBuilder {
     }
 
     /**
-     * Sets the {@code RelationshipGoal} of the {@code Person} that we are building.
+     * Sets the relationship goals the {@code Person} we are building is open to, recorded as a preference.
      */
-    public PersonBuilder withRelationshipGoal(String relationshipGoal) {
-        this.relationshipGoal = RelationshipGoal.fromStoredValue(relationshipGoal);
+    public PersonBuilder withRelationshipGoal(String relationshipGoals) {
+        preferences.put(DatingAttribute.RELATIONSHIP_GOAL, relationshipGoals);
         return this;
     }
 
@@ -178,7 +175,7 @@ public class PersonBuilder {
      */
     public Person build() {
         return new Person(name, phone, email, address, age, tags, smokingStatus, gender, religion,
-                relationshipGoal, new DatingCriteria(preferences, dealbreakers));
+                new DatingCriteria(preferences, dealbreakers));
     }
 
 }

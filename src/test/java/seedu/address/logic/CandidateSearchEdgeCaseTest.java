@@ -59,7 +59,7 @@ public class CandidateSearchEdgeCaseTest {
 
     @Test
     public void findMatch_respectedDealbreakers_doNotIncreasePreferenceScore() throws Exception {
-        addClient("Target", 25, "g/w s/no r/Jainism rg/long {r/Buddhism}");
+        addClient("Target", 25, "g/w s/no r/Jainism {r/Buddhism rg/long}");
         addClient("Many Respected Exclusions", 30, "r/Islam <age/99 g/m s/yes r/Islam rg/short>");
         addClient("One Met Preference", 30, "r/Buddhism");
 

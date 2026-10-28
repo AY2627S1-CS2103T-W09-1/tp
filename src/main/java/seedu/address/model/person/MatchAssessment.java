@@ -3,6 +3,7 @@ package seedu.address.model.person;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,7 +74,8 @@ public final class MatchAssessment {
             case SMOKING -> person.getSmokingStatus().equals(SmokingStatus.UNSPECIFIED)
                     ? Optional.empty() : Optional.of(person.getSmokingStatus().value);
             case RELIGION -> person.getReligion().map(Religion::toString);
-            case RELATIONSHIP_GOAL -> person.getRelationshipGoal().map(RelationshipGoal::toString);
+            case RELATIONSHIP_GOAL -> person.getRelationshipGoals().isEmpty()
+                    ? Optional.empty() : Optional.of(RelationshipGoal.formatCriterion(person.getRelationshipGoals()));
         };
     }
 
@@ -83,6 +85,11 @@ public final class MatchAssessment {
             int lower = Integer.parseInt(bounds[0]);
             int upper = bounds.length == 1 ? lower : Integer.parseInt(bounds[1]);
             return new AgeMatchesPredicate(lower, upper).test(candidate);
+        }
+        if (attribute == DatingAttribute.RELATIONSHIP_GOAL) {
+            // A goal criterion lists alternatives, so sharing any goal with the candidate is a match
+            return !Collections.disjoint(RelationshipGoal.parseStoredCriterion(criterion),
+                    candidate.getRelationshipGoals());
         }
         return criterion.equals(actual);
     }

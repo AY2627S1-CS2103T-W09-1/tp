@@ -13,6 +13,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
@@ -51,7 +52,6 @@ public class PersonUtil {
         person.getTags().stream().forEach(
             s -> sb.append(PREFIX_TAG + s.tagName + " ")
         );
-        person.getRelationshipGoal().ifPresent(goal -> sb.append(PREFIX_RELATIONSHIP_GOAL + goal.getKeyword() + " "));
         person.getReligion().ifPresent(religion -> sb.append(PREFIX_RELIGION).append(religion).append(" "));
         appendCriteria(sb, person.getDatingCriteria().getPreferences(), '{', '}');
         appendCriteria(sb, person.getDatingCriteria().getDealbreakers(), '<', '>');
@@ -78,11 +78,6 @@ public class PersonUtil {
                 tags.forEach(s -> sb.append(PREFIX_TAG).append(s.tagName).append(" "));
             }
         }
-        if (descriptor.isRelationshipGoalEdited()) {
-            sb.append(PREFIX_RELATIONSHIP_GOAL);
-            descriptor.getRelationshipGoal().map(RelationshipGoal::getKeyword).ifPresent(sb::append);
-            sb.append(" ");
-        }
         if (descriptor.isReligionEdited()) {
             sb.append(PREFIX_RELIGION);
             descriptor.getReligion().ifPresent(sb::append);
@@ -102,8 +97,12 @@ public class PersonUtil {
     }
 
     private static String toCommandValue(DatingAttribute attribute, String value) {
-        return attribute == DatingAttribute.RELATIONSHIP_GOAL
-                ? RelationshipGoal.fromStoredValue(value).getKeyword() : value;
+        if (attribute != DatingAttribute.RELATIONSHIP_GOAL) {
+            return value;
+        }
+        return RelationshipGoal.parseStoredCriterion(value).stream()
+                .map(RelationshipGoal::getKeyword)
+                .collect(Collectors.joining(","));
     }
 
     private static Prefix getPrefix(DatingAttribute attribute) {

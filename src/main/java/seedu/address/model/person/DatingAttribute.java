@@ -45,12 +45,13 @@ public enum DatingAttribute {
 
     /**
      * Validates a criterion value typed by a user and returns its canonical form.
-     * Relationship goals are typed as keywords, while every other attribute accepts its canonical form.
+     * Relationship goals are typed as a comma-separated list of keywords, while every other attribute
+     * accepts its canonical form.
      */
     public String parseCriterion(String input) {
         requireNonNull(input);
         if (this == RELATIONSHIP_GOAL && !input.isBlank()) {
-            return RelationshipGoal.fromKeyword(input).toString();
+            return RelationshipGoal.formatCriterion(RelationshipGoal.parseKeywordList(input));
         }
         return normalizeCriterion(input);
     }
@@ -66,7 +67,7 @@ public enum DatingAttribute {
             case GENDER -> Gender.parseValue(value).getValue();
             case SMOKING -> new SmokingStatus(value.trim()).value;
             case RELIGION -> new Religion(value).toString();
-            case RELATIONSHIP_GOAL -> RelationshipGoal.fromStoredValue(value).toString();
+            case RELATIONSHIP_GOAL -> RelationshipGoal.formatCriterion(RelationshipGoal.parseStoredCriterion(value));
         };
     }
 }

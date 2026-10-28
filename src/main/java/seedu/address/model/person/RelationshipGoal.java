@@ -2,11 +2,15 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Represents a client's relationship goal, which is one of the supported categories adapted from Hinge.
+ * Represents a relationship goal, which is one of the supported categories adapted from Hinge.
+ * A client records the goals they are open to as a partner preference, and these goals also describe
+ * the client when others are matched against them.
  * Users enter a goal by its short keyword, while the full name is used for display and storage.
  */
 public enum RelationshipGoal {
@@ -23,8 +27,11 @@ public enum RelationshipGoal {
                     .collect(Collectors.joining(", "))
             + ".";
 
-    /** The text displayed when a client's relationship goal has not been recorded. */
-    public static final String NOT_SPECIFIED_LABEL = "Not specified";
+    public static final String MESSAGE_INVALID_LIST =
+            "Use distinct relationship goals separated by commas, e.g. rg/long,long-open.";
+
+    /** Separates goal names in a stored criterion. Commas cannot be used as some goal names contain one. */
+    private static final String CRITERION_SEPARATOR = " or ";
 
     private final String keyword;
     private final String fullName;
@@ -67,6 +74,50 @@ public enum RelationshipGoal {
             }
         }
         throw new IllegalArgumentException(MESSAGE_CONSTRAINTS);
+    }
+
+    /**
+     * Returns the distinct goals listed in {@code input}, a comma-separated list of keywords.
+     *
+     * @throws IllegalArgumentException if a keyword is unsupported, empty or repeated
+     */
+    public static Set<RelationshipGoal> parseKeywordList(String input) {
+        requireNonNull(input);
+        Set<RelationshipGoal> goals = EnumSet.noneOf(RelationshipGoal.class);
+        for (String token : input.split(",", -1)) {
+            if (token.isBlank() || !goals.add(fromKeyword(token))) {
+                throw new IllegalArgumentException(MESSAGE_INVALID_LIST);
+            }
+        }
+        return goals;
+    }
+
+    /**
+     * Returns the goals in a criterion created by {@link #formatCriterion(Set)}, or in a hand-edited data
+     * file where each goal may also be given in the forms accepted by {@link #fromStoredValue(String)}.
+     *
+     * @throws IllegalArgumentException if a goal is unsupported, empty or repeated
+     */
+    public static Set<RelationshipGoal> parseStoredCriterion(String criterion) {
+        requireNonNull(criterion);
+        Set<RelationshipGoal> goals = EnumSet.noneOf(RelationshipGoal.class);
+        for (String goalName : criterion.split(CRITERION_SEPARATOR, -1)) {
+            if (!goals.add(fromStoredValue(goalName))) {
+                throw new IllegalArgumentException(MESSAGE_INVALID_LIST);
+            }
+        }
+        return goals;
+    }
+
+    /**
+     * Returns the canonical criterion for {@code goals}: their full names in a fixed order.
+     */
+    public static String formatCriterion(Set<RelationshipGoal> goals) {
+        requireNonNull(goals);
+        assert !goals.isEmpty() : "A relationship goal criterion must contain at least one goal";
+        return EnumSet.copyOf(goals).stream()
+                .map(RelationshipGoal::toString)
+                .collect(Collectors.joining(CRITERION_SEPARATOR));
     }
 
     /** Returns the short keyword that users type to enter this goal. */

@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 public class RelationshipGoalTest {
@@ -77,5 +79,29 @@ public class RelationshipGoalTest {
     @Test
     public void toString_returnsFullGoalName() {
         assertEquals("Long-term relationship, open to short", RelationshipGoal.LONG_TERM_OPEN_TO_SHORT.toString());
+    }
+
+    @Test
+    public void parseKeywordList_distinctKeywords_returnsGoals() {
+        assertEquals(Set.of(RelationshipGoal.LONG_TERM, RelationshipGoal.SHORT_TERM_FUN),
+                RelationshipGoal.parseKeywordList(" short , LONG"));
+    }
+
+    @Test
+    public void parseKeywordList_repeatedOrEmptyKeyword_throwsIllegalArgumentException() {
+        String invalidList = RelationshipGoal.MESSAGE_INVALID_LIST;
+        for (String input : new String[] {"long,long", "long,LONG", "long,", ",long", "long,,short", ""}) {
+            assertThrows(IllegalArgumentException.class, invalidList, () -> RelationshipGoal.parseKeywordList(input));
+        }
+        String constraints = RelationshipGoal.MESSAGE_CONSTRAINTS;
+        assertThrows(IllegalArgumentException.class, constraints, () -> RelationshipGoal.parseKeywordList("long,x"));
+    }
+
+    @Test
+    public void formatCriterion_roundTripsThroughParseStoredCriterion() {
+        Set<RelationshipGoal> goals = Set.of(RelationshipGoal.SHORT_TERM_FUN, RelationshipGoal.LONG_TERM_OPEN_TO_SHORT);
+        String criterion = RelationshipGoal.formatCriterion(goals);
+        assertEquals("Long-term relationship, open to short or Short-term fun", criterion);
+        assertEquals(goals, RelationshipGoal.parseStoredCriterion(criterion));
     }
 }

@@ -20,7 +20,7 @@ import seedu.address.model.person.Person;
 public class ReligionCriteriaStorageTest {
     private static final String CLIENT = "{\"name\":\"Religion Demo\",\"phone\":\"91234567\","
             + "\"email\":\"demo@example.com\",\"address\":\"Test Lane\",\"age\":\"25\","
-            + "\"smokingStatus\":\"no\",\"gender\":\"nb\",\"relationshipGoal\":\"long\","
+            + "\"smokingStatus\":\"no\",\"gender\":\"nb\","
             + "\"tags\":[],\"religion\":\"Jainism\"";
 
     @TempDir

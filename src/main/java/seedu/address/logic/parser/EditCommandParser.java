@@ -53,8 +53,9 @@ public class EditCommandParser implements Parser<EditCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE), pe);
         }
 
+        ParserUtil.rejectOwnRelationshipGoal(argMultimap);
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
+                PREFIX_GENDER, PREFIX_SMOKING, PREFIX_AGE, PREFIX_RELIGION);
 
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
 
@@ -84,10 +85,6 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (argMultimap.getValue(PREFIX_RELIGION).isPresent()) {
             String value = argMultimap.getValue(PREFIX_RELIGION).get();
             editPersonDescriptor.setReligion(value.isEmpty() ? null : ParserUtil.parseReligion(value));
-        }
-        if (argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).isPresent()) {
-            String value = argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).get();
-            editPersonDescriptor.setRelationshipGoal(value.isEmpty() ? null : ParserUtil.parseRelationshipGoal(value));
         }
         if (parsedCriteria.preferencesSupplied()) {
             editPersonDescriptor.setPreferences(parsedCriteria.preferences());

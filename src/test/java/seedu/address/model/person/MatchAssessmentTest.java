@@ -39,6 +39,17 @@ public class MatchAssessmentTest {
     }
 
     @Test
+    public void assess_relationshipGoals_matchWhenAnyGoalOverlaps() {
+        Person openToBoth = new PersonBuilder().withRelationshipGoal("long or short").build();
+        Person shortOnly = new PersonBuilder().withRelationshipGoal("short").build();
+        Map<DatingAttribute, String> prefersLong = Map.of(DatingAttribute.RELATIONSHIP_GOAL, "long");
+
+        assertEquals(MET, assess(prefersLong, Map.of(), openToBoth).getFirstComparisons().getFirst().status());
+        assertEquals(UNMET, assess(prefersLong, Map.of(), shortOnly).getFirstComparisons().getFirst().status());
+        assertEquals(INCOMPATIBLE, assess(Map.of(), prefersLong, openToBoth).getOutcome());
+    }
+
+    @Test
     public void assess_ageRange_includesBothBounds() {
         for (int age : new int[] {24, 25, 35, 36}) {
             Person person = new PersonBuilder().withAge(age).build();
@@ -80,7 +91,9 @@ public class MatchAssessmentTest {
 
     @Test
     public void assess_nonExcludedValues_respectsDealbreakers() {
-        MatchAssessment assessment = assess(Map.of(), Map.of(DatingAttribute.AGE, "18-29",
+        // sharing the candidate's goal keeps the candidate's goal preference met
+        MatchAssessment assessment = assess(Map.of(DatingAttribute.RELATIONSHIP_GOAL, "long"),
+                Map.of(DatingAttribute.AGE, "18-29",
                 DatingAttribute.SMOKING, "yes", DatingAttribute.RELIGION, "Islam",
                 DatingAttribute.RELATIONSHIP_GOAL, "short"), candidate);
         assertEquals(COMPATIBLE, assessment.getOutcome());
@@ -129,14 +142,16 @@ public class MatchAssessmentTest {
 
     @Test
     public void assess_noCriteria_insufficientInformation() {
-        assertEquals(INSUFFICIENT_INFORMATION, new MatchAssessment(candidate, candidate).getOutcome());
+        Person person = new PersonBuilder().build();
+        assertEquals(INSUFFICIENT_INFORMATION, new MatchAssessment(person, person).getOutcome());
     }
 
     @Test
     public void assess_oneSidedCriteria_checksOnlyRecordedCriteria() {
         Person owner = withCriteria(new PersonBuilder().build(), Map.of(DatingAttribute.AGE, "30"), Map.of());
-        assertEquals(COMPATIBLE, new MatchAssessment(owner, candidate).getOutcome());
-        assertEquals(COMPATIBLE, new MatchAssessment(candidate, owner).getOutcome());
+        Person other = new PersonBuilder().withAge(30).build();
+        assertEquals(COMPATIBLE, new MatchAssessment(owner, other).getOutcome());
+        assertEquals(COMPATIBLE, new MatchAssessment(other, owner).getOutcome());
     }
 
     private MatchAssessment assess(Map<DatingAttribute, String> preferences,
@@ -148,7 +163,6 @@ public class MatchAssessmentTest {
             Map<DatingAttribute, String> dealbreakers) {
         return new Person(person.getName(), person.getPhone(), person.getEmail(), person.getAddress(),
                 person.getAge(), person.getTags(), person.getSmokingStatus(), person.getGender(),
-                person.getReligion().orElse(null), person.getRelationshipGoal().orElse(null),
-                new DatingCriteria(preferences, dealbreakers));
+                person.getReligion().orElse(null), new DatingCriteria(preferences, dealbreakers));
     }
 }

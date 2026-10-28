@@ -170,13 +170,17 @@ public class FindCommandParserTest {
     @Test
     public void parse_relationshipGoal_returnsGoalSearch() {
         FindCommand expected = new FindCommand(
-                new RelationshipGoalMatchesPredicate(RelationshipGoal.LONG_TERM_OPEN_TO_SHORT));
+                new RelationshipGoalMatchesPredicate(Set.of(RelationshipGoal.LONG_TERM_OPEN_TO_SHORT)));
         assertParseSuccess(parser, " rg/long-open ", expected);
+
+        expected = new FindCommand(new RelationshipGoalMatchesPredicate(
+                Set.of(RelationshipGoal.LONG_TERM, RelationshipGoal.SHORT_TERM_FUN)));
+        assertParseSuccess(parser, "rg/short,long", expected);
     }
 
     @Test
     public void parse_invalidRelationshipGoal_throwsParseException() {
-        assertParseFailure(parser, "rg/", RelationshipGoal.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "rg/", RelationshipGoal.MESSAGE_INVALID_LIST);
         assertParseFailure(parser, "rg/forever", RelationshipGoal.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "rg/long rg/short",
                 Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_RELATIONSHIP_GOAL));

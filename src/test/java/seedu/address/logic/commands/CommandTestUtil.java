@@ -39,7 +39,6 @@ public class CommandTestUtil {
     public static final int VALID_AGE_BOB = 30;
     public static final String VALID_TAG_HUSBAND = "husband";
     public static final String VALID_TAG_FRIEND = "friend";
-    public static final String VALID_RELATIONSHIP_GOAL_AMY = "Long-term relationship";
     public static final String VALID_RELATIONSHIP_GOAL_BOB = "Short-term relationship, open to long";
     public static final String VALID_RELATIONSHIP_GOAL_KEYWORD_AMY = "long";
     public static final String VALID_RELATIONSHIP_GOAL_KEYWORD_BOB = "short-open";
@@ -58,8 +57,6 @@ public class CommandTestUtil {
     public static final String TAG_DESC_HUSBAND = " " + PREFIX_TAG + VALID_TAG_HUSBAND;
     public static final String RELATIONSHIP_GOAL_DESC_AMY =
             " " + PREFIX_RELATIONSHIP_GOAL + VALID_RELATIONSHIP_GOAL_KEYWORD_AMY;
-    public static final String RELATIONSHIP_GOAL_DESC_BOB =
-            " " + PREFIX_RELATIONSHIP_GOAL + VALID_RELATIONSHIP_GOAL_KEYWORD_BOB;
 
     public static final String INVALID_NAME_DESC = " " + PREFIX_NAME + "James&"; // '&' not allowed in names
     public static final String INVALID_PHONE_DESC = " " + PREFIX_PHONE + "911a"; // 'a' not allowed in phones
@@ -67,8 +64,6 @@ public class CommandTestUtil {
     public static final String INVALID_ADDRESS_DESC = " " + PREFIX_ADDRESS; // empty string not allowed for addresses
     public static final String INVALID_AGE_DESC = " " + PREFIX_AGE + "17"; // age must be at least 18
     public static final String INVALID_TAG_DESC = " " + PREFIX_TAG + "hubby*"; // '*' not allowed in tags
-    public static final String INVALID_RELATIONSHIP_GOAL_DESC =
-            " " + PREFIX_RELATIONSHIP_GOAL + "Marriage"; // not a supported category
 
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";

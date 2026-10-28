@@ -7,6 +7,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * An immutable collection of a client's soft partner preferences and hard dealbreakers.
@@ -15,6 +16,8 @@ public final class DatingCriteria {
 
     public static final String MESSAGE_CONFLICTING_RELIGION =
             "A partner religion cannot be both preferred and excluded.";
+    public static final String MESSAGE_CONFLICTING_RELATIONSHIP_GOAL =
+            "A relationship goal cannot be both preferred and excluded.";
 
     public static final DatingCriteria EMPTY = new DatingCriteria(Map.of(), Map.of());
 
@@ -25,7 +28,7 @@ public final class DatingCriteria {
      * Creates criteria after validating and canonicalizing all supplied values.
      * Dealbreaker values describe attributes a partner must not have.
      *
-     * @throws IllegalArgumentException If the same religion is both preferred and excluded.
+     * @throws IllegalArgumentException If the same religion or relationship goal is both preferred and excluded.
      */
     public DatingCriteria(Map<DatingAttribute, String> preferences, Map<DatingAttribute, String> dealbreakers) {
         this.preferences = normalize(preferences);
@@ -34,6 +37,17 @@ public final class DatingCriteria {
         if (preferredReligion != null && preferredReligion.equals(this.dealbreakers.get(DatingAttribute.RELIGION))) {
             throw new IllegalArgumentException(MESSAGE_CONFLICTING_RELIGION);
         }
+        if (!Collections.disjoint(goalsIn(this.preferences), goalsIn(this.dealbreakers))) {
+            throw new IllegalArgumentException(MESSAGE_CONFLICTING_RELATIONSHIP_GOAL);
+        }
+    }
+
+    /**
+     * Returns the relationship goals the client is open to, which also describe the client to potential
+     * partners. The set is empty if no relationship goal preference is recorded.
+     */
+    public Set<RelationshipGoal> getRelationshipGoals() {
+        return goalsIn(preferences);
     }
 
     /**
@@ -89,6 +103,11 @@ public final class DatingCriteria {
             normalized.put(attribute, attribute.normalizeCriterion(requireNonNull(entry.getValue())));
         }
         return Collections.unmodifiableMap(normalized);
+    }
+
+    private static Set<RelationshipGoal> goalsIn(Map<DatingAttribute, String> criteria) {
+        String criterion = criteria.get(DatingAttribute.RELATIONSHIP_GOAL);
+        return criterion == null ? Set.of() : RelationshipGoal.parseStoredCriterion(criterion);
     }
 
     private static Map<String, String> toStorageMap(Map<DatingAttribute, String> criteria) {

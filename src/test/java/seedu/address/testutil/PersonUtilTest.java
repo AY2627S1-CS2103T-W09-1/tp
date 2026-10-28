@@ -41,8 +41,7 @@ public class PersonUtilTest {
 
     @Test
     public void getEditPersonDescriptorDetails_clearedFields_preservesClears() throws Exception {
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withTags().withReligion(null)
-                .withoutRelationshipGoal().build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withTags().withReligion(null).build();
         descriptor.setPreferences(Map.of());
         descriptor.setDealbreakers(Map.of());
         assertDescriptorRoundTrip(descriptor);

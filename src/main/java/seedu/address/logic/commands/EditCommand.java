@@ -7,7 +7,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
@@ -37,7 +36,6 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
-import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -62,10 +60,11 @@ public class EditCommand extends Command {
             + "[" + PREFIX_AGE + "AGE] "
             + "[" + PREFIX_TAG + "TAG]... "
             + "[" + PREFIX_RELIGION + "RELIGION] "
-            + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL] [{CRITERIA}] [<CRITERIA>]\n"
+            + "[{CRITERIA}] [<CRITERIA>]\n"
             + "Gender: m, w, nb, or empty for unspecified.\n"
             + "Partner criteria: {...} prefers; <...> excludes (must not have). "
-            + "Use age/, g/, s/, r/, or rg/ once per block, each with a value.\n"
+            + "Use age/, g/, s/, r/, or rg/ once per block, each with a value. "
+            + "rg/ takes comma-separated goal keywords, e.g. {rg/long,long-open}.\n"
             + "Supplied criteria add or update entries; {} or <> clears that entire set.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
@@ -139,9 +138,6 @@ public class EditCommand extends Command {
         Gender updatedGender = editPersonDescriptor.getGender().orElse(personToEdit.getGender());
         SmokingStatus updatedSmokingStatus = editPersonDescriptor.getSmokingStatus()
                 .orElse(personToEdit.getSmokingStatus());
-        RelationshipGoal updatedRelationshipGoal = editPersonDescriptor.isRelationshipGoalEdited()
-                ? editPersonDescriptor.getRelationshipGoal().orElse(null)
-                : personToEdit.getRelationshipGoal().orElse(null);
         Map<DatingAttribute, String> updatedPreferences = mergeCriteria(
                 personToEdit.getDatingCriteria().getPreferences(), editPersonDescriptor.getPreferences());
         Map<DatingAttribute, String> updatedDealbreakers = mergeCriteria(
@@ -152,7 +148,7 @@ public class EditCommand extends Command {
                 ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
 
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
-                updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal, updatedDatingCriteria);
+                updatedSmokingStatus, updatedGender, updatedReligion, updatedDatingCriteria);
     }
 
     /**
@@ -209,8 +205,6 @@ public class EditCommand extends Command {
         private Religion religion;
         // Track supplied fields separately so null can mean an explicit clear.
         private boolean religionEdited;
-        private RelationshipGoal relationshipGoal;
-        private boolean relationshipGoalEdited;
         private Map<DatingAttribute, String> preferences;
         private boolean preferencesEdited;
         private Map<DatingAttribute, String> dealbreakers;
@@ -234,9 +228,6 @@ public class EditCommand extends Command {
             if (toCopy.religionEdited) {
                 setReligion(toCopy.religion);
             }
-            if (toCopy.relationshipGoalEdited) {
-                setRelationshipGoal(toCopy.relationshipGoal);
-            }
             if (toCopy.preferencesEdited) {
                 setPreferences(toCopy.preferences);
             }
@@ -250,7 +241,7 @@ public class EditCommand extends Command {
          */
         public boolean isAnyFieldEdited() {
             return CollectionUtil.isAnyNonNull(name, phone, email, address, age, tags, smokingStatus, gender)
-                    || religionEdited || relationshipGoalEdited || preferencesEdited || dealbreakersEdited;
+                    || religionEdited || preferencesEdited || dealbreakersEdited;
         }
 
         public void setName(Name name) {
@@ -348,28 +339,6 @@ public class EditCommand extends Command {
             return religionEdited;
         }
 
-        /**
-         * Sets or clears the client's relationship goal; null explicitly clears it.
-         */
-        public void setRelationshipGoal(RelationshipGoal relationshipGoal) {
-            this.relationshipGoal = relationshipGoal;
-            relationshipGoalEdited = true;
-        }
-
-        /**
-         * Returns the new relationship goal, if one was supplied rather than cleared.
-         */
-        public Optional<RelationshipGoal> getRelationshipGoal() {
-            return Optional.ofNullable(relationshipGoal);
-        }
-
-        /**
-         * Returns whether the relationship goal was supplied, including an explicit clear.
-         */
-        public boolean isRelationshipGoalEdited() {
-            return relationshipGoalEdited;
-        }
-
         /** Records partner preferences to add or update. */
         public void setPreferences(Map<DatingAttribute, String> preferences) {
             this.preferences = Map.copyOf(requireNonNull(preferences));
@@ -413,8 +382,6 @@ public class EditCommand extends Command {
                     && Objects.equals(tags, otherEditPersonDescriptor.tags)
                     && Objects.equals(religion, otherEditPersonDescriptor.religion)
                     && religionEdited == otherEditPersonDescriptor.religionEdited
-                    && Objects.equals(relationshipGoal, otherEditPersonDescriptor.relationshipGoal)
-                    && relationshipGoalEdited == otherEditPersonDescriptor.relationshipGoalEdited
                     && Objects.equals(preferences, otherEditPersonDescriptor.preferences)
                     && preferencesEdited == otherEditPersonDescriptor.preferencesEdited
                     && Objects.equals(dealbreakers, otherEditPersonDescriptor.dealbreakers)
@@ -436,8 +403,7 @@ public class EditCommand extends Command {
                     .add("tags", tags)
                     .add("gender", gender)
                     .add("religion", religion)
-                    .add("religionEdited", religionEdited)
-                    .add("relationshipGoal", relationshipGoal);
+                    .add("religionEdited", religionEdited);
             if (preferencesEdited) {
                 builder.add("preferences", preferences)
                         .add("preferencesEdited", true);

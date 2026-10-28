@@ -2,15 +2,20 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
@@ -269,6 +274,30 @@ public class JsonAdaptedPersonTest {
                 + "\"address\":\"New Road\",\"age\":\"25\",\"tags\":[],\"relationshipGoal\":\"Marriage\"}";
         JsonAdaptedPerson person = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class);
         assertThrows(IllegalValueException.class, RelationshipGoal.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void fromJson_legacyGoalWithGoalCriteria_keepsRecordedCriteria() throws Exception {
+        String json = "{\"name\":\"Benson Meier\",\"phone\":\"98765432\",\"email\":\"benson@example.com\","
+                + "\"address\":\"New Road\",\"age\":\"25\",\"tags\":[],\"relationshipGoal\":\"long\",%s}";
+
+        // an existing goal preference is not overwritten
+        Person person = JsonUtil.fromJsonString(String.format(json, "\"preferences\":{\"relationshipGoal\":\"short\"}"),
+                JsonAdaptedPerson.class).toModelType();
+        assertEquals(Set.of(RelationshipGoal.SHORT_TERM_FUN), person.getRelationshipGoals());
+
+        // an excluded legacy goal is dropped instead of failing to load
+        person = JsonUtil.fromJsonString(String.format(json, "\"dealbreakers\":{\"relationshipGoal\":\"long\"}"),
+                JsonAdaptedPerson.class).toModelType();
+        assertTrue(person.getRelationshipGoals().isEmpty());
+    }
+
+    @Test
+    public void toJson_goalPreference_omitsLegacyGoalField() throws Exception {
+        Person person = new PersonBuilder(BENSON).withRelationshipGoal("long").build();
+        JsonNode json = new ObjectMapper().readTree(JsonUtil.toJsonString(new JsonAdaptedPerson(person)));
+        assertFalse(json.has("relationshipGoal"));
+        assertEquals("Long-term relationship", json.get("preferences").get("relationshipGoal").asText());
     }
 
 }

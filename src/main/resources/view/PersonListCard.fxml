@@ -36,7 +36,6 @@
       <Label fx:id="smokingStatus" styleClass="cell_small_label" text="\$smokingStatus" />
       <Label fx:id="age" styleClass="cell_small_label" text="\$age" />
       <Label fx:id="religion" styleClass="cell_small_label" text="\$religion" />
-      <Label fx:id="relationshipGoal" styleClass="cell_small_label" text="\$relationshipGoal" />
       <Label fx:id="preferences" styleClass="cell_small_label" wrapText="true" />
       <Label fx:id="dealbreakers" styleClass="cell_small_label" wrapText="true" />
     </VBox>

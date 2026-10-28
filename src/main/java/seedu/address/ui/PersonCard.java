@@ -13,7 +13,6 @@ import javafx.scene.layout.Region;
 import seedu.address.model.group.GroupName;
 import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.RelationshipGoal;
 
 /**
  * A UI component that displays information of a {@code Person}.
@@ -57,8 +56,6 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private FlowPane groups;
     @FXML
-    private Label relationshipGoal;
-    @FXML
     private Label preferences;
     @FXML
     private Label dealbreakers;
@@ -91,8 +88,6 @@ public class PersonCard extends UiPart<Region> {
                 .forEach(groupName -> groups.getChildren().add(new Label("Group: " + groupName)));
         groups.setVisible(!groupNames.isEmpty());
         groups.setManaged(!groupNames.isEmpty());
-        relationshipGoal.setText("Relationship goal: "
-                + person.getRelationshipGoal().map(Object::toString).orElse(RelationshipGoal.NOT_SPECIFIED_LABEL));
         preferences.setText(formatCriteria("Preferences", person.getDatingCriteria().getPreferences()));
         preferences.setManaged(!person.getDatingCriteria().getPreferences().isEmpty());
         preferences.setVisible(!person.getDatingCriteria().getPreferences().isEmpty());

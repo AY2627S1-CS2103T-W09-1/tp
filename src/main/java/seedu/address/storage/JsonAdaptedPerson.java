@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -8,11 +9,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
@@ -40,6 +43,8 @@ class JsonAdaptedPerson {
     private final String age;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final String religion;
+    /** The client's own goal in older data files. It is read for migration but no longer saved. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String relationshipGoal;
     private final Map<String, String> preferences;
     private final Map<String, String> dealbreakers;
@@ -111,7 +116,7 @@ class JsonAdaptedPerson {
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
         religion = source.getReligion().map(Religion::toString).orElse(null);
-        relationshipGoal = source.getRelationshipGoal().map(RelationshipGoal::toString).orElse(null);
+        relationshipGoal = null;
         preferences = source.getDatingCriteria().getPreferencesForStorage();
         dealbreakers = source.getDatingCriteria().getDealbreakersForStorage();
     }
@@ -185,22 +190,35 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Gender.MESSAGE_CONSTRAINTS);
         }
 
-        final RelationshipGoal modelRelationshipGoal;
-        try {
-            modelRelationshipGoal = relationshipGoal == null
-                    ? null : RelationshipGoal.fromStoredValue(relationshipGoal);
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalValueException(RelationshipGoal.MESSAGE_CONSTRAINTS);
-        }
-
         try {
             Religion modelReligion = religion == null ? null : new Religion(religion);
-            DatingCriteria modelDatingCriteria = DatingCriteria.fromStorage(preferences, dealbreakers);
+            DatingCriteria modelDatingCriteria = migrateLegacyRelationshipGoal(
+                    DatingCriteria.fromStorage(preferences, dealbreakers));
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags,
-                    modelSmokingStatus, modelGender, modelReligion, modelRelationshipGoal, modelDatingCriteria);
+                    modelSmokingStatus, modelGender, modelReligion, modelDatingCriteria);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(exception.getMessage());
         }
+    }
+
+    /**
+     * Moves a legacy own relationship goal into the relationship goal preference, which now describes the
+     * client. The legacy goal is dropped if a goal preference is already recorded or the goal is excluded.
+     *
+     * @throws IllegalArgumentException if the legacy goal is not a supported relationship goal.
+     */
+    private DatingCriteria migrateLegacyRelationshipGoal(DatingCriteria criteria) {
+        if (relationshipGoal == null || !criteria.getRelationshipGoals().isEmpty()) {
+            return criteria;
+        }
+        RelationshipGoal goal = RelationshipGoal.fromStoredValue(relationshipGoal);
+        String excludedGoals = criteria.getDealbreakers().get(DatingAttribute.RELATIONSHIP_GOAL);
+        if (excludedGoals != null && RelationshipGoal.parseStoredCriterion(excludedGoals).contains(goal)) {
+            return criteria;
+        }
+        Map<DatingAttribute, String> migratedPreferences = new HashMap<>(criteria.getPreferences());
+        migratedPreferences.put(DatingAttribute.RELATIONSHIP_GOAL, goal.toString());
+        return new DatingCriteria(migratedPreferences, criteria.getDealbreakers());
     }
 
 }
