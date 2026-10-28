@@ -30,7 +30,7 @@ public class ResultDisplay extends UiPart<Region> {
         requireNonNull(feedbackToUser);
         showMatch(false);
         resultDisplay.setText(feedbackToUser);
-        resultDisplay.setPrefRowCount(Math.max(3, resultDisplay.getParagraphs().size()));
+        resultDisplay.setPrefRowCount(Math.max(2, resultDisplay.getParagraphs().size()));
     }
 
     /**
