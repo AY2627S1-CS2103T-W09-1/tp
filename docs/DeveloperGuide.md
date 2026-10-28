@@ -626,7 +626,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
       Use case ends.
 
-A missing client attribute does not satisfy a search criterion. Separate client records with the same name remain separate results.
+A missing client attribute does not satisfy a search criterion. Client records with the same exact name are treated as duplicates, even if other details differ.
 
 **Use case: Assess a pair of clients**
 
