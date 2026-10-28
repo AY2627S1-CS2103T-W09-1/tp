@@ -595,7 +595,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **Extensions**
 
-* 2a. A supplied value is invalid, an attribute is repeated, or a preference conflicts with a dealbreaker in the same command.
+* 2a. A supplied value is invalid, an attribute is repeated, or the same normalized religion is both preferred and excluded.
     * 2a1. CupidMaxxing explains the invalid input and changes no data.
 
       Use case ends.
