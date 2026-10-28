@@ -131,6 +131,15 @@ public class ReligionCriteriaIntegrationTest {
     }
 
     @Test
+    public void criteriaContradictions_reportHelpfulErrors() throws Exception {
+        assertThrows(ParseException.class, DatingCriteria.MESSAGE_CONFLICTING_CRITERIA, () ->
+                logic.execute(ADD_CLIENT + " {s/no} <s/no>"));
+        assertThrows(ParseException.class, DatingCriteria.MESSAGE_OVERLAPPING_AGE_RANGES, () ->
+                logic.execute(ADD_CLIENT + " {age/20 - 30} <age/25-35>"));
+        logic.execute(ADD_CLIENT + " {age/20 - 24} <age/25 - 35>");
+    }
+
+    @Test
     public void execute_invalidReligionEnvironments_preservesRecordsAndDisplayedResults() throws Exception {
         logic.execute(ADD_CLIENT + " {r/Buddhism} <r/Islam>");
         AddressBook before = new AddressBook(model.getAddressBook());
