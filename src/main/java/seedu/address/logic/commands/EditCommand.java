@@ -143,9 +143,11 @@ public class EditCommand extends Command {
                 ? editPersonDescriptor.getRelationshipGoal().orElse(null)
                 : personToEdit.getRelationshipGoal().orElse(null);
         Map<DatingAttribute, String> updatedPreferences = mergeCriteria(
-                personToEdit.getDatingCriteria().getPreferences(), editPersonDescriptor.getPreferences());
+                personToEdit.getDatingCriteria().getPreferences(), editPersonDescriptor.getPreferences(),
+                editPersonDescriptor.getPreferencesToRemove(), editPersonDescriptor.shouldClearPreferences());
         Map<DatingAttribute, String> updatedDealbreakers = mergeCriteria(
-                personToEdit.getDatingCriteria().getDealbreakers(), editPersonDescriptor.getDealbreakers());
+                personToEdit.getDatingCriteria().getDealbreakers(), editPersonDescriptor.getDealbreakers(),
+                editPersonDescriptor.getDealbreakersToRemove(), editPersonDescriptor.shouldClearDealbreakers());
         DatingCriteria updatedDatingCriteria = new DatingCriteria(updatedPreferences, updatedDealbreakers);
 
         Religion updatedReligion = editPersonDescriptor.isReligionEdited()
@@ -156,16 +158,18 @@ public class EditCommand extends Command {
     }
 
     /**
-     * Applies supplied criteria to the existing criteria without removing attributes that were not supplied.
+     * Applies supplied criteria to the existing criteria and removes attributes with empty values.
      * An explicitly empty environment clears all criteria of that type.
      */
     private static Map<DatingAttribute, String> mergeCriteria(Map<DatingAttribute, String> existingCriteria,
-            Optional<Map<DatingAttribute, String>> editedCriteria) {
-        if (editedCriteria.filter(Map::isEmpty).isPresent()) {
+            Optional<Map<DatingAttribute, String>> editedCriteria, Set<DatingAttribute> attributesToRemove,
+            boolean shouldClearCriteria) {
+        if (shouldClearCriteria) {
             return Map.of();
         }
         Map<DatingAttribute, String> mergedCriteria = new HashMap<>(existingCriteria);
         editedCriteria.ifPresent(mergedCriteria::putAll);
+        attributesToRemove.forEach(mergedCriteria::remove);
         return mergedCriteria;
     }
 
@@ -212,8 +216,12 @@ public class EditCommand extends Command {
         private RelationshipGoal relationshipGoal;
         private boolean relationshipGoalEdited;
         private Map<DatingAttribute, String> preferences;
+        private Set<DatingAttribute> preferencesToRemove = Set.of();
+        private boolean clearPreferences;
         private boolean preferencesEdited;
         private Map<DatingAttribute, String> dealbreakers;
+        private Set<DatingAttribute> dealbreakersToRemove = Set.of();
+        private boolean clearDealbreakers;
         private boolean dealbreakersEdited;
 
         public EditPersonDescriptor() {}
@@ -238,10 +246,10 @@ public class EditCommand extends Command {
                 setRelationshipGoal(toCopy.relationshipGoal);
             }
             if (toCopy.preferencesEdited) {
-                setPreferences(toCopy.preferences);
+                setPreferences(toCopy.preferences, toCopy.preferencesToRemove);
             }
             if (toCopy.dealbreakersEdited) {
-                setDealbreakers(toCopy.dealbreakers);
+                setDealbreakers(toCopy.dealbreakers, toCopy.dealbreakersToRemove);
             }
         }
 
@@ -372,7 +380,15 @@ public class EditCommand extends Command {
 
         /** Records partner preferences to add or update. */
         public void setPreferences(Map<DatingAttribute, String> preferences) {
+            setPreferences(preferences, Set.of());
+        }
+
+        /** Records partner preferences to add, update or remove. */
+        public void setPreferences(Map<DatingAttribute, String> preferences,
+                Set<DatingAttribute> attributesToRemove) {
             this.preferences = Map.copyOf(requireNonNull(preferences));
+            preferencesToRemove = Set.copyOf(requireNonNull(attributesToRemove));
+            clearPreferences = preferences.isEmpty() && attributesToRemove.isEmpty();
             preferencesEdited = true;
         }
 
@@ -381,15 +397,43 @@ public class EditCommand extends Command {
             return Optional.ofNullable(preferences);
         }
 
+        /** Returns the preference attributes to remove because they were supplied with an empty value. */
+        public Set<DatingAttribute> getPreferencesToRemove() {
+            return preferencesToRemove;
+        }
+
+        /** Returns whether the preference environment was explicitly empty. */
+        public boolean shouldClearPreferences() {
+            return clearPreferences;
+        }
+
         /** Records partner dealbreakers to add or update. */
         public void setDealbreakers(Map<DatingAttribute, String> dealbreakers) {
+            setDealbreakers(dealbreakers, Set.of());
+        }
+
+        /** Records partner dealbreakers to add, update or remove. */
+        public void setDealbreakers(Map<DatingAttribute, String> dealbreakers,
+                Set<DatingAttribute> attributesToRemove) {
             this.dealbreakers = Map.copyOf(requireNonNull(dealbreakers));
+            dealbreakersToRemove = Set.copyOf(requireNonNull(attributesToRemove));
+            clearDealbreakers = dealbreakers.isEmpty() && attributesToRemove.isEmpty();
             dealbreakersEdited = true;
         }
 
         /** Returns dealbreakers to add or update when the dealbreaker environment was supplied. */
         public Optional<Map<DatingAttribute, String>> getDealbreakers() {
             return Optional.ofNullable(dealbreakers);
+        }
+
+        /** Returns the dealbreaker attributes to remove because they were supplied with an empty value. */
+        public Set<DatingAttribute> getDealbreakersToRemove() {
+            return dealbreakersToRemove;
+        }
+
+        /** Returns whether the dealbreaker environment was explicitly empty. */
+        public boolean shouldClearDealbreakers() {
+            return clearDealbreakers;
         }
 
         @Override
@@ -416,8 +460,12 @@ public class EditCommand extends Command {
                     && Objects.equals(relationshipGoal, otherEditPersonDescriptor.relationshipGoal)
                     && relationshipGoalEdited == otherEditPersonDescriptor.relationshipGoalEdited
                     && Objects.equals(preferences, otherEditPersonDescriptor.preferences)
+                    && preferencesToRemove.equals(otherEditPersonDescriptor.preferencesToRemove)
+                    && clearPreferences == otherEditPersonDescriptor.clearPreferences
                     && preferencesEdited == otherEditPersonDescriptor.preferencesEdited
                     && Objects.equals(dealbreakers, otherEditPersonDescriptor.dealbreakers)
+                    && dealbreakersToRemove.equals(otherEditPersonDescriptor.dealbreakersToRemove)
+                    && clearDealbreakers == otherEditPersonDescriptor.clearDealbreakers
                     && dealbreakersEdited == otherEditPersonDescriptor.dealbreakersEdited;
         }
 
@@ -440,10 +488,12 @@ public class EditCommand extends Command {
                     .add("relationshipGoal", relationshipGoal);
             if (preferencesEdited) {
                 builder.add("preferences", preferences)
+                        .add("preferencesToRemove", preferencesToRemove)
                         .add("preferencesEdited", true);
             }
             if (dealbreakersEdited) {
                 builder.add("dealbreakers", dealbreakers)
+                        .add("dealbreakersToRemove", dealbreakersToRemove)
                         .add("dealbreakersEdited", true);
             }
             return builder.toString();

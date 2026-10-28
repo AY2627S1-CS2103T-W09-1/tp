@@ -140,12 +140,29 @@ public class ReligionCriteriaIntegrationTest {
     }
 
     @Test
+    public void emptyCriteriaValues_removeOnlyTheirAttributes() throws Exception {
+        logic.execute(ADD_CLIENT + " {g/m s/no age/25 r/Buddhism rg/long}"
+                + " <g/w s/yes age/30 r/Islam rg/short>");
+        logic.execute("edit 1 {g/ age/ r/ rg/} <g/ age/ r/ rg/>");
+
+        assertEquals(Map.of(DatingAttribute.SMOKING, "no"), first().getDatingCriteria().getPreferences());
+        assertEquals(Map.of(DatingAttribute.SMOKING, "yes"), first().getDatingCriteria().getDealbreakers());
+    }
+
+    @Test
+    public void add_emptyCriteriaValues_leavesCriteriaUnspecified() throws Exception {
+        logic.execute(ADD_CLIENT + " {g/ s/ age/ r/ rg/} <g/ s/ age/ r/ rg/>");
+
+        assertEquals(DatingCriteria.EMPTY, first().getDatingCriteria());
+    }
+
+    @Test
     public void execute_invalidReligionEnvironments_preservesRecordsAndDisplayedResults() throws Exception {
         logic.execute(ADD_CLIENT + " {r/Buddhism} <r/Islam>");
         AddressBook before = new AddressBook(model.getAddressBook());
         List<Person> displayedPersons = List.copyOf(model.getFilteredPersonList());
-        List<String> invalidEnvironments = List.of("{r/}", "<r/>", "{r/Other}", "<r/Other>",
-                "{r/Islam r/islam}", "<r/Islam r/Buddhism>", "{r/Buddhism} {r/Jainism}",
+        List<String> invalidEnvironments = List.of("{r/Other}", "<r/Other>", "{r/Islam r/islam}",
+                "<r/Islam r/Buddhism>", "{r/Buddhism} {r/Jainism}",
                 "{r/Buddhism>", "{<r/Islam>}", "{rp/Islam}", "<rx/Islam>");
         for (String fields : invalidEnvironments) {
             assertThrows(ParseException.class, () -> logic.execute("edit 1 " + fields));

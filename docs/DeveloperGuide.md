@@ -395,7 +395,8 @@ Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matchi
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
 gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
 other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
-inside each preference or dealbreaker environment; empty values and gender lists are rejected.
+inside each preference or dealbreaker environment; gender lists are rejected. An empty criterion value removes
+that attribute from the corresponding preference or dealbreaker set.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
 when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.
