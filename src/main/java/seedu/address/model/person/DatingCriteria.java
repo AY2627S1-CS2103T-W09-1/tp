@@ -15,8 +15,12 @@ public final class DatingCriteria {
 
     public static final String MESSAGE_CONFLICTING_RELIGION =
             "A partner religion cannot be both preferred and excluded.";
-    public static final String MESSAGE_CONFLICTING_CRITERIA =
-            "A partner attribute cannot be both preferred and excluded.";
+    public static final String MESSAGE_CONFLICTING_GENDER =
+            "A partner gender cannot be both preferred and excluded.";
+    public static final String MESSAGE_CONFLICTING_SMOKING =
+            "A partner smoking status cannot be both preferred and excluded.";
+    public static final String MESSAGE_CONFLICTING_RELATIONSHIP_GOAL =
+            "A partner relationship goal cannot be both preferred and excluded.";
     public static final String MESSAGE_OVERLAPPING_AGE_RANGES =
             "A preferred age range cannot overlap an excluded age range.";
 
@@ -104,10 +108,20 @@ public final class DatingCriteria {
                 throw new IllegalArgumentException(MESSAGE_OVERLAPPING_AGE_RANGES);
             }
             if (preference.equals(dealbreaker)) {
-                throw new IllegalArgumentException(attribute == DatingAttribute.RELIGION
-                        ? MESSAGE_CONFLICTING_RELIGION : MESSAGE_CONFLICTING_CRITERIA);
+                throw new IllegalArgumentException(getContradictionMessage(attribute));
             }
         }
+    }
+
+    /** Returns an error message that identifies the contradicted dating attribute. */
+    private static String getContradictionMessage(DatingAttribute attribute) {
+        return switch (attribute) {
+            case GENDER -> MESSAGE_CONFLICTING_GENDER;
+            case SMOKING -> MESSAGE_CONFLICTING_SMOKING;
+            case RELIGION -> MESSAGE_CONFLICTING_RELIGION;
+            case RELATIONSHIP_GOAL -> MESSAGE_CONFLICTING_RELATIONSHIP_GOAL;
+            case AGE -> MESSAGE_OVERLAPPING_AGE_RANGES;
+        };
     }
 
     /** Returns whether two normalized inclusive age ranges share at least one age. */

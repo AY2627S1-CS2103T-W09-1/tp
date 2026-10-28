@@ -132,7 +132,7 @@ public class ReligionCriteriaIntegrationTest {
 
     @Test
     public void criteriaContradictions_reportHelpfulErrors() throws Exception {
-        assertThrows(ParseException.class, DatingCriteria.MESSAGE_CONFLICTING_CRITERIA, () ->
+        assertThrows(ParseException.class, DatingCriteria.MESSAGE_CONFLICTING_SMOKING, () ->
                 logic.execute(ADD_CLIENT + " {s/no} <s/no>"));
         assertThrows(ParseException.class, DatingCriteria.MESSAGE_OVERLAPPING_AGE_RANGES, () ->
                 logic.execute(ADD_CLIENT + " {age/20 - 30} <age/25-35>"));
