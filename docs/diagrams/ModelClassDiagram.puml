@@ -81,10 +81,10 @@ Person *--> "1" Age
 Person *--> "1" SmokingStatus
 Person *--> "0..1" Religion
 Person *--> "1" Gender
-Person *--> "0..1" RelationshipGoal
 Person *--> "*" Tag
 Person *--> "1" DatingCriteria : dating criteria
 DatingCriteria ..> DatingAttribute : preference/dealbreaker keys
+DatingCriteria ..> RelationshipGoal : goal criteria
 
 show DatingCriteria fields
 show DatingAttribute members

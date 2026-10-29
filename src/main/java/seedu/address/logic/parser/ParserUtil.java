@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,6 +31,9 @@ public class ParserUtil {
             "Partner religion prefixes (rp/, rr/, rx/) are no longer supported. "
             + "Use outer r/ for the client's own religion, {r/RELIGION} for a partner preference, "
             + "or <r/RELIGION> for an excluded partner religion (must not have).";
+    public static final String MESSAGE_OWN_RELATIONSHIP_GOAL =
+            "Relationship goals are partner criteria. Use {rg/GOAL} for the goals the client is open to, "
+            + "or <rg/GOAL> for goals the client rules out.";
     public static final String MESSAGE_INVALID_SMOKING_STATUS = SmokingStatus.MESSAGE_CONSTRAINTS
             + " s/ starts the smoking status, so to use \" s/\" inside another field, put that value in quotes,"
             + " e.g. n/\"Ravi s/o Kumar\".";
@@ -203,16 +207,27 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a supported relationship goal category.
+     * Parses a comma-separated list of distinct relationship goal keywords.
      *
-     * @throws ParseException if the value is not a supported category
+     * @throws ParseException if a keyword is unsupported, empty or repeated
      */
-    public static RelationshipGoal parseRelationshipGoal(String value) throws ParseException {
+    public static Set<RelationshipGoal> parseRelationshipGoals(String value) throws ParseException {
         requireNonNull(value);
         try {
-            return RelationshipGoal.fromString(value);
+            return RelationshipGoal.parseKeywordList(value);
         } catch (IllegalArgumentException exception) {
-            throw new ParseException(RelationshipGoal.MESSAGE_CONSTRAINTS);
+            throw new ParseException(exception.getMessage(), exception);
+        }
+    }
+
+    /**
+     * Rejects a relationship goal given as one of the client's own fields, outside the partner criteria.
+     *
+     * @throws ParseException If {@code rg/} is supplied outside the preference and dealbreaker environments.
+     */
+    public static void rejectOwnRelationshipGoal(ArgumentMultimap arguments) throws ParseException {
+        if (arguments.getValue(PREFIX_RELATIONSHIP_GOAL).isPresent()) {
+            throw new ParseException(MESSAGE_OWN_RELATIONSHIP_GOAL);
         }
     }
 }

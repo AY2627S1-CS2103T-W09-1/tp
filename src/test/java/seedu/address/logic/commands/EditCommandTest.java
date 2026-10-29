@@ -7,7 +7,6 @@ import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_RELATIONSHIP_GOAL_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
@@ -131,7 +130,7 @@ public class EditCommandTest {
         assertEquals(cleared.getAge(), actual.getAge());
         assertEquals(cleared.getGender(), actual.getGender());
         assertEquals(cleared.getSmokingStatus(), actual.getSmokingStatus());
-        assertEquals(cleared.getRelationshipGoal(), actual.getRelationshipGoal());
+        assertEquals(cleared.getDatingCriteria(), actual.getDatingCriteria());
         assertEquals(cleared.getTags(), actual.getTags());
     }
 
@@ -218,34 +217,6 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_relationshipGoalSpecifiedUnfilteredList_success() {
-        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        Person editedPerson = new PersonBuilder(firstPerson).withRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY).build();
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
-                .withRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY).build();
-
-        assertFirstPersonEditSuccess(descriptor, editedPerson);
-    }
-
-    @Test
-    public void execute_otherFieldEdited_relationshipGoalPreserved() {
-        Person personWithGoal = setFirstPersonRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY);
-        Person editedPerson = new PersonBuilder(personWithGoal).withName(VALID_NAME_BOB).build();
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();
-
-        assertFirstPersonEditSuccess(descriptor, editedPerson);
-    }
-
-    @Test
-    public void execute_emptyRelationshipGoal_relationshipGoalCleared() {
-        Person personWithoutGoal = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        setFirstPersonRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY);
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutRelationshipGoal().build();
-
-        assertFirstPersonEditSuccess(descriptor, personWithoutGoal);
-    }
-
-    @Test
     public void execute_criteriaEdits_existingCriteriaPreservedAndSuppliedCriteriaUpdated() {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person personWithCriteria = withDatingCriteria(original, new DatingCriteria(
@@ -267,22 +238,11 @@ public class EditCommandTest {
         assertFirstPersonEditSuccess(descriptor, expectedPerson);
     }
 
-    /**
-     * Gives the first person in {@code model} the relationship goal {@code relationshipGoal}
-     * and returns the updated person.
-     */
-    private Person setFirstPersonRelationshipGoal(String relationshipGoal) {
-        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        Person personWithGoal = new PersonBuilder(firstPerson).withRelationshipGoal(relationshipGoal).build();
-        model.setPerson(firstPerson, personWithGoal);
-        return personWithGoal;
-    }
-
     /** Returns a copy of {@code person} with the supplied dating criteria. */
     private Person withDatingCriteria(Person person, DatingCriteria datingCriteria) {
         return new Person(person.getName(), person.getPhone(), person.getEmail(), person.getAddress(), person.getAge(),
                 person.getTags(), person.getSmokingStatus(), person.getGender(), person.getReligion().orElse(null),
-                person.getRelationshipGoal().orElse(null), datingCriteria);
+                datingCriteria);
     }
 
     /**

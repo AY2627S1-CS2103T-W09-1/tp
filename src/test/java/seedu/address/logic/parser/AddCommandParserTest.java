@@ -12,7 +12,6 @@ import static seedu.address.logic.commands.CommandTestUtil.INVALID_AGE_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_EMAIL_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_NAME_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_PHONE_DESC;
-import static seedu.address.logic.commands.CommandTestUtil.INVALID_RELATIONSHIP_GOAL_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_TAG_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_BOB;
@@ -21,7 +20,6 @@ import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_NON_EMPTY;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
 import static seedu.address.logic.commands.CommandTestUtil.RELATIONSHIP_GOAL_DESC_AMY;
-import static seedu.address.logic.commands.CommandTestUtil.RELATIONSHIP_GOAL_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_HUSBAND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
@@ -30,6 +28,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_RELATIONSHIP_GOAL_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_RELATIONSHIP_GOAL_KEYWORD_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
@@ -50,6 +49,7 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -257,36 +257,43 @@ public class AddCommandParserTest {
     }
 
     @Test
-    public void parse_relationshipGoalPresent_success() {
+    public void parse_relationshipGoalCriteria_success() {
         Person expectedPerson = new PersonBuilder(BOB).withAge(VALID_AGE_BOB).withTags(VALID_TAG_FRIEND)
                 .withRelationshipGoal(VALID_RELATIONSHIP_GOAL_BOB).build();
-        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB
-                + TAG_DESC_FRIEND + RELATIONSHIP_GOAL_DESC_BOB, new AddCommand(expectedPerson));
+        String validPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB
+                + TAG_DESC_FRIEND;
+        assertParseSuccess(parser, validPersonString + " {" + PREFIX_RELATIONSHIP_GOAL
+                + VALID_RELATIONSHIP_GOAL_KEYWORD_BOB + "}", new AddCommand(expectedPerson));
 
-        // letter case and repeated spaces are ignored, and the listed spelling is stored
-        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB
-                + TAG_DESC_FRIEND + " " + PREFIX_RELATIONSHIP_GOAL + "SHORT-TERM relationship,   open to LONG",
-                new AddCommand(expectedPerson));
-
-        // short keyword is stored as the full category
-        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB
-                + TAG_DESC_FRIEND + " " + PREFIX_RELATIONSHIP_GOAL + "short-open", new AddCommand(expectedPerson));
+        // several goals, in any order and letter case
+        expectedPerson = new PersonBuilder(expectedPerson)
+                .withRelationshipGoal("Long-term relationship or Short-term relationship, open to long").build();
+        assertParseSuccess(parser, validPersonString + " {rg/ SHORT-Open,long }", new AddCommand(expectedPerson));
     }
 
     @Test
-    public void parse_relationshipGoalInvalidOrRepeated_failure() {
+    public void parse_invalidRelationshipGoal_failure() {
         String validPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + AGE_DESC_BOB;
 
-        // unsupported category
-        assertParseFailure(parser, validPersonString + INVALID_RELATIONSHIP_GOAL_DESC,
-                RelationshipGoal.MESSAGE_CONSTRAINTS);
-
-        // empty value
+        // own goal outside the criteria
+        assertParseFailure(parser, validPersonString + RELATIONSHIP_GOAL_DESC_AMY,
+                ParserUtil.MESSAGE_OWN_RELATIONSHIP_GOAL);
         assertParseFailure(parser, validPersonString + " " + PREFIX_RELATIONSHIP_GOAL,
+                ParserUtil.MESSAGE_OWN_RELATIONSHIP_GOAL);
+
+        // unsupported category
+        assertParseFailure(parser, validPersonString + " {rg/marriage}", RelationshipGoal.MESSAGE_CONSTRAINTS);
+
+        // full category name instead of keyword
+        assertParseFailure(parser, validPersonString + " {" + PREFIX_RELATIONSHIP_GOAL
+                + VALID_RELATIONSHIP_GOAL_BOB + "}", RelationshipGoal.MESSAGE_CONSTRAINTS);
+
+        // misspelled category name
+        assertParseFailure(parser, validPersonString + " {rg/long-term relationsip }",
                 RelationshipGoal.MESSAGE_CONSTRAINTS);
 
-        // repeated prefix
-        assertParseFailure(parser, validPersonString + RELATIONSHIP_GOAL_DESC_AMY + RELATIONSHIP_GOAL_DESC_BOB,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_RELATIONSHIP_GOAL));
+        // a goal cannot be both preferred and excluded
+        assertParseFailure(parser, validPersonString + " {rg/long,short} <rg/short>",
+                DatingCriteria.MESSAGE_CONFLICTING_RELATIONSHIP_GOAL);
     }
 }

@@ -73,7 +73,7 @@ public class FindCommandParser implements Parser<Command> {
         }
         if (hasGoal) {
             return new FindCommand(new RelationshipGoalMatchesPredicate(
-                    ParserUtil.parseRelationshipGoal(argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).get())));
+                    ParserUtil.parseRelationshipGoals(argMultimap.getValue(PREFIX_RELATIONSHIP_GOAL).get())));
         }
         if (hasReligion) {
             return new FindCommand(new ReligionMatchesPredicate(

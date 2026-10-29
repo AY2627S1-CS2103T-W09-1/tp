@@ -12,7 +12,6 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
-import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -48,7 +47,6 @@ public class EditPersonDescriptorBuilder {
         descriptor.setAge(person.getAge());
         descriptor.setTags(person.getTags());
         descriptor.setReligion(person.getReligion().orElse(null));
-        person.getRelationshipGoal().ifPresent(descriptor::setRelationshipGoal);
         descriptor.setPreferences(person.getDatingCriteria().getPreferences());
         descriptor.setDealbreakers(person.getDatingCriteria().getDealbreakers());
     }
@@ -124,22 +122,6 @@ public class EditPersonDescriptorBuilder {
      */
     public EditPersonDescriptorBuilder withReligion(String value) {
         descriptor.setReligion(value == null ? null : new Religion(value));
-        return this;
-    }
-
-    /**
-     * Sets the {@code RelationshipGoal} of the {@code EditPersonDescriptor} that we are building.
-     */
-    public EditPersonDescriptorBuilder withRelationshipGoal(String relationshipGoal) {
-        descriptor.setRelationshipGoal(RelationshipGoal.fromString(relationshipGoal));
-        return this;
-    }
-
-    /**
-     * Clears the {@code RelationshipGoal} of the {@code EditPersonDescriptor} that we are building.
-     */
-    public EditPersonDescriptorBuilder withoutRelationshipGoal() {
-        descriptor.setRelationshipGoal(null);
         return this;
     }
 

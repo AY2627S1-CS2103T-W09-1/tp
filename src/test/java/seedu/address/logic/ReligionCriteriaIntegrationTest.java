@@ -31,7 +31,7 @@ import seedu.address.storage.StorageManager;
 
 public class ReligionCriteriaIntegrationTest {
     private static final String ADD_CLIENT = "add n/Religion Demo p/91234567 e/demo@example.com a/Test Lane age/25"
-            + " s/no g/nb rg/long r/Jainism";
+            + " s/no g/nb r/Jainism";
 
     @TempDir
     Path temporaryFolder;
@@ -59,7 +59,6 @@ public class ReligionCriteriaIntegrationTest {
         assertEquals("25", person.getAge().toString());
         assertEquals("no", person.getSmokingStatus().toString());
         assertEquals("Non-binary", person.getGender().toString());
-        assertEquals("Long-term relationship", person.getRelationshipGoal().orElseThrow().toString());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
@@ -80,7 +79,6 @@ public class ReligionCriteriaIntegrationTest {
         assertEquals(original.getAge(), first().getAge());
         assertEquals(original.getSmokingStatus(), first().getSmokingStatus());
         assertEquals(original.getGender(), first().getGender());
-        assertEquals(original.getRelationshipGoal(), first().getRelationshipGoal());
         logic.execute("edit 1 r/");
         assertTrue(first().getReligion().isEmpty());
         assertEquals(original.getDatingCriteria(), first().getDatingCriteria());
@@ -110,8 +108,7 @@ public class ReligionCriteriaIntegrationTest {
         assertEquals(DatingCriteria.EMPTY, first().getDatingCriteria());
         Person expected = new Person(original.getName(), original.getPhone(), original.getEmail(),
                 original.getAddress(), original.getAge(), original.getTags(), original.getSmokingStatus(),
-                original.getGender(), original.getReligion().orElse(null), original.getRelationshipGoal().orElse(null),
-                DatingCriteria.EMPTY);
+                original.getGender(), original.getReligion().orElse(null), DatingCriteria.EMPTY);
         assertEquals(expected, first());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
