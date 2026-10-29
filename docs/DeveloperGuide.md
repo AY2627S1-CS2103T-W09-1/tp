@@ -500,6 +500,26 @@ Automated tests cover value validation/immutability, atomic failures, filtered a
 matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
 persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
 
+### Reliability
+
+#### Application data sandbox
+
+`AppPaths` determines the application home from the packaged JAR's code location. For a packaged run,
+the JAR's containing folder is the home; a development or test class-directory run retains its working
+directory behavior. `MainApp` places `preferences.json` and `data/addressbook.json` below that home.
+
+All packaged data paths pass through `AppPaths.resolveDataPath` before file access. It normalizes each
+path, rejects traversal outside the home folder, and rejects existing symbolic links that resolve outside
+it. `JsonUtil` and `FileUtil` use this check for JSON reads and writes; `LogsCenter` applies the same
+containment check to rotating log files.
+
+Before JavaFX starts, `Main` calls `AppPaths.configureRuntimeCaches`. It creates `.javafx/` and `.tmp/`
+inside the application home and assigns them to the `javafx.cachedir` and `java.io.tmpdir` process
+properties. These runtime folders must be readable and writable and may not contain symbolic links.
+If the folder layout is unsafe or unusable, startup stops before JavaFX starts rather than writing
+runtime files outside the application home. These properties apply only to the running process and do
+not modify OS-level configuration.
+
 
 #### Error handling, validation and recovery
 
@@ -509,6 +529,11 @@ the existing storage error path. Validation happens before model mutation. The p
 typed attributes, unique client identity, non-conflicting criteria, valid group membership, and sandbox-confined
 paths. Consequently, a failed command leaves the current model and saved data unchanged; a malformed data file
 does not create a partially loaded model. Tests exercise these paths alongside normal command behaviour.
+
+If `data/addressbook.json` is manually edited and becomes malformed, or contains values that fail model
+validation, loading fails through the storage error path. `MainApp` logs a warning and starts the session
+with an empty `AddressBook` rather than loading only the valid records. The invalid JSON file is not changed
+during startup; a later successful command that saves data replaces it with the current address book.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -593,10 +618,6 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Cons: We must ensure that the implementation of each individual command is correct.
 
 _{more aspects and alternatives to be added}_
-
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -782,15 +803,6 @@ client, excluding the source. It rejects an existing name or zero candidates. Gr
 * **Label**: A categorisation attached to a client using the existing AB3 tag mechanism.
 * **Group**: A named collection of client records; membership does not create duplicate client records.
 
-### Details to confirm with the team
-
-The draft feature notes disagree on some validation rules. Resolve these before implementing or publishing precise command specifications:
-
-* The implemented age range is 18–99 for client data and age searches. Draft ranges up to 120 and age-range client records are not supported.
-* Religion data uses the 21 fixed categories in the User Guide, with no free-text or `Other` value. Future filtering must use the same canonical representation.
-* Name search now uses `find n/KEYWORD [MORE_KEYWORDS]`, so every `find` mode is selected by exactly one prefix. Bare keywords inherited from AB3 are rejected rather than treated as a name search. Combining characteristics into an OR search remains pending.
-* `show NAME` displays members of a known group. Listing all group names, group rename and whole-group deletion
-  remain deferred; no command syntax is reserved for these operations.
 
 --------------------------------------------------------------------------------------------------------------------
 
