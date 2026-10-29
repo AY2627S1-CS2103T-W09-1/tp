@@ -173,7 +173,7 @@ This section describes some noteworthy details on how certain features are imple
 
 #### Recording profile attributes
 
-##### Client gender
+##### Recording gender
 
 ###### Internal representation
 
@@ -184,8 +184,6 @@ This section describes some noteworthy details on how certain features are imple
 * `FindCommandParser` retains name-only search and parses one `g/` into a set of genders. It rejects repeated prefixes, duplicate normalized values, unknown values and empty list items. Empty `g/` selects all three specified genders. `GenderMatchesPredicate` tests set membership, and `FindCommand` accepts `Predicate<Person>` so name, age and gender searches share the existing execution path. Age searches retain upstream's exact-age and inclusive-range validation.
 * `JsonAdaptedPerson` saves the canonical gender code. Missing, null or empty gender values load as `UNSPECIFIED`, so valid records containing the required age need no gender migration. Invalid non-empty values use the existing storage error handling.
 * `PersonCard` and command feedback display the full gender label, including “Unspecified”.
-
-Name, age and gender are separate search modes. Combined-trait searches remain deferred. The required age and optional smoking fields from upstream are preserved when adding, editing and saving gender.
 
 Tests cover gender value validation, parser rules, full command execution, filtering, editing the correct displayed client, persistence, older JSON records and unchanged data/results after invalid commands. Existing name-search tests are retained. Shared builders and command helpers carry gender so they do not silently discard it.
 
@@ -208,45 +206,21 @@ This increment supplies personal-characteristic data for later filtering and mat
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
 Clearing a recorded smoking status is not supported.
 
-#### Recording preference and dealbreaker attributes
+##### Recording age
 
-`AddCommandParser` and `EditCommandParser` use `DatingCriteriaParser` to extract at most one
-non-nested `{...}` preference environment and one non-nested `<...>` dealbreaker environment before
-tokenizing the remaining outer arguments as the client's own fields. For example, `{r/Buddhism}`
-records a soft partner preference for Buddhism, while `<r/Islam>` records Islam as an excluded partner
-religion. Exclusion is not a requirement to have that religion. These commands record criteria;
-[pairwise matching](#pairwise-matching) evaluates them.
+`age/` records a client's current age and is required by every `add` command. `edit` accepts `age/`
+to replace that value. The profile field accepts one exact age only; an age range is valid only inside a
+preference or dealbreaker environment.
 
-`DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an explicitly empty one.
-It returns the criteria to update and the attributes to remove for each supplied environment.
-`EditPersonDescriptor` carries these optional bucket updates; `EditCommand` preserves an omitted bucket
-and merges a non-empty update by attribute. For example, `{r/Buddhism}` changes the preferred religion
-while preserving age, smoking and relationship-goal preferences. `{}` clears all preferences and `<>`
-clears all exclusions/dealbreakers, without changing the own religion or the other bucket. Unrelated
-person fields are preserved unless separately supplied in the edit.
+###### Internal representation
 
-`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete outer `rp/`, `rr/` and
-`rx/` prefixes, including blank values; `DatingCriteriaParser` also rejects them inside an environment.
-This prevents a legacy criteria command from silently becoming part of another field.
+`Person` stores age as an immutable `Age` value with an integer between 18 and 99, inclusive.
+`ParserUtil.parseAge` trims the supplied value, requires digits only, and constructs `Age` only after
+that validation. In contrast, `DatingAttribute.AGE` normalizes a criterion such as `age/25 - 30` to
+the inclusive range `25-30` for preference/dealbreaker comparison.
 
-##### Internal representation
 
-`Person` holds an immutable `DatingCriteria` with separate preference and dealbreaker maps indexed by
-`DatingAttribute`. The resulting criteria must not prefer and exclude the same normalized gender,
-smoking status, religion, or relationship goal. Preferred and excluded age ranges must not overlap.
-These checks also apply when an edit updates only one bucket and retains the other. Age ranges accept
-spaces around the hyphen, such as `age/25 - 30`. A failed add or edit leaves stored records unchanged.
-
-`JsonAdaptedPerson` persists criteria as the `preferences` and `dealbreakers` maps. Each map uses the
-stable `DatingAttribute` storage key and a canonical value; for example,
-`"preferences": {"religion": "Buddhism"}` and `"dealbreakers": {"religion": "Islam"}`.
-`DatingCriteria.fromStorage` restores these maps; older valid records without them load with empty
-criteria. Invalid criteria, including null map values and normalized preference/dealbreaker conflicts,
-are reported through the existing `IllegalValueException` invalid-data path.
-
-> **Class diagram:** To be uploaded here.
-
-##### Religion attributes
+##### Recording religion attributes
 
 `Religion` accepts only the categories listed in the User Guide. It strips leading and trailing
 whitespace, collapses repeated internal whitespace, and compares names without regard to case.
@@ -310,6 +284,62 @@ comma-separated list, because some full goal names contain commas.
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
 
+##### Other values
+
+Within every `add` command, the user must supply exactly one `n/`, `a/`, `e/`, `age/`, and `p/` value. `AddCommandParser`
+rejects a command if any of these prefixes is absent, if it has unprefixed text, or if a required prefix
+is repeated. `ParserUtil` trims each supplied value before constructing the corresponding immutable
+`Person` field. The constraints are:
+
+| Value | Prefix | Underlying constraint |
+| --- | --- | --- |
+| Name | `n/` | Must be non-blank and contain only alphanumeric characters and spaces. |
+| Address | `a/` | Must be non-blank; after trimming, any characters are allowed. |
+| Email | `e/` | Must use `local-part@domain` format. The local part contains alphanumeric characters and `+`, `_`, `.`, or `-`, cannot start or end with one of them, and cannot contain consecutive periods. Domain labels are dot-separated, begin and end alphanumerically, may contain internal hyphens, and the final label has at least two characters. |
+| Age | `age/` | Must contain digits only and represent an integer from 18 through 99, inclusive. |
+| Phone number | `p/` | Must contain digits only and have at least three digits. |
+
+These fields are mandatory only when creating a client. An `edit` changes a supplied field after the
+same validation and retains every mandatory field that was omitted from the command.
+
+#### Recording preference and dealbreaker attributes
+
+`AddCommandParser` and `EditCommandParser` use `DatingCriteriaParser` to extract at most one
+non-nested `{...}` preference environment and one non-nested `<...>` dealbreaker environment before
+tokenizing the remaining outer arguments as the client's own fields. For example, `{r/Buddhism}`
+records a soft partner preference for Buddhism, while `<r/Islam>` records Islam as an excluded partner
+religion. Exclusion is not a requirement to have that religion. These commands record criteria;
+[pairwise matching](#pairwise-matching) evaluates them.
+
+`DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an explicitly empty one.
+It returns the criteria to update and the attributes to remove for each supplied environment.
+`EditPersonDescriptor` carries these optional bucket updates; `EditCommand` preserves an omitted bucket
+and merges a non-empty update by attribute. For example, `{r/Buddhism}` changes the preferred religion
+while preserving age, smoking and relationship-goal preferences. `{}` clears all preferences and `<>`
+clears all exclusions/dealbreakers, without changing the own religion or the other bucket. Unrelated
+person fields are preserved unless separately supplied in the edit.
+
+`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete outer `rp/`, `rr/` and
+`rx/` prefixes, including blank values; `DatingCriteriaParser` also rejects them inside an environment.
+This prevents a legacy criteria command from silently becoming part of another field.
+
+##### Internal representation
+
+`Person` holds an immutable `DatingCriteria` with separate preference and dealbreaker maps indexed by
+`DatingAttribute`. The resulting criteria must not prefer and exclude the same normalized gender,
+smoking status, religion, or relationship goal. Preferred and excluded age ranges must not overlap.
+These checks also apply when an edit updates only one bucket and retains the other. Age ranges accept
+spaces around the hyphen, such as `age/25 - 30`. A failed add or edit leaves stored records unchanged.
+
+`JsonAdaptedPerson` persists criteria as the `preferences` and `dealbreakers` maps. Each map uses the
+stable `DatingAttribute` storage key and a canonical value; for example,
+`"preferences": {"religion": "Buddhism"}` and `"dealbreakers": {"religion": "Islam"}`.
+`DatingCriteria.fromStorage` restores these maps; older valid records without them load with empty
+criteria. Invalid criteria, including null map values and normalized preference/dealbreaker conflicts,
+are reported through the existing `IllegalValueException` invalid-data path.
+
+> **Class diagram:** To be uploaded here.
+
 ### Prefixed name search
 
 `FindCommandParser` tokenizes `n/` together with the other search prefixes (`age/`, `g/`, `r/`, `rg/`, `s/` and
@@ -342,61 +372,13 @@ record and persisted data unchanged.
 
 #### Resolving contradictory preferences and dealbreakers
 
-##### Definition of a contradiction
-
-Each `DatingCriteria` object has at most one canonical value for each `DatingAttribute` in its
-preferences map and at most one in its dealbreakers map. A contradiction is evaluated only after an
-`add` supplies both maps, or an `edit` has merged its supplied additions, removals, or clears with the
-stored maps. An omitted environment preserves its current map; an empty environment clears that map;
-and an empty attribute value removes only that attribute. Consequently, removed or cleared values cannot
-conflict with a value in the other map.
-
-For gender, smoking status, religion, and relationship goal, a contradiction exists only when both
-maps contain the **same normalized value** for that attribute. Different values are allowed: for example,
-`{g/m} <g/w>` prefers men while excluding women and is not contradictory. Age is different: a
-contradiction exists when the preferred and excluded inclusive age ranges overlap, even if their textual
-forms differ.
-
-| Attribute | Normalized comparison | Contradictory example | Valid contrasting example |
-| --- | --- | --- | --- |
-| Gender | `m`, `w`, or `nb` | `{g/m} <g/m>` | `{g/m} <g/w>` |
-| Smoking status | `yes` or `no` | `{s/no} <s/no>` | `{s/no} <s/yes>` |
-| Religion | Canonical category, case- and whitespace-insensitive | `{r/Buddhism} <r/ buddhism >` | `{r/Buddhism} <r/Islam>` |
-| Relationship goal | Canonical full goal name; keywords and full names are equivalent | `{rg/long} <rg/Long-term relationship>` | `{rg/long} <rg/short>` |
-| Age | Inclusive normalized range | `{age/20-30} <age/25-35>` | `{age/20-24} <age/25-35>` |
-
-An exact age is an inclusive one-value range. Therefore, `{age/25} <age/25-35>` is also contradictory,
-while neighbouring ranges such as `20-24` and `25-35` are not.
-
-##### Resolution policy
-
-The application rejects the entire `add` or `edit` command; it never gives a preference or a dealbreaker
-priority. `AddCommandParser` builds a new `DatingCriteria` from the parsed maps, so a conflict is reported
-as a `ParseException` before a client is added. For `edit`, `EditCommand` first combines the retained
-maps with the requested changes, then constructs a replacement `DatingCriteria`. A conflict becomes a
-`CommandException` before `Model#setPerson` is called. The original client, its other criteria, and the
-saved data therefore remain unchanged.
-
-The same policy applies while loading JSON. `JsonAdaptedPerson` calls `DatingCriteria.fromStorage`, which
-uses the same validation as normal construction. A malformed or contradictory `preferences`/
-`dealbreakers` pair is rejected through the existing `IllegalValueException` path instead of introducing
-an invalid record into the model.
-
-##### Validation logic and examples
-
-`DatingCriteriaParser` validates every non-empty criterion through
-`DatingAttribute#normalizeCriterion` before it reaches the model: age uses `Age.normalizeRange`, gender
-uses `Gender.parseValue`, smoking uses `SmokingStatus`, religion uses `Religion`, and relationship goal
-uses `RelationshipGoal.fromString`. `DatingCriteria` normalizes both maps again defensively, then checks
-each `DatingAttribute` that occurs in both maps. For age it tests whether the inclusive bounds overlap;
-for the other four attributes it tests canonical-value equality. It throws an attribute-specific error:
-gender, smoking status, religion, relationship goal, or overlapping age ranges.
-
-For example, `add ... {s/no} <s/no>` and `add ... {age/20 - 30} <age/25-35>` fail during parsing.
-If an existing client has `{r/Buddhism}`, `edit 1 <r/bUdDhIsM>` fails after the edit merge, with no
-change to that client. In contrast, `add ... {age/20-24} <age/25-35>` succeeds because the two inclusive
-ranges do not share an age. The `DatingCriteria` unit tests cover each scalar attribute and overlapping
-age ranges; integration tests cover parser errors, edit rejection, and unchanged persisted data.
+A contradiction is a value that is simultaneously preferred and excluded after an add or edit has been
+merged with retained criteria. For scalar attributes (gender, smoking status, religion, and relationship
+goal), equality after normalisation is contradictory. For age, overlapping preferred and excluded ranges
+are contradictory. The policy is to reject the entire command rather than prioritise either bucket.
+For example, `{r/Buddhism} <r/buddhism>` and a retained preferred `age/25-30` plus a new excluded
+`age/28-35` are rejected. The `DatingCriteria` constructor and `fromStorage` apply the same invariant,
+so a malformed JSON file cannot introduce a state that commands would reject.
 
 ### Matching
 
@@ -454,7 +436,7 @@ and other searches return to insertion order without any changes.
 
 ### Forming groups
 
-#### Forming arbitrary groups and tagging
+#### Forming Named client groups
 
 `grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
 `GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
@@ -477,7 +459,7 @@ The command flow is:
    whole command. Single-member groups and empty groups after removal are valid.
 4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
 
-#### Forming groups based on match and tagging
+#### Forming groups based on match
 
 Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
 `INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
