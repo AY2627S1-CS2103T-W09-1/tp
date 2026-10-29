@@ -11,7 +11,7 @@ title: Developer Guide
 
 * _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
 * The smoking-status increment follows the model, storage, and UI integration approach in the [SE-EDU Adding a Command tutorial](https://se-education.org/guides/tutorials/ab3AddRemark.html), adapted to the existing `add` and `edit` commands.
-* The relationship-goal increment follows the model, storage, and UI integration approach in the [SE-EDU Adding a Command tutorial](https://se-education.org/guides/tutorials/ab3AddRemark.html), adapted to the existing `add` and `edit` commands. Its goal categories are adapted from the relationship types offered by the Hinge dating app.
+* The relationship-goal categories are adapted from the relationship types offered by the Hinge dating app.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
-`MatchCommand` compares two displayed clients and returns a `MatchCommandResult`, a subclass of
+`MatchCommand` compares two clients, given by displayed index or by name, and returns a `MatchCommandResult`, a subclass of
 `CommandResult` carrying structured match details for the UI. `FindMatchCommand`, created by
 `FindCommandParser` for `find match/INDEX`, filters and ranks candidates and returns an ordinary
 `CommandResult`. The diagram shows these separately; `XYZCommand` stands for the other concrete commands.
@@ -169,7 +169,10 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+
 ### Recording Dating Data
+
+### Prefixed name search
 
 #### Recording profile attributes
 
@@ -178,6 +181,7 @@ This section describes some noteworthy details on how certain features are imple
 `age/` records a client's current age and is required by every `add` command. `edit` accepts `age/`
 to replace that value. The profile field accepts one exact age only; an age range is valid only inside a
 preference or dealbreaker environment.
+
 
 ###### Internal representation
 
@@ -207,18 +211,22 @@ The optional `s/` parameter in `add` and `edit` records a client's own smoking h
 ###### Internal representation
 
 `SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
-not a non-smoker. The parsers reject empty, invalid, and repeated `s/` parameters.
+not a non-smoker. The parsers reject invalid and repeated `s/` parameters, and empty ones in `add` and `find`.
+`EditCommandParser` maps an empty `s/` to `SmokingStatus.UNSPECIFIED`, clearing the status the same way an empty
+`g/` or `r/` clears gender or religion. An unquoted ` s/` inside another value, as in `n/Ravi s/o Kumar`, is read as
+the smoking prefix; [quoted values](#quoted-argument-values) avoid this. `ParserUtil.MESSAGE_INVALID_SMOKING_STATUS`
+suggests quoting for command input, while storage keeps the shorter `SmokingStatus.MESSAGE_CONSTRAINTS`.
 
 `Person` includes smoking status in full equality and hashing, while its existing name-based identity rule is unchanged.
 `EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
 `JsonAdaptedPerson` saves the `smokingStatus` string and reads absent or null fields in older JSON files as unspecified.
 An empty stored string also means unspecified. Other invalid stored values are rejected using the existing storage-error path.
-The person card and command feedback display the status, including `Not specified` for missing information.
+The person card and command feedback display the status. Missing information is shown as `not set` on the card and
+`Not specified` in command feedback.
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
 Clearing a recorded smoking status is not supported.
-
 
 ##### Recording religion attributes
 
@@ -244,14 +252,41 @@ partner-criteria map and may equal or differ from its values. `JsonAdaptedPerson
 own-religion name and treats a missing or null property as unknown. The existing unknown-property
 handling ignores obsolete `preferredReligion`, `requiredReligion` and `excludedReligions` properties;
 they are omitted on the next save rather than migrated into the new maps.
+=======
 
-`PersonCard` shows the client's own religion and recorded partner criteria. `find r/RELIGION` compares only that own
-field, not either partner-criteria map. Criteria-environment searching is not supported. Use `match` for
-compatibility evaluation.
+
+The class diagram below focuses on the religion-related model.
+<img src="images/ReligionCriteriaClassDiagram.png" width="450" alt="Religion model: a Person has an optional own Religion and separate DatingCriteria maps keyed by DatingAttribute." />
+
+The `0..1` multiplicity represents an unknown or recorded own religion, while
+`DatingCriteria` is always present, even when both maps are empty. Religion criteria
+are canonical strings in those maps, not references to the client's own `Religion`.
+The dashed dependencies show the map key type and the shared religion validation;
+they do not represent additional stored associations.
+
 
 ##### Recording relationship goals
 
-The optional `rg/` parameter in `add` and `edit` records a client's own relationship goal.
+`RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge. Each value
+holds a short keyword (for example, `long-open`) and a full name. Users type keywords only:
+`RelationshipGoal#parseKeywordList` splits the input on commas and rejects unknown, empty or repeated keywords.
+`RelationshipGoal#formatCriterion` stores the goals as their full names joined by ` or `, in enum order. Commas
+cannot separate stored goals because some full names contain one. `DatingAttribute#parseCriterion` uses the
+keyword path for user input, while `DatingAttribute#normalizeCriterion` uses the more lenient
+`RelationshipGoal#parseStoredCriterion` for the hand-editable data file.
+
+`DatingCriteria#getRelationshipGoals` returns the goals in the preference, and `Person#getRelationshipGoals`
+exposes them; an empty set means the goal is **unknown**, not `Figuring out my goals`. The `DatingCriteria`
+constructor rejects a goal that is both preferred and excluded. `AddCommandParser` and `EditCommandParser`
+call `ParserUtil#rejectOwnRelationshipGoal`, so an outer `rg/` is rejected with a hint to use the criteria.
+
+Older data files stored a client's own goal in a `relationshipGoal` field. `JsonAdaptedPerson` still reads that
+field but no longer writes it. When loading, it moves the goal into the `{rg/...}` preference unless the client
+already has one or excludes that goal, so an older file never fails to load because of the migration.
+
+`find rg/GOAL[,GOAL]...` parses the list with `ParserUtil#parseRelationshipGoals`.
+`RelationshipGoalMatchesPredicate` keeps clients whose goals share at least one goal with the list, so clients
+with an unknown goal are never returned.
 
 ###### Internal representation
 
@@ -283,6 +318,15 @@ so clients with an unknown goal are never returned. A single goal is accepted ra
 comma-separated list, because some full goal names contain commas.
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
+
+A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
+`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
+`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
+Keeping one copy avoids an own goal and a goal preference that disagree.
+
+
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching): a criterion is met when it
+shares at least one goal with the other client's goals.
 
 ##### Miscellaneous values
 
@@ -354,6 +398,7 @@ any keyword may match. A repeated `n/` is reported through the shared duplicate-
 
 ### Maintaining preferences and dealbreakers
 
+
 #### Editing preferences and dealbreakers
 
 `EditPersonDescriptor` represents an edit as optional updates, rather than mutable updates to a
@@ -380,16 +425,78 @@ For example, `{r/Buddhism} <r/buddhism>` and a retained preferred `age/25-30` pl
 `age/28-35` are rejected. The `DatingCriteria` constructor and `fromStorage` apply the same invariant,
 so a malformed JSON file cannot introduce a state that commands would reject.
 
+## Special characters in Dating Attributes
+
+`ArgumentTokenizer` scans the arguments once, left to right, recording the earliest prefix occurrence each time.
+When the first non-space character after a prefix is `"`, the value is quoted: the scan skips to the next `"` that
+is followed by whitespace or the end of the string, so prefixes inside the quotes, such as `s/` in
+`n/"Ravi s/o Kumar"`, are not recognized. The quotes and surrounding spaces are removed from the stored value.
+A missing closing quote (`MESSAGE_UNCLOSED_QUOTE`) or text between the closing quote and the next prefix
+(`MESSAGE_TEXT_AFTER_QUOTE`) raises a `ParseException`, so `tokenize` now declares it. Quotes later in a value,
+and in the preamble, are kept as typed.
+
+Every command that uses the tokenizer gets this behaviour, including values inside `{...}` and `<...>`.
+`DatingCriteriaParser` still runs first, so quotes do not protect `{`, `}`, `<` or `>`.
+`Name` allows `/` after its first character, so quoted names such as `Ravi s/o Kumar` pass validation.
+`FindCommandParser` still rejects name keywords that contain `/`, because a keyword such as `s/o` usually means
+a mistyped prefix; such clients are found by their other name words.
+
 ### Matching
 
 #### Pairwise matching
+### Recording relationship goals
 
-`MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
-`MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
-`MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
-gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
-inside each preference or dealbreaker environment; gender lists are rejected. An empty criterion value removes
+A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
+`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
+`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
+Keeping one copy avoids an own goal and a goal preference that disagree.
+
+`RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge. Each value
+holds a short keyword (for example, `long-open`) and a full name. Users type keywords only:
+`RelationshipGoal#parseKeywordList` splits the input on commas and rejects unknown, empty or repeated keywords.
+`DatingCriteriaParser` stores each goal as its full name, one per value in the criterion's set, like other
+multi-valued criteria. Users cannot separate full names with commas because some full names contain one.
+`DatingAttribute#normalizeCriterion` uses the more lenient `RelationshipGoal#fromStoredValue`, which also accepts
+keywords and ignores case, for the hand-editable data file.
+
+`DatingCriteria#getRelationshipGoals` returns the goals in the preference, and `Person#getRelationshipGoals`
+exposes them; an empty set means the goal is **unknown**, not `Figuring out my goals`. The `DatingCriteria`
+constructor rejects a goal that is both preferred and excluded. `AddCommandParser` and `EditCommandParser`
+call `ParserUtil#rejectOwnRelationshipGoal`, so an outer `rg/` is rejected with a hint to use the criteria.
+
+Older data files stored a client's own goal in a `relationshipGoal` field. `JsonAdaptedPerson` still reads that
+field but no longer writes it. When loading, it moves the goal into the `{rg/...}` preference unless the client
+already has one or excludes that goal, so an older file never fails to load because of the migration.
+
+`find rg/GOAL[,GOAL]...` parses the list with `ParserUtil#parseRelationshipGoals`.
+`RelationshipGoalMatchesPredicate` keeps clients whose goals share at least one goal with the list, so clients
+with an unknown goal are never returned.
+
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching): a criterion is met when it
+shares at least one goal with the other client's goals.
+
+### Pairwise matching
+
+`MatchCommandParser` accepts exactly two clients. Preamble tokens are parsed as indexes with
+`ParserUtil.parseIndex` and `n/` values as names with `ParserUtil.parseName`, so indexes come before names.
+Each becomes a `ClientReference`, a sealed interface whose `resolve(Model)` returns the client:
+
+* `ClientReference.ByIndex` looks the index up in `Model.getFilteredPersonList()` and rejects out-of-range indexes.
+* `ClientReference.ByName` searches the whole address book, so the matchmaker need not filter the list first.
+  It returns the client with exactly that `Name` if there is one. Otherwise it accepts a single client whose name
+  differs only in letter case and spacing, and rejects a name with no such client or with several.
+
+The parser rejects two identical references, and `MatchCommand` rejects two references that resolve to the same
+client, such as `match 1 n/Alex Yeoh` when Alex Yeoh is displayed first.
+The parser rejects two identical references. `MatchCommand` also rejects two references that resolve to the same
+client, such as `match 1 n/Alex Yeoh` when Alex Yeoh is displayed first. Records keep the references comparable,
+so `MatchCommand#equals` compares them directly.
+
+`MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes and goal
+preference, preserving unknown gender, smoking status, religion, and goals. Age uses the existing inclusive
+`AgeMatchesPredicate`; a relationship-goal criterion is met when it shares a goal with the other client's goal
+preference; other attributes compare canonical values. Gender, religion and relationship-goal criteria may hold
+several values, and a preference is met when any of its values matches. An empty criterion value removes
 that attribute from the corresponding preference or dealbreaker set.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
@@ -398,8 +505,10 @@ Any known violation makes the pair incompatible, even if another comparison is u
 comparison or no criteria on either client gives insufficient information. All other pairs are compatible with
 recorded dealbreakers, including pairs with unmet preferences.
 
-`MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome and
-a table per direction in the command-result area. Plain-text feedback uses the same labels for logs.
+`MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome with a
+one-line reason, then a three-column table per direction: requirement, the candidate's value, and assessment.
+`MainWindow` hides the client list while a match result is shown, so the tables have room on small screens, and
+shows it again after any other command or error. Plain-text feedback uses the same labels for logs.
 Other commands and errors retain their text display. Matching does not change model data,
 the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
 save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
@@ -458,6 +567,32 @@ The command flow is:
    requires an existing group. Any already-present member on add or absent member on remove rejects the
    whole command. Single-member groups and empty groups after removal are valid.
 4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
+
+Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
+`INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
+including insufficient-information candidates, but does not apply its preference-score ordering. An existing
+group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
+
+`ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
+order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
+clear the selected-group state. `AddressBook.setPerson` replaces membership references when immutable
+persons are edited; `removePerson` removes references but retains empty groups. Bulk person replacement
+prunes obsolete references. `resetData` validates a complete copy before replacing persons and groups;
+clearing the book therefore clears groups too. Existing add/edit commands still restore the full list.
+
+`JsonAdaptedGroup` stores `name` and `memberNames`, resolving members against the loaded persons' unique
+names. This uses the existing name-based client identity and is independent of displayed or file-array
+positions. App-driven renames are saved consistently; manual JSON renames must update group references.
+Missing groups in legacy files default to an empty collection. Malformed entries, duplicate group names
+or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
+
+`Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
+change. `PersonCard` displays alphabetically ordered group chips after a **Groups** label, separately from tag chips,
+in a strip below the card's columns that is hidden when the client has no tags or groups. No additional client fields or external dependencies are required.
+
+Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
+matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
+persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
 
 #### Forming groups based on match
 
@@ -564,9 +699,9 @@ not a claim that every possible enhancement or input combination is supported.
 | Priority | As a … | I want to … | So that I can … | Implemented workflow |
 | -------- | ------ | ----------- | --------------- | -------------------- |
 | `* * *` | matchmaker | add and update a client's contact details | keep an accurate way to reach the client | `add`, `edit` |
-| `* * *` | matchmaker | record age, gender, smoking habit, religion, relationship goal, preferences and dealbreakers | retain the information needed to assess candidates | Own fields and `{...}` / `<...>` criteria in `add` and `edit` |
+| `* * *` | matchmaker | record age, gender, smoking habit, religion, relationship goals, preferences and dealbreakers | retain the information needed to assess candidates | Own fields and `{...}` / `<...>` criteria in `add` and `edit` |
 | `* * *` | matchmaker | find clients by one recorded characteristic at a time | identify candidates without scanning every record | `find n/`, `age/`, `g/`, `s/`, `r/` or `rg/` |
-| `* * *` | matchmaker | compare two clients against each other's preferences and dealbreakers | understand conflicts and unknown information before an introduction | `match INDEX_A INDEX_B` |
+| `* * *` | matchmaker | compare two clients against each other's preferences and dealbreakers | understand conflicts and unknown information before an introduction | `match INDEX_A INDEX_B` or `match n/NAME_A n/NAME_B` |
 | `* * *` | matchmaker | attach labels to clients | categorise client records | Repeated `t/` fields in `add` and replacement tags in `edit` |
 | `* * *` | matchmaker | create named groups and manage their membership | organise different sets of clients | `grp NAME add/remove ...` and `show NAME` |
 | `* *` | matchmaker | rank candidates for a selected client using saved criteria | prioritise possible introductions without re-entering every criterion | `find match/INDEX`; unknown information remains visible |
@@ -583,7 +718,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **Main success scenario (MSS)**
 
-1. The matchmaker requests to add a client with contact details and optional gender, age, smoking habit, religion, preferences, and dealbreakers.
+1. The matchmaker requests to add a client with contact details and age, and optional gender, smoking habit, religion, preferences, and dealbreakers.
 2. CupidMaxxing validates the supplied values and checks for repeated attributes within the command.
 3. CupidMaxxing creates the client record and shows the stored information.
 4. At a later visit, the matchmaker requests to edit that client with a new preference or characteristic.
@@ -593,7 +728,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **Extensions**
 
-* 2a. A supplied value is invalid, an attribute is repeated, or a preference conflicts with a dealbreaker in the same command.
+* 2a. A supplied value is invalid, an attribute is repeated, or the same normalized religion is both preferred and excluded.
     * 2a1. CupidMaxxing explains the invalid input and changes no data.
 
       Use case ends.
@@ -606,33 +741,33 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **MSS**
 
-1. The matchmaker requests `filter` with at least one criterion, such as an age range and smoking status.
-2. CupidMaxxing checks that each criterion is supported and has a valid value.
-3. CupidMaxxing searches the entire address book and shows each client who satisfies **all** supplied criteria exactly once.
+1. The matchmaker requests `find` using one recorded characteristic, such as `find age/25-35` or `find s/no`.
+2. CupidMaxxing checks that the search uses one supported mode and that its input is valid.
+3. CupidMaxxing searches the entire address book and shows each client who matches the search criterion exactly once.
 4. CupidMaxxing reports how many clients matched. The displayed indexes are updated to match the filtered list.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. No criterion is supplied, or a criterion is invalid or repeated.
+* 2a. No search mode is supplied, multiple modes are combined, a prefix is repeated, or the input is invalid.
     * 2a1. CupidMaxxing reports the problem and keeps the previously displayed list unchanged.
 
       Use case ends.
-* 3a. No client satisfies every criterion.
+* 3a. No client matches the search criterion.
     * 3a1. CupidMaxxing shows an empty list and reports that no clients match.
 
       Use case ends.
 
-A missing client attribute does not satisfy a filter criterion. Separate client records with the same name remain separate results.
+A missing client attribute does not satisfy a search criterion. Client records with the same exact name are treated as duplicates, even if other details differ.
 
 **Use case: Assess a pair of clients**
 
 **MSS**
 
-1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
+1. The matchmaker requests a match of two different clients, each given by displayed index or by name.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
-3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
+3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, violated, or unknown, and an overall assessment.
 4. The displayed list and stored client records remain unchanged.
 
    Use case ends.
@@ -641,6 +776,10 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
 
 * 1a. An index is invalid, missing, repeated, or outside the displayed list.
     * 1a1. CupidMaxxing shows an error in the command-result area and leaves client records and the list unchanged.
+
+      Use case ends.
+* 1b. A name matches no client, or matches several clients only when letter case and spacing are ignored.
+    * 1b1. CupidMaxxing shows an error asking for a known name or the clients' indexes, and leaves records and the list unchanged.
 
       Use case ends.
 * 2a. At least one dealbreaker is violated.
@@ -656,6 +795,29 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
     * 2c1. CupidMaxxing reports insufficient information.
 
       Use case resumes at step 4.
+
+**Use case: Find suitable matches for one client**
+
+**MSS**
+
+1. The matchmaker requests `find match/INDEX` for a client in the displayed list.
+2. CupidMaxxing assesses that client against every other client, using the same rules as assessing a pair.
+3. CupidMaxxing hides clients who violate a dealbreaker in either direction, and lists the rest with the most
+   preferences met in both directions first.
+4. CupidMaxxing reports how many clients are listed. Client records remain unchanged.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is invalid or outside the displayed list, or `match/` is combined with another search.
+    * 1a1. CupidMaxxing shows an error and keeps the previously displayed list unchanged.
+
+      Use case ends.
+* 3a. Every other client violates a dealbreaker.
+    * 3a1. CupidMaxxing shows an empty list and reports that no clients are listed.
+
+      Use case ends.
 
 **Use case: Organise clients in a named group**
 
@@ -720,23 +882,42 @@ Given below are instructions to test the app manually.
 
 Use an isolated writable JAR folder with test data. Do not clear a real client database.
 
-1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
-   Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
-2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, with separate
-   `Group: VIP` badges. Alice's ordinary VIP tag should still appear. Check at a narrow window size that badges
-   wrap and the client details remain readable.
-3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
-   records remain and their VIP group badges disappear, while Alice's ordinary tag remains.
-4. Run `grp VIP add 2` then `grp VIP add 1 2`. Expect the second command to fail without adding Alice.
-   `show VIP` should display only Bob. Run `grp VIP remove 1 2`; it must fail without removing Bob.
-5. Run `edit 1 n/Group Robert`, then `show VIP`. Expect Robert still in VIP. Restart the app and run `show VIP`
-   again; membership and the new name must survive. `delete 1` should retain an empty VIP group.
-6. Run `list`, then `grp Candidates matches 1`. With only Alice and Cara remaining, expect an error because
-   Alice excludes smokers. Add a fourth client with unknown smoking status, run `list` and repeat the command.
-   Expect a new Candidates group containing only the fourth client, with Alice excluded.
-7. Edit the fourth client's smoking status to `yes`, then `show Candidates`. The client should remain a member:
-   membership is a snapshot. `grp candidates matches 1` must reject the existing group name.
-8. Restart and check both groups. Finally run `clear`, restart and run `show VIP`; expect an unknown-group error.
+- [ ] Run `clear`, then add three clients:
+  `add n/Group Alice p/91110001 e/alice@example.com a/Test Lane age/25 s/no t/VIP <s/yes>`,
+  `add n/Group Bob p/91110002 e/bob@example.com a/Test Lane age/26 s/no` and
+  `add n/Group Cara p/91110003 e/cara@example.com a/Test Lane age/27 s/yes`.
+  **Expected:** The list shows Alice, Bob and Cara in that order. Alice has a `VIP` chip after **Tags**.
+- [ ] Run `grp VIP add 1 3`, then `show vip`.
+  **Expected:** Only Alice and Cara are shown, in address-book order, each with a `VIP` chip after **Groups**.
+  Alice's `VIP` tag chip still appears after **Tags**. At a narrow window width, the chips wrap and the client
+  details stay readable.
+- [ ] Run `grp VIP remove 1 2`, then `list`.
+  **Expected:** After the removal, zero clients are displayed and VIP is an empty group. After `list`, all three
+  clients remain, without `VIP` group chips, and Alice's `VIP` tag chip remains.
+- [ ] Run `grp VIP add 2`, then `grp VIP add 1 2`, then `show VIP`.
+  **Expected:** The first command adds Bob. The second fails because Bob is already a member, and Alice is not
+  added. `show VIP` shows only Bob.
+- [ ] With VIP shown, run `grp VIP remove 1 2`.
+  **Expected:** Rejected, because index 2 is outside the one-client list. Bob stays a member.
+- [ ] Run `edit 1 n/Group Robert`, then `show VIP`. Exit, relaunch and run `show VIP` again.
+  **Expected:** Robert (formerly Bob) is still in VIP, and both the membership and the new name survive the restart.
+- [ ] With VIP shown, run `delete 1`.
+  **Expected:** Robert is deleted from the address book and from VIP. VIP remains as an empty group, so
+  `show VIP` lists zero clients.
+- [ ] Run `list`, then `grp Candidates matches 1`.
+  **Expected:** Rejected with "No matching candidates": only Alice and Cara remain, and Alice excludes smokers.
+  No Candidates group is created.
+- [ ] Run `add n/Group Dan p/91110004 e/dan@example.com a/Test Lane age/28`, then `list` and
+  `grp Candidates matches 1`.
+  **Expected:** Candidates is created with only Dan. Alice (the source client) and Cara (a smoker) are excluded.
+- [ ] Run `list`, then `edit 3 s/yes`, then `show Candidates`. Then run `grp candidates matches 1`.
+  **Expected:** Dan is still in Candidates although he now smokes: a matching shortlist is a snapshot.
+  The second command is rejected because the group already exists.
+- [ ] Try `grp VIP add 0`, `grp VIP add 1 1`, `grp VIP add 1,2`, `grp -VIP add 1`, `grp VIP ADD 1`, `show`,
+  `show VIP extra` and `show Unknown`.
+  **Expected:** Each command is rejected with an error. No group or displayed list changes.
+- [ ] Exit, relaunch and run `show VIP`, then `show Candidates`. Then run `clear`, exit, relaunch and run `show VIP`.
+  **Expected:** Both groups survive the first restart. After `clear`, `show VIP` reports an unknown group.
 
 ### Recording religion preferences and exclusions
 
@@ -747,16 +928,16 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
 `find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
 because a successful edit restores the full list and changes the displayed indexes.
 
-- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no rg/long t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
+- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
    Expected: One client is added with own religion Jainism, preference religion Buddhism
-   and age 25, and excluded religion Islam. Ordinary details, gender, smoking status,
-   relationship goal and tag are recorded normally. Inspect the saved JSON: outer
+   and age 25, and excluded religion Islam. Ordinary details, gender, smoking status
+   and tag are recorded normally. Inspect the saved JSON: outer
    `religion` is `Jainism`, `preferences` contains `religion: Buddhism` and `age: 25`,
    and `dealbreakers` contains `religion: Islam` (JSON keys and values are strings).
 - [ ] Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
    Expected: Only the phone changes. Own religion and both entire criteria maps remain
    unchanged. In the remaining steps, check that name, this phone, email, address,
-   age, gender, smoking status, relationship goal and tag remain unchanged unless
+   age, gender, smoking status and tag remain unchanged unless
    explicitly edited.
 - [ ] Run `edit 1 r/Buddhism`, then `edit 1 r/Islam`, finding the test client again
    before each edit.<br>
@@ -837,7 +1018,7 @@ Manual checks (use distinct test names):
 
 Use a test data file and distinct client names for these checks.
 
-1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be “Unspecified”.
+1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card shows Gender “Non-binary” under Attributes and its feedback shows “Gender: Non-binary”. Add another client with a different name and no `g/`; its card should show Gender “not set” and its feedback “Unspecified”.
 2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find n/Gender` searches names, while `find Gender` without `n/` is rejected.
 3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
 4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.
@@ -903,9 +1084,9 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 
 - [ ] Adding, editing and retaining the client's own religion
 
-  - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb rg/long r/jAiNiSm`.<br>
-      Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
-      non-binary gender and a long-term relationship goal. No partner criteria appear.
+  - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb r/jAiNiSm`.<br>
+      Expected: The card's Attributes column shows religion Jainism, age 25, non-smoking
+      and non-binary gender. Both partner criteria lists show `none`.
 
   - Enter `find n/Nia`, then `edit 1 r/Christianity`.<br>
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
@@ -952,42 +1133,123 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 
 ### Relationship goals
 
-1. Adding and retaining a relationship goal
+1. Recording and retaining relationship goals
 
+   1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 {rg/LONG,short-open}`.<br>
+      Expected: Under Partner criteria, Prefers shows `relationship goal = Long-term relationship or Short-term
+      relationship, open to long`. Keywords are converted to full goal names.
+
+   1. Enter `find n/Rae`, then `edit 1 <rg/life>`.<br>
+      Expected: Dealbreakers shows `relationship goal = Life partner`. Prefers is unchanged.
    1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 rg/LONG`.<br>
-      Expected: The contact card shows `Relationship goal: Long-term relationship`. The keyword
+      Expected: The contact card shows Goal `Long-term relationship`. The keyword
       is converted to the goal's full name.
 
-   1. Enter `find n/Rae`, then `edit 1 rg/short-open`.<br>
-      Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
+   1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 {rg/LONG,short-open}`.<br>
+      Expected: Under Partner criteria, Prefers shows `relationship goal = Long-term relationship or Short-term
+      relationship, open to long`. Keywords are converted to full goal names.
 
-   1. Enter `find n/Rae`, then `edit 1 p/99999999`.<br>
-      Expected: The phone number changes and the relationship goal is unchanged.
+   1. Enter `find n/Rae`, then `edit 1 <rg/life>`.<br>
+      Expected: Dealbreakers shows `relationship goal = Life partner`. Prefers is unchanged.
 
    1. Close and relaunch the app.<br>
-      Expected: Rae's relationship goal is still `Short-term relationship, open to long`.
+      Expected: Rae's goal preference and dealbreaker are unchanged.
 
+1. Rejecting invalid goals
    1. Enter `find n/Rae`, then `edit 1 rg/`.<br>
-      Expected: The contact card shows `Relationship goal: Not specified`.
+      Expected: The contact card shows Goal `not set`.
 
-1. Rejecting unsupported and repeated values
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/long`.<br>
+      Expected: The command is rejected with a hint to use `{rg/...}` or `<rg/...>`. No contact is added.
 
-   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/marriage`.<br>
-      Expected: The command is rejected with the list of accepted keywords and goals. No contact is added.
+   1. Enter the same command with `{rg/marriage}`, `{rg/Long-term relationship}`, `{rg/long,}`, `{rg/long,LONG}`
+      or `{rg/long,short} <rg/short>` instead of `rg/long`.<br>
+      Expected: Each command is rejected with an error. No contact is added.
 
-   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/short rg/life`.<br>
-      Expected: The command is rejected because `rg/` is repeated. No contact is added.
+1. Loading a goal saved by an earlier version
+
+   1. Close the app. In `data/addressbook.json`, add `"relationshipGoal" : "long"` to a client with no
+      `relationshipGoal` preference, then relaunch.<br>
+      Expected: The client loads with Prefers showing `relationship goal = Long-term relationship`. After the next
+      command, the top-level `relationshipGoal` field is no longer in the file.
 
 1. Finding clients by relationship goal
 
-   1. Ensure Rae has `rg/long` and another client has a different or no goal, then enter `find rg/long`.<br>
-      Expected: Rae is listed and clients with other or unspecified goals are not. The status shows the number listed.
+   1. Ensure Rae has `{rg/long,short-open}` and another client has a different or no goal preference, then enter
+      `find rg/long,life`.<br>
+      Expected: Rae is listed and clients without a shared goal are not. The status shows the number listed.
 
-   1. Enter `find rg/Long-term relationship`.<br>
-      Expected: The same clients are listed as for `find rg/long`.
-
-   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
+   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long`
+      in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
+
+### Matching two clients and finding matches
+
+1. Matching by index and by name
+   1. Prerequisites: start with the sample data, so `Alex Yeoh` and `Bernice Yu` are the first two clients.
+   1. Test case: `match 1 2`<br>
+      Expected: the match result replaces the list, comparing Alex Yeoh and Bernice Yu in both directions.
+   1. Test case: `match n/Alex Yeoh n/Bernice Yu`, then `match 2 n/alex   yeoh`<br>
+      Expected: the first gives the same result as `match 1 2`. The second gives it with the clients swapped.
+   1. Test case: `find n/Alex`, then `match 1 n/Bernice Yu`<br>
+      Expected: Bernice Yu is found although she is not displayed.
+
+1. Rejected match references
+   1. Test case: `match n/Nobody 1`<br>
+      Expected: `No client is named Nobody.` No data changes.
+   1. Test case: `list`, then `match 1 n/Alex Yeoh`<br>
+      Expected: the same-client error.
+   1. Test case: `match n/Alex Yeoh`, `match 1 2 n/Alex Yeoh`, or `match n/Alex Yeoh 2`<br>
+      Expected: the `match` usage message.
+
+1. Finding matches for one client
+   1. Test case: `list`, `edit 1 <s/yes>`, `edit 2 s/yes`, then `find match/1`<br>
+      Expected: Bernice Yu is not listed, because she violates Alex's dealbreaker. Clients with unknown smoking
+      status are still listed.
+   1. Test case: `find match/0`, then `find match/1 s/yes`<br>
+      Expected: `Index must be a positive integer.`, then the `find` usage message. The list is unchanged.
+
+1. Searching for a quoted name
+   1. Test case: `add n/"Ravi s/o Kumar" p/91234567 e/ravi@example.com a/Test Lane age/30`, then `find n/"ravi S/O"`<br>
+      Expected: Ravi s/o Kumar is listed.
+   1. Test case: `find n/"Kumar Ravi"`<br>
+      Expected: no clients are listed, because the words are not in that order.
+   1. Test case: `find n/Siti d/o` and `find n/"Ravi s/o`<br>
+      Expected: the first suggests quoting the name. The second reports the missing closing quote.
+### Recording and clearing smoking status
+
+Use an isolated writable JAR folder with test data. Do not clear a real client database.
+
+- [ ] Run `clear`, then add three clients:
+  `add n/Smoke Yes p/92220001 e/sy@example.com a/Test Lane age/25 s/YES {s/no} <s/yes>`,
+  `add n/Smoke No p/92220002 e/sn@example.com a/Test Lane age/26 s/ no` and
+  `add n/Smoke Unknown p/92220003 e/su@example.com a/Test Lane age/27`.
+  **Expected:** The cards show Smoking `Yes`, `No` and `not set`, and the feedback shows `Smoking: yes`,
+  `Smoking: no` and `Smoking: Not specified`. Smoke Yes keeps its own status `Yes` while preferring `no` and
+  excluding `yes`.
+- [ ] Try `add n/Smoke Bad p/92220004 e/sb@example.com a/Test Lane age/25 s/`, then the same command ending in
+  `s/maybe`, then ending in `s/yes s/no`.
+  **Expected:** Each command is rejected and no client is added. The first two give the smoking-status error;
+  the third reports the repeated `s/` prefix.
+- [ ] Try `add n/Ravi s/o Kumar p/92220005 e/rk@example.com a/Test Lane age/25`.
+  **Expected:** Rejected. The error says that `s/` starts the smoking status and suggests quoting the value,
+  e.g. `n/"Ravi s/o Kumar"`. No client is added.
+- [ ] Run `add n/"Ravi s/o Kumar" p/92220005 e/rk@example.com a/Test Lane age/25 s/no`, then `delete 4`.
+  **Expected:** The client is added as `Ravi s/o Kumar` with Smoking `No`; the quotes are not part of the name.
+  `delete 4` removes it again so that the indexes below still apply.
+- [ ] Try `add n/"Ravi s/o Kumar p/92220005 e/rk@example.com a/Test Lane age/25` and
+  `add n/"Ravi s/o" Kumar p/92220005 e/rk@example.com a/Test Lane age/25`.
+  **Expected:** Both are rejected: the first for a missing closing quote, the second for text after the closing
+  quote. No client is added.
+- [ ] Run `edit 3 s/no`, then `edit 3 s/`, then `edit 3 s/` again.
+  **Expected:** Smoke Unknown becomes `No`, then `not set`; the third command succeeds without changing anything.
+  Name, contact details and age stay the same throughout.
+- [ ] Run `edit 1 p/99990000`.
+  **Expected:** Only the phone changes. Smoke Yes is still `Yes`, with the same preference and dealbreaker.
+- [ ] Try `edit 1 s/maybe` and `edit 1 s/no s/yes`.
+  **Expected:** Both are rejected, and Smoke Yes is unchanged.
+- [ ] Exit and relaunch.
+  **Expected:** The three statuses are still `Yes`, `No` and `not set`.
 
 ### Finding clients by smoking status
 
@@ -996,18 +1258,41 @@ criterion. `SmokingStatusMatchesPredicate` compares only the client's recorded s
 It rejects an unspecified search criterion, and unspecified client statuses match neither value.
 The existing `FindCommand` filters the full address book without changing stored records.
 
-Manual checks (use a separate test data set):
+Continue with the three clients from [Recording and clearing smoking status](#recording-and-clearing-smoking-status).
 
-1. Add three clients with distinct names: one with `s/yes`, one with `s/no`, and one with no `s/`.
-   Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
-2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
-   even though the previous search hid that client. Check that the displayed count is correct.
-3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find n/Alice s/yes`.
-   Each should report an error and preserve the previous results and records.
-4. Run `list` to restore all three clients. Restart the application and repeat the searches;
-   the results should remain the same. With no clients of the searched status, expect zero matches.
-5. After `find s/no`, run `edit 1 s/yes` or `delete 1` on disposable test data.
-   Confirm that it targets the first displayed client, not the first client in the full book.
+- [ ] Run `find s/YES`, then `find s/no`.
+  **Expected:** The first lists only Smoke Yes and the second only Smoke No, each with a count of 1, even though
+  the previous search hid that client. Smoke Unknown is never listed: unspecified does not mean non-smoker.
+  Smoke Yes's `{s/no}` preference does not make it appear for `find s/no`.
+- [ ] Try `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25` and `find n/Smoke s/yes`.
+  **Expected:** Each command is rejected with an error. The previous results and all records are unchanged.
+- [ ] Run `find s/no`, then `edit 1 s/yes`, then `find s/yes`.
+  **Expected:** The edit changes Smoke No, the first displayed client, not Smoke Yes, which is first in the
+  full list. `find s/yes` then lists both Smoke Yes and Smoke No.
+- [ ] Run `find s/no`.
+  **Expected:** No client is listed and the count is zero.
+- [ ] Run `list`, exit, relaunch and repeat `find s/yes`.
+  **Expected:** The same two clients are listed after the restart.
+
+### Matching two clients
+
+1. Matching by index and by name
+   1. Prerequisites: start with the sample data, so `Alex Yeoh` and `Bernice Yu` are the first two clients.
+   1. Test case: `match 1 2`<br>
+      Expected: the match result replaces the list, comparing Alex Yeoh and Bernice Yu in both directions.
+   1. Test case: `match n/Alex Yeoh n/Bernice Yu`, then `match 2 n/alex   yeoh`<br>
+      Expected: the first gives the same result as `match 1 2`. The second gives it with the clients swapped.
+   1. Test case: `find n/Alex`, then `match 1 n/Bernice Yu`<br>
+      Expected: Bernice Yu is found although she is not displayed. After the next command the list still shows
+      only Alex Yeoh.
+
+1. Rejected references
+   1. Test case: `match n/Nobody 1`<br>
+      Expected: "No client is named Nobody." No data changes.
+   1. Test case: `match 1 n/Alex Yeoh` while Alex Yeoh is first in the list<br>
+      Expected: the same-client error.
+   1. Test case: `match n/Alex Yeoh`, `match 1 2 n/Alex Yeoh`, or `match n/ n/Alex Yeoh`<br>
+      Expected: the usage message for the first two, and the name constraints for the last.
 
 ### Saving data
 

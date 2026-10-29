@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.MatchAssessment;
@@ -15,40 +14,48 @@ import seedu.address.model.person.MatchAssessment.Comparison;
 import seedu.address.model.person.Person;
 
 /**
- * Assesses two clients from the displayed list without recording a pairing or changing the list.
+ * Assesses two clients, each given by displayed index or by name, without recording a pairing or changing
+ * the list.
  */
 public class MatchCommand extends Command {
     public static final String COMMAND_WORD = "match";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Compares two different clients in the displayed list.\n"
-            + "Parameters: INDEX_A INDEX_B (must be distinct positive integers)\n"
-            + "Example: " + COMMAND_WORD + " 1 3";
+            + ": Compares two different clients, given by displayed index or by name.\n"
+            + "Parameters: INDEX_A INDEX_B, n/NAME_A n/NAME_B, or INDEX_A n/NAME_B "
+            + "(indexes are positive integers and come before names)\n"
+            + "Examples: " + COMMAND_WORD + " 1 3, " + COMMAND_WORD + " n/Alex Yeoh n/Bernice Yu";
     public static final String MESSAGE_SAME_CLIENT = "Choose two different clients.\n" + MESSAGE_USAGE;
 
-    private final Index firstIndex;
-    private final Index secondIndex;
+    private final ClientReference firstClient;
+    private final ClientReference secondClient;
+
+    /**
+     * Creates a comparison of the two referenced clients.
+     */
+    public MatchCommand(ClientReference firstClient, ClientReference secondClient) {
+        requireAllNonNull(firstClient, secondClient);
+        this.firstClient = firstClient;
+        this.secondClient = secondClient;
+    }
 
     /**
      * Creates a comparison of the clients at the given displayed indexes.
      */
     public MatchCommand(Index firstIndex, Index secondIndex) {
-        requireAllNonNull(firstIndex, secondIndex);
-        this.firstIndex = firstIndex;
-        this.secondIndex = secondIndex;
+        this(new ClientReference.ByIndex(firstIndex), new ClientReference.ByIndex(secondIndex));
     }
 
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        if (firstIndex.equals(secondIndex)) {
+        if (firstClient.equals(secondClient)) {
             throw new CommandException(MESSAGE_SAME_CLIENT);
         }
-        List<Person> displayed = model.getFilteredPersonList();
-        if (firstIndex.getZeroBased() >= displayed.size() || secondIndex.getZeroBased() >= displayed.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        Person first = firstClient.resolve(model);
+        Person second = secondClient.resolve(model);
+        if (first.isSamePerson(second)) {
+            throw new CommandException(MESSAGE_SAME_CLIENT);
         }
-        Person first = displayed.get(firstIndex.getZeroBased());
-        Person second = displayed.get(secondIndex.getZeroBased());
         MatchAssessment assessment = new MatchAssessment(first, second);
         String feedback = first.getName() + " <-> " + second.getName()
                 + "\nResult: " + assessment.getOutcome().getDisplayName()
@@ -72,6 +79,6 @@ public class MatchCommand extends Command {
     @Override
     public boolean equals(Object other) {
         return other == this || (other instanceof MatchCommand otherCommand
-                && firstIndex.equals(otherCommand.firstIndex) && secondIndex.equals(otherCommand.secondIndex));
+                && firstClient.equals(otherCommand.firstClient) && secondClient.equals(otherCommand.secondClient));
     }
 }

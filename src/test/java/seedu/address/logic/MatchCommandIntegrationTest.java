@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.commands.ClientReference;
 import seedu.address.logic.commands.MatchCommand;
 import seedu.address.logic.commands.MatchCommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -42,8 +43,8 @@ public class MatchCommandIntegrationTest {
         storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressbook.json"));
         initializeLogic();
         logic.execute("add n/Hidden p/99999999 e/hidden@example.com a/Home age/50");
-        logic.execute("add n/Alice p/11111111 e/alice@example.com a/Home age/28 s/no rg/long"
-                + " {age/25-35} <s/yes>");
+        logic.execute("add n/Alice p/11111111 e/alice@example.com a/Home age/28 s/no"
+                + " {age/25-35 rg/long} <s/yes>");
         logic.execute("add n/Bob p/22222222 e/bob@example.com a/Home age/30 s/yes"
                 + " {r/Buddhism rg/long}");
     }
@@ -58,11 +59,12 @@ public class MatchCommandIntegrationTest {
         MatchCommandResult result = assertInstanceOf(MatchCommandResult.class, logic.execute("match 1 2"));
         assertEquals("Alice", result.getFirstName());
         assertEquals("Bob", result.getSecondName());
-        assertEquals(2, result.getAssessment().getFirstComparisons().size());
+        assertEquals(3, result.getAssessment().getFirstComparisons().size());
         String feedback = result.getFeedbackToUser();
         assertEquals("Alice <-> Bob\nResult: Incompatible"
                 + "\n\nAlice's criteria -> Bob"
                 + "\nMet - Preference: Age 25-35; Actual: 30"
+                + "\nMet - Preference: Relationship goal Long-term relationship; Actual: Long-term relationship"
                 + "\nViolated - Dealbreaker: Smoking Exclude: Yes; Actual: Yes"
                 + "\n\nBob's criteria -> Alice"
                 + "\nUnknown - Preference: Religion Buddhism; Actual: Not specified"
@@ -121,6 +123,19 @@ public class MatchCommandIntegrationTest {
         assertThrows(CommandException.class, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX, ()
             -> logic.execute("match 1 2"));
         assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_names_matchesHiddenClientsWithoutChangingList() throws Exception {
+        String expected = logic.execute("match 2 3").getFeedbackToUser();
+        logic.execute("find n/Nobody");
+        String saved = Files.readString(storage.getAddressBookFilePath());
+
+        assertEquals(expected, logic.execute("match n/alice n/Bob").getFeedbackToUser());
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+        assertThrows(CommandException.class, String.format(ClientReference.MESSAGE_CLIENT_NOT_FOUND, "Carol"), ()
+            -> logic.execute("match n/Alice n/Carol"));
     }
 
     private void initializeLogic() {

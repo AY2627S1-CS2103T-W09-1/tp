@@ -7,7 +7,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_GENDER;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
@@ -36,10 +35,11 @@ public class AddCommand extends Command {
             + PREFIX_AGE + "AGE "
             + "[" + PREFIX_TAG + "TAG]... "
             + "[" + PREFIX_RELIGION + "RELIGION] "
-            + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL] [{CRITERIA}] [<CRITERIA>]\n"
+            + "[{CRITERIA}] [<CRITERIA>]\n"
             + "Gender: m, w, nb, or empty for unspecified.\n"
             + "Partner criteria: {...} prefers; <...> excludes (must not have). "
-            + "Use age/, g/, s/, r/, or rg/ once per block, each with a value.\n"
+            + "Use age/, g/, s/, r/, or rg/ once per block. g/, r/, and rg/ accept comma-separated values, "
+            + "and rg/ takes goal keywords, e.g. {rg/long,long-open}.\n"
             + "Outer r/ records only the client's own religion.\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + "John Doe "

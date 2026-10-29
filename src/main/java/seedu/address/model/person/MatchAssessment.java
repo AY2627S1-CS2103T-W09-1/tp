@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -55,13 +57,16 @@ public final class MatchAssessment {
         return List.copyOf(comparisons);
     }
 
-    private static void addComparisons(List<Comparison> comparisons, Map<DatingAttribute, String> criteria,
+    private static void addComparisons(List<Comparison> comparisons, Map<DatingAttribute, Set<String>> criteria,
             Person candidate, boolean isDealbreaker) {
-        criteria.forEach((attribute, criterion) -> {
+        criteria.forEach((attribute, criteriaValues) -> {
             Optional<String> actual = getActualValue(candidate, attribute);
-            Status status = actual.map(value -> matches(candidate, attribute, criterion, value) != isDealbreaker
+            Status status = actual.map(value -> criteriaValues.stream()
+                    .anyMatch(criterion -> matches(candidate, attribute, criterion, value)) != isDealbreaker
                     ? Status.MET : Status.UNMET).orElse(Status.UNKNOWN);
-            comparisons.add(new Comparison(attribute, criterion, actual, isDealbreaker, status));
+            comparisons.add(new Comparison(attribute,
+                    criteriaValues.stream().sorted().collect(Collectors.joining(", ")),
+                    actual, isDealbreaker, status));
         });
     }
 
@@ -73,7 +78,8 @@ public final class MatchAssessment {
             case SMOKING -> person.getSmokingStatus().equals(SmokingStatus.UNSPECIFIED)
                     ? Optional.empty() : Optional.of(person.getSmokingStatus().value);
             case RELIGION -> person.getReligion().map(Religion::toString);
-            case RELATIONSHIP_GOAL -> person.getRelationshipGoal().map(RelationshipGoal::toString);
+            case RELATIONSHIP_GOAL -> person.getRelationshipGoals().isEmpty()
+                    ? Optional.empty() : Optional.of(RelationshipGoal.formatCriterion(person.getRelationshipGoals()));
         };
     }
 
@@ -83,6 +89,10 @@ public final class MatchAssessment {
             int lower = Integer.parseInt(bounds[0]);
             int upper = bounds.length == 1 ? lower : Integer.parseInt(bounds[1]);
             return new AgeMatchesPredicate(lower, upper).test(candidate);
+        }
+        if (attribute == DatingAttribute.RELATIONSHIP_GOAL) {
+            // A candidate's goals are the goals they are open to, so any one of them can match
+            return candidate.getRelationshipGoals().contains(RelationshipGoal.fromStoredValue(criterion));
         }
         return criterion.equals(actual);
     }

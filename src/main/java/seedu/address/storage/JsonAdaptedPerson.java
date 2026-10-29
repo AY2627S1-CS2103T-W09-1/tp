@@ -1,18 +1,22 @@
 package seedu.address.storage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
+import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.DatingCriteria;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Gender;
@@ -40,9 +44,11 @@ class JsonAdaptedPerson {
     private final String age;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final String religion;
+    /** The client's own goal in older data files. It is read for migration but no longer saved. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String relationshipGoal;
-    private final Map<String, String> preferences;
-    private final Map<String, String> dealbreakers;
+    private final Map<String, List<String>> preferences;
+    private final Map<String, List<String>> dealbreakers;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -55,8 +61,8 @@ class JsonAdaptedPerson {
             @JsonProperty("smokingStatus") String smokingStatus, @JsonProperty("gender") String gender,
             @JsonProperty("religion") String religion,
             @JsonProperty("relationshipGoal") String relationshipGoal,
-            @JsonProperty("preferences") Map<String, String> preferences,
-            @JsonProperty("dealbreakers") Map<String, String> dealbreakers) {
+            @JsonProperty("preferences") Map<String, ?> preferences,
+            @JsonProperty("dealbreakers") Map<String, ?> dealbreakers) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -69,8 +75,8 @@ class JsonAdaptedPerson {
             this.tags.addAll(tags);
         }
         this.relationshipGoal = relationshipGoal;
-        this.preferences = preferences;
-        this.dealbreakers = dealbreakers;
+        this.preferences = convertCriteria(preferences);
+        this.dealbreakers = convertCriteria(dealbreakers);
     }
 
     /**
@@ -111,9 +117,34 @@ class JsonAdaptedPerson {
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
         religion = source.getReligion().map(Religion::toString).orElse(null);
-        relationshipGoal = source.getRelationshipGoal().map(RelationshipGoal::toString).orElse(null);
+        relationshipGoal = null;
         preferences = source.getDatingCriteria().getPreferencesForStorage();
         dealbreakers = source.getDatingCriteria().getDealbreakersForStorage();
+    }
+
+    /** Accepts legacy single-string values while writing all criteria as value lists. */
+    private static Map<String, List<String>> convertCriteria(Map<String, ?> criteria) {
+        if (criteria == null) {
+            return null;
+        }
+        Map<String, List<String>> converted = new LinkedHashMap<>();
+        criteria.forEach((attribute, rawValues) -> {
+            if (rawValues instanceof String value) {
+                converted.put(attribute, List.of(value));
+            } else if (rawValues instanceof List<?> values) {
+                List<String> strings = new ArrayList<>();
+                for (Object value : values) {
+                    if (!(value instanceof String string)) {
+                        throw new IllegalArgumentException("Dating criteria values must be strings.");
+                    }
+                    strings.add(string);
+                }
+                converted.put(attribute, List.copyOf(strings));
+            } else {
+                throw new IllegalArgumentException("Dating criteria values must be strings or lists of strings.");
+            }
+        });
+        return Map.copyOf(converted);
     }
 
     /**
@@ -185,21 +216,37 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Gender.MESSAGE_CONSTRAINTS);
         }
 
-        final RelationshipGoal modelRelationshipGoal;
-        try {
-            modelRelationshipGoal = relationshipGoal == null ? null : RelationshipGoal.fromString(relationshipGoal);
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalValueException(RelationshipGoal.MESSAGE_CONSTRAINTS);
-        }
-
         try {
             Religion modelReligion = religion == null ? null : new Religion(religion);
-            DatingCriteria modelDatingCriteria = DatingCriteria.fromStorage(preferences, dealbreakers);
+            DatingCriteria modelDatingCriteria = migrateLegacyRelationshipGoal(
+                    DatingCriteria.fromStorage(preferences, dealbreakers));
             return new Person(modelName, modelPhone, modelEmail, modelAddress, modelAge, modelTags,
-                    modelSmokingStatus, modelGender, modelReligion, modelRelationshipGoal, modelDatingCriteria);
+                    modelSmokingStatus, modelGender, modelReligion, modelDatingCriteria);
         } catch (IllegalArgumentException exception) {
             throw new IllegalValueException(exception.getMessage());
         }
+    }
+
+    /**
+     * Moves a legacy own relationship goal into the relationship goal preference, which now describes the
+     * client. The legacy goal is dropped if a goal preference is already recorded or the goal is excluded.
+     *
+     * @throws IllegalArgumentException if the legacy goal is not a supported relationship goal.
+     */
+    private DatingCriteria migrateLegacyRelationshipGoal(DatingCriteria criteria) {
+        if (relationshipGoal == null || !criteria.getRelationshipGoals().isEmpty()) {
+            return criteria;
+        }
+        RelationshipGoal goal = RelationshipGoal.fromStoredValue(relationshipGoal);
+        Set<String> excludedGoals = criteria.getDealbreakers()
+                .getOrDefault(DatingAttribute.RELATIONSHIP_GOAL, Set.of());
+        boolean isExcluded = excludedGoals.contains(goal.toString());
+        if (isExcluded) {
+            return criteria;
+        }
+        Map<DatingAttribute, Set<String>> migratedPreferences = new HashMap<>(criteria.getPreferences());
+        migratedPreferences.put(DatingAttribute.RELATIONSHIP_GOAL, Set.of(goal.toString()));
+        return new DatingCriteria(migratedPreferences, criteria.getDealbreakers());
     }
 
 }

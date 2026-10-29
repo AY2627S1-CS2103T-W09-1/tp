@@ -30,18 +30,17 @@ public class Person {
     private final Age age;
     private final Set<Tag> tags = new HashSet<>();
     private final Religion religion;
-    private final RelationshipGoal relationshipGoal;
     private final DatingCriteria datingCriteria;
 
     /**
-     * Creates a person whose smoking status and relationship goal have not been recorded.
+     * Creates a person whose smoking status has not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags) {
         this(name, phone, email, address, age, tags, SmokingStatus.UNSPECIFIED);
     }
 
     /**
-     * Creates a person whose relationship goal has not been recorded.
+     * Creates a person whose gender has not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus) {
@@ -53,7 +52,7 @@ public class Person {
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus, Gender gender) {
-        this(name, phone, email, address, age, tags, smokingStatus, gender, null, null);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, null);
     }
 
     /**
@@ -64,30 +63,20 @@ public class Person {
     }
 
     /**
-     * Creates a person with all supported client characteristics except a relationship goal.
+     * Creates a person with all supported client characteristics but no partner criteria.
+     * A null religion means it has not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
             SmokingStatus smokingStatus, Gender gender, Religion religion) {
-        this(name, phone, email, address, age, tags, smokingStatus, gender, religion, null);
-    }
-
-    /**
-     * Creates a person with all supported client characteristics.
-     * A null religion or relationship goal means it has not been recorded.
-     */
-    public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
-            SmokingStatus smokingStatus, Gender gender, Religion religion, RelationshipGoal relationshipGoal) {
-        this(name, phone, email, address, age, tags, smokingStatus, gender, religion, relationshipGoal,
-                DatingCriteria.EMPTY);
+        this(name, phone, email, address, age, tags, smokingStatus, gender, religion, DatingCriteria.EMPTY);
     }
 
     /**
      * Creates a person with all supported characteristics and partner criteria.
-     * A null religion or relationship goal means it has not been recorded.
+     * A null religion means it has not been recorded.
      */
     public Person(Name name, Phone phone, Email email, Address address, Age age, Set<Tag> tags,
-            SmokingStatus smokingStatus, Gender gender, Religion religion, RelationshipGoal relationshipGoal,
-            DatingCriteria datingCriteria) {
+            SmokingStatus smokingStatus, Gender gender, Religion religion, DatingCriteria datingCriteria) {
         requireAllNonNull(name, phone, email, address, age, tags, smokingStatus, gender, datingCriteria);
         this.name = name;
         this.phone = phone;
@@ -98,7 +87,6 @@ public class Person {
         this.age = age;
         this.tags.addAll(tags);
         this.religion = religion;
-        this.relationshipGoal = relationshipGoal;
         this.datingCriteria = datingCriteria;
     }
 
@@ -138,10 +126,11 @@ public class Person {
     }
 
     /**
-     * Returns the client's recorded relationship goal, if known.
+     * Returns the relationship goals in the client's partner preferences, which also describe the client
+     * to potential partners. The set is empty if none are recorded.
      */
-    public Optional<RelationshipGoal> getRelationshipGoal() {
-        return Optional.ofNullable(relationshipGoal);
+    public Set<RelationshipGoal> getRelationshipGoals() {
+        return datingCriteria.getRelationshipGoals();
     }
 
     /** Returns the client's preferences and dealbreakers for a potential partner. */
@@ -194,7 +183,6 @@ public class Person {
                 && tags.equals(otherPerson.tags)
                 && gender == otherPerson.gender
                 && Objects.equals(religion, otherPerson.religion)
-                && Objects.equals(relationshipGoal, otherPerson.relationshipGoal)
                 && datingCriteria.equals(otherPerson.datingCriteria);
     }
 
@@ -205,7 +193,7 @@ public class Person {
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
         return Objects.hash(name, phone, email, address, tags, religion, age, smokingStatus, gender,
-                relationshipGoal, datingCriteria);
+                datingCriteria);
     }
 
     /**
@@ -222,8 +210,7 @@ public class Person {
                 .add("age", age)
                 .add("tags", tags)
                 .add("gender", gender)
-                .add("religion", religion)
-                .add("relationshipGoal", relationshipGoal);
+                .add("religion", religion);
         if (!datingCriteria.isEmpty()) {
             builder.add("datingCriteria", datingCriteria);
         }

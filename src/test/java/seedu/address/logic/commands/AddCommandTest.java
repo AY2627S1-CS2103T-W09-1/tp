@@ -89,6 +89,11 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public Runnable createRestorePoint() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public void setGroups(java.util.List<seedu.address.model.group.ClientGroup> groups) {
             throw new AssertionError("Unexpected group mutation.");
         }

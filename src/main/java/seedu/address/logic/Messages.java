@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.RelationshipGoal;
 
 /**
  * Container for user visible messages.
@@ -56,19 +55,18 @@ public class Messages {
         person.getTags().forEach(builder::append);
         builder.append("; Religion: ")
                 .append(person.getReligion().map(Object::toString).orElse("Not specified"));
-        String relationshipGoal = person.getRelationshipGoal().map(Object::toString)
-                .orElse(RelationshipGoal.NOT_SPECIFIED_LABEL);
-        builder.append("; Relationship goal: ").append(relationshipGoal);
         appendCriteria(builder, "Preferences", person.getDatingCriteria().getPreferences());
         appendCriteria(builder, "Dealbreakers", person.getDatingCriteria().getDealbreakers());
         return builder.toString();
     }
 
-    private static void appendCriteria(StringBuilder builder, String label, Map<DatingAttribute, String> criteria) {
+    private static void appendCriteria(StringBuilder builder, String label,
+            Map<DatingAttribute, Set<String>> criteria) {
         if (!criteria.isEmpty()) {
             builder.append("; ").append(label).append(": ")
                     .append(criteria.entrySet().stream()
-                            .map(entry -> entry.getKey().getDisplayName() + " = " + entry.getValue())
+                            .map(entry -> entry.getKey().getDisplayName() + " = "
+                                    + entry.getValue().stream().sorted().collect(Collectors.joining(", ")))
                             .collect(Collectors.joining(", ")));
         }
     }

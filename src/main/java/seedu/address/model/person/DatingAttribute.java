@@ -32,6 +32,11 @@ public enum DatingAttribute {
         return displayName;
     }
 
+    /** Returns whether this attribute may record more than one partner criterion. */
+    public boolean allowsMultipleValues() {
+        return this == GENDER || this == RELIGION || this == RELATIONSHIP_GOAL;
+    }
+
     /** Returns the attribute associated with a JSON property name. */
     public static DatingAttribute fromStorageKey(String storageKey) {
         requireNonNull(storageKey);
@@ -43,7 +48,7 @@ public enum DatingAttribute {
         throw new IllegalArgumentException("Unsupported dating attribute: " + storageKey);
     }
 
-    /** Validates and canonicalizes a criterion value for this attribute. */
+    /** Validates and canonicalizes a stored criterion value for this attribute. */
     public String normalizeCriterion(String value) {
         requireNonNull(value);
         if (value.isBlank()) {
@@ -54,7 +59,7 @@ public enum DatingAttribute {
             case GENDER -> Gender.parseValue(value).getValue();
             case SMOKING -> new SmokingStatus(value.trim()).value;
             case RELIGION -> new Religion(value).toString();
-            case RELATIONSHIP_GOAL -> RelationshipGoal.fromString(value).toString();
+            case RELATIONSHIP_GOAL -> RelationshipGoal.fromStoredValue(value).toString();
         };
     }
 }

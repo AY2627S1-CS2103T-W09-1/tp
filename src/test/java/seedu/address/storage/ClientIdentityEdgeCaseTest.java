@@ -102,7 +102,7 @@ public class ClientIdentityEdgeCaseTest {
 
         for (Person person : restored.getPersonList()) {
             assertTrue(person.getReligion().isEmpty());
-            assertTrue(person.getRelationshipGoal().isEmpty());
+            assertTrue(person.getRelationshipGoals().isEmpty());
             assertTrue(person.getDatingCriteria().getPreferences().isEmpty());
             assertTrue(person.getDatingCriteria().getDealbreakers().isEmpty());
         }
