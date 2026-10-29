@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -113,5 +114,20 @@ public class GroupCommand extends Command {
             members.removeAll(selected);
         }
         return new ClientGroup(existing == null ? name : existing.getName(), members);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other == this || other instanceof GroupCommand command
+                && name.equals(command.name) && operation == command.operation && indexes.equals(command.indexes);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .add("name", name)
+                .add("operation", operation)
+                .add("indexes", indexes)
+                .toString();
     }
 }

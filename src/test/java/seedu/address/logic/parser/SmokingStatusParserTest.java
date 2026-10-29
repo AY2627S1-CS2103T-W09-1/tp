@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -37,7 +38,7 @@ public class SmokingStatusParserTest {
     public void parseSmokingStatus_invalidInput_throwsParseException() {
         for (String value : new String[] {"", " ", "sometimes", "unknown", "yes no"}) {
             assertThrows(ParseException.class,
-                    SmokingStatus.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseSmokingStatus(value));
+                    ParserUtil.MESSAGE_INVALID_SMOKING_STATUS, () -> ParserUtil.parseSmokingStatus(value));
         }
     }
 
@@ -59,11 +60,51 @@ public class SmokingStatusParserTest {
     }
 
     @Test
-    public void parse_invalidSmokingStatus_rejectsCommand() {
-        for (String value : new String[] {"", "sometimes", "no extra text"}) {
-            assertParseFailure(addParser, personDetails + " s/" + value, SmokingStatus.MESSAGE_CONSTRAINTS);
-            assertParseFailure(editParser, "1 s/" + value, SmokingStatus.MESSAGE_CONSTRAINTS);
+    public void parse_editEmptySmokingStatus_clearsStatus() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        descriptor.setSmokingStatus(SmokingStatus.UNSPECIFIED);
+        for (String args : new String[] {"1 s/", "1 s/   ", "1 n/Amy Bee s/"}) {
+            EditPersonDescriptor expected = new EditPersonDescriptor(descriptor);
+            if (args.contains("n/")) {
+                expected = new EditPersonDescriptorBuilder().withName("Amy Bee").withSmokingStatus("").build();
+            }
+            assertParseSuccess(editParser, args, new EditCommand(INDEX_FIRST_PERSON, expected));
         }
+    }
+
+    @Test
+    public void parse_invalidSmokingStatus_rejectsCommand() {
+        assertParseFailure(addParser, personDetails + " s/", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
+        for (String value : new String[] {"sometimes", "no extra text"}) {
+            assertParseFailure(addParser, personDetails + " s/" + value, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
+            assertParseFailure(editParser, "1 s/" + value, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
+        }
+    }
+
+    @Test
+    public void parse_unquotedNameContainingSmokingPrefix_suggestsQuotes() {
+        String details = " n/Ravi s/o Kumar p/91234567 e/ravi@example.com a/Home age/25";
+        assertParseFailure(addParser, details, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
+        assertParseFailure(editParser, "1 n/Ravi s/o Kumar", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
+        assertTrue(ParserUtil.MESSAGE_INVALID_SMOKING_STATUS.contains("n/\"Ravi s/o Kumar\""));
+    }
+
+    @Test
+    public void parse_quotedNameContainingSmokingPrefix_keepsNameAndSmokingStatus() {
+        Person person = new PersonBuilder().withName("Ravi s/o Kumar").withSmokingStatus("yes").build();
+        String details = " " + PersonUtil.getPersonDetails(person)
+                .replace("n/Ravi s/o Kumar ", "n/\"Ravi s/o Kumar\" ");
+        assertParseSuccess(addParser, details, new AddCommand(person));
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Ravi s/o Kumar")
+                .withSmokingStatus("no").build();
+        assertParseSuccess(editParser, "1 n/\"Ravi s/o Kumar\" s/no", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_badlyQuotedName_rejectsCommand() {
+        assertParseFailure(editParser, "1 n/\"Ravi s/o Kumar s/no", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTE);
+        assertParseFailure(editParser, "1 n/\"Ravi s/o\" Kumar s/no", ArgumentTokenizer.MESSAGE_TEXT_AFTER_QUOTE);
     }
 
     @Test

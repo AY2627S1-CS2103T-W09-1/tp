@@ -3,9 +3,15 @@ package seedu.address.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
+
+import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
+
+import seedu.address.logic.parser.exceptions.ParseException;
 
 public class ArgumentTokenizerTest {
 
@@ -13,9 +19,12 @@ public class ArgumentTokenizerTest {
     private final Prefix pSlash = new Prefix("p/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
+    private final Prefix nSlash = new Prefix("n/");
+    private final Prefix sSlash = new Prefix("s/");
+    private final Prefix aSlash = new Prefix("a/");
 
     @Test
-    public void tokenize_emptyArgsString_noValues() {
+    public void tokenize_emptyArgsString_noValues() throws Exception {
         String argsString = "  ";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash);
 
@@ -54,7 +63,7 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void tokenize_noPrefixes_allTakenAsPreamble() {
+    public void tokenize_noPrefixes_allTakenAsPreamble() throws Exception {
         String argsString = "  some random string /t tag with leading and trailing spaces ";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString);
 
@@ -64,7 +73,7 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void tokenize_oneArgument() {
+    public void tokenize_oneArgument() throws Exception {
         // Preamble present
         String argsString = "  Some preamble string p/ Argument value ";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash);
@@ -80,7 +89,7 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void tokenize_multipleArguments() {
+    public void tokenize_multipleArguments() throws Exception {
         // Only two arguments are present
         String argsString = "SomePreambleString -t dashT-Value p/pSlash value";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT, hatQ);
@@ -116,7 +125,7 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void tokenize_multipleArgumentsWithRepeats() {
+    public void tokenize_multipleArgumentsWithRepeats() throws Exception {
         // Two arguments repeated, some have empty values
         String argsString = "SomePreambleString -t dashT-Value ^Q ^Q -t another dashT value p/ pSlash value -t";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT, hatQ);
@@ -127,13 +136,91 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void tokenize_multipleArgumentsJoined() {
+    public void tokenize_multipleArgumentsJoined() throws Exception {
         String argsString = "SomePreambleStringp/ pSlash joined-tjoined -t not joined^Qjoined";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT, hatQ);
         assertPreamblePresent(argMultimap, "SomePreambleStringp/ pSlash joined-tjoined");
         assertArgumentAbsent(argMultimap, pSlash);
         assertArgumentPresent(argMultimap, dashT, "not joined^Qjoined");
         assertArgumentAbsent(argMultimap, hatQ);
+    }
+
+    @Test
+    public void tokenize_quotedValue_ignoresPrefixesInsideAndRemovesQuotes() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" n/\"Ravi s/o Kumar\" s/yes", nSlash, sSlash);
+        assertPreambleEmpty(argMultimap);
+        assertArgumentPresent(argMultimap, nSlash, "Ravi s/o Kumar");
+        assertArgumentPresent(argMultimap, sSlash, "yes");
+
+        // Whitespace around the quotes and inside them at the ends is discarded
+        argMultimap = ArgumentTokenizer.tokenize(" n/   \"  Ravi s/o Kumar \"   s/yes  ", nSlash, sSlash);
+        assertArgumentPresent(argMultimap, nSlash, "Ravi s/o Kumar");
+        assertArgumentPresent(argMultimap, sSlash, "yes");
+
+        // Quoted value at the end of the string
+        argMultimap = ArgumentTokenizer.tokenize(" s/no n/\"Tan a/l Ali\"", nSlash, sSlash, aSlash);
+        assertArgumentPresent(argMultimap, nSlash, "Tan a/l Ali");
+        assertArgumentAbsent(argMultimap, aSlash);
+    }
+
+    @Test
+    public void tokenize_severalQuotedValues_allUnquoted() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(
+                " n/\"Ravi s/o Kumar\" a/\"Blk 5 s/o Lane\" n/\"\" s/no", nSlash, sSlash, aSlash);
+        assertArgumentPresent(argMultimap, nSlash, "Ravi s/o Kumar", "");
+        assertArgumentPresent(argMultimap, aSlash, "Blk 5 s/o Lane");
+        assertArgumentPresent(argMultimap, sSlash, "no");
+    }
+
+    @Test
+    public void tokenize_quoteNotAtValueStart_keptAsTyped() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" a/Blk \"5\" s/yes", aSlash, sSlash);
+        assertArgumentPresent(argMultimap, aSlash, "Blk \"5\"");
+        assertArgumentPresent(argMultimap, sSlash, "yes");
+
+        // Quotes in the preamble are not part of a prefixed value
+        argMultimap = ArgumentTokenizer.tokenize("\"1 s/x\" n/Amy", nSlash, sSlash);
+        assertPreamblePresent(argMultimap, "\"1");
+        assertArgumentPresent(argMultimap, sSlash, "x\"");
+        assertArgumentPresent(argMultimap, nSlash, "Amy");
+    }
+
+    @Test
+    public void tokenize_unclosedQuote_throwsParseException() {
+        for (String argsString : new String[] {" n/\"Ravi s/o Kumar s/yes", " n/\"", " n/\"Ravi\"s/yes"}) {
+            assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTE, () ->
+                    ArgumentTokenizer.tokenize(argsString, nSlash, sSlash));
+        }
+    }
+
+    @Test
+    public void tokenize_textAfterClosingQuote_throwsParseException() {
+        for (String argsString : new String[] {" n/\"Ravi s/o\" Kumar s/yes", " n/\"Ravi\" Kumar"}) {
+            assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_TEXT_AFTER_QUOTE, () ->
+                    ArgumentTokenizer.tokenize(argsString, nSlash, sSlash));
+        }
+    }
+
+    @Test
+    public void tokenize_repeatedAndInterleavedPrefixesAroundQuotes_keepsOrder() throws Exception {
+        String argsString = " p/1 -t a \"x -t y\" p/\"2 -t z\" ^Q q -t \"b p/c\" p/3 -t";
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT, hatQ);
+        assertArgumentPresent(argMultimap, pSlash, "1", "2 -t z", "3");
+        assertArgumentPresent(argMultimap, dashT, "a \"x", "y\"", "b p/c", "");
+        assertArgumentPresent(argMultimap, hatQ, "q");
+    }
+
+    @Test
+    public void tokenize_manyPrefixes_completesQuickly() {
+        StringBuilder argsString = new StringBuilder(" n/Amy");
+        for (int i = 0; i < 20000; i++) {
+            argsString.append(" -t t").append(i);
+        }
+        ArgumentMultimap argMultimap = assertTimeoutPreemptively(Duration.ofSeconds(3), () ->
+                ArgumentTokenizer.tokenize(argsString.toString(), nSlash, sSlash, aSlash, pSlash, dashT, hatQ));
+        assertEquals(20000, argMultimap.getAllValues(dashT).size());
+        assertEquals("t19999", argMultimap.getValue(dashT).get());
+        assertArgumentPresent(argMultimap, nSlash, "Amy");
     }
 
     @Test
