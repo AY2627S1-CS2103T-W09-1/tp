@@ -100,9 +100,9 @@ Examples:
 ### Adding a client: `add`
 
 Adds a client to CupidMaxxing with contact details and dating attributes. Tags, gender, smoking status,
-religion and relationship goal are optional.
+religion and partner criteria are optional.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
 
 * `AGE` is compulsory. The valid values for `AGE`, `SMOKING`, `GENDER`, `RELIGION` and
   `RELATIONSHIP_GOAL` are listed in [Parameter list](#parameter-list).
@@ -124,7 +124,7 @@ Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 age/25`
 * `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd age/28 g/w` Records Sarah as a woman.
 * `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi age/30 s/no` Records Alice as a non-smoker.
-* `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 rg/long` Records Priya as looking for a long-term relationship.
+* `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 {rg/long}` Records Priya as looking for a long-term relationship.
 
 | Error handled | Message shown |
 | --- | --- |
@@ -137,7 +137,7 @@ Examples:
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
 * At least one of the optional fields must be provided.
@@ -148,7 +148,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
-* Use `rg/RELATIONSHIP_GOAL` to update the relationship goal. Omitting `rg/` preserves the existing goal, and `rg/` with no value clears it.
+* Relationship goals are recorded only as partner criteria, e.g. `{rg/long}`. See [Relationship goals](#relationship-goals).
 
 Examples:
 
@@ -156,8 +156,7 @@ Examples:
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 r/Christianity` Sets the client's own religion.
 *  `edit 1 r/` Clears the client's own religion to unknown, preserving both partner-criteria buckets.
-*  `edit 3 rg/short-open` Records the 3rd displayed client as looking for a short-term relationship, open to long, preserving their other details.
-*  `edit 3 rg/` Clears the 3rd displayed client's relationship goal.
+*  `edit 3 {rg/short-open}` Records the 3rd displayed client as looking for a short-term relationship, open to long, preserving their other details.
 * `edit 1 g/nb` changes the first displayed client's gender to non-binary.
 * `edit 1 g/` clears that client's gender.
 
@@ -216,21 +215,22 @@ Examples:
 
 ### Finding clients: `find`
 
-Search by name, age, or the client's own gender, religion, relationship goal or smoking status, or by compatibility with a client. Each search examines the full client list and replaces the displayed results.
+Search by name, age, or the client's own gender, religion or smoking status, their relationship-goal preference, or compatibility with a client. Each search examines the full client list and replaces the displayed results.
 
 Formats:
 
 * `find n/KEYWORD [MORE_KEYWORDS]` searches names. Matching is case-insensitive and uses whole words; a client is returned if any keyword matches. The `n/` prefix is required, like the other search modes: `find Alex` without it is rejected. A blank `n/` and repeated `n/` prefixes are also rejected.
+* `find n/"PHRASE"` searches for a quoted phrase, which may contain `/`. A client is returned if the phrase's words appear together, in order, as whole words of the name, ignoring case. Use it for names such as `Ravi s/o Kumar`, since an unquoted keyword containing `/` is rejected.
 * `find age/AGE` or `find age/MIN-MAX` searches an exact age or an inclusive range. See [Age](#age)
   for accepted values and range rules.
 * `find g/GENDER[,GENDER]…` returns clients matching any listed gender: `m`, `w`, or `nb`, in any order, ignoring case and surrounding whitespace.
 * `find g/` returns every client with a specified gender, equivalent to `find g/m,w,nb`. Unspecified genders are excluded from gender searches.
 * `find r/RELIGION` searches the client's **own religion**, not partner criteria. Use one category from the
   [religion reference table](#religion), which also explains unknown values and invalid inputs.
-* `find rg/GOAL` returns clients with that relationship goal. `GOAL` accepts the same keywords and full names as `add` and `edit`, such as `life`, `long`, `long-open`, `short-open`, `short` or `unsure`. Clients with no recorded goal are excluded.
+* `find rg/GOAL[,GOAL]...` returns clients whose relationship-goal preference includes any listed goal. `GOAL` is a keyword from [Relationship goals](#relationship-goals), such as `long` or `long-open`. Clients with no goal preference are excluded.
 * `find s/yes` or `find s/no` searches the client's **own smoking habit**, ignoring case and surrounding whitespace in the value. Clients with unspecified smoking status are excluded from both searches; unspecified does not mean non-smoker. Partner preferences and dealbreakers do not affect these results.
 * A blank `s/`, unsupported values (such as `unknown`), repeated `s/` prefixes and lists such as `s/yes,no` are rejected.
-* `find match/INDEX` lists clients compatible with the client at `INDEX` in the displayed list, best matches first. It uses the same rules as [`match`](#matching-two-clients-match). The rest are sorted by how many recorded criteria they meet. Unrecorded details never hide anyone. Use `match INDEX_A INDEX_B` to see the full breakdown for one pair. `list` or any other `find` restores the normal order.
+* `find match/INDEX` lists suitable matches for one client. See [Finding matches for one client](#finding-matches-for-one-client-find-match).
 
 Use one search mode at a time. Name keywords, age, gender, religion, relationship-goal, smoking and match criteria cannot be combined. Combined-trait searches are not supported in this increment.
 
@@ -239,16 +239,16 @@ Use each prefix only once. Duplicate gender values (including `m,M`), unsupporte
 Examples:
 
 * `find n/Alex Sam` finds clients whose names contain Alex or Sam.
+* `find n/"Ravi s/o"` finds `Ravi s/o Kumar`, but not `Kumar Ravi`.
 * `find age/25-35` finds clients aged 25 to 35, inclusive.
 * `find g/w` finds women.
 * `find g/m,nb` finds men or non-binary clients.
 * `find r/jAiNiSm` finds clients whose own religion is Jainism.
 * `find r/Baha'i   Faith` finds clients recorded as Baha'i Faith, ignoring repeated spaces.
 * `find r/No religion` finds clients who explicitly have no religion.
-* `find rg/long` finds clients looking for a long-term relationship.
+* `find rg/long,long-open` finds clients open to a long-term relationship, or to a long-term one open to short.
 * `find s/YES` finds clients recorded as smokers.
 * `find s/no` finds clients explicitly recorded as non-smokers.
-* `find match/2` lists clients compatible with the 2nd displayed client, best matches first.
 
 A valid search with no matches displays an empty result list and a count of zero.
 Use `list` to show every client again; searching does not modify the stored records.
@@ -256,39 +256,74 @@ Use `list` to show every client again; searching does not modify the stored reco
 | Error handled | Message shown |
 | --- | --- |
 | More than one search mode, an empty name search, or malformed syntax | `Invalid command format!` followed by the `find` usage |
-| An index for `find match/INDEX` is invalid | `The person index provided is invalid.` |
+| An unquoted name keyword contains `/` | `Name keywords cannot contain /. To search for a name containing /, put it in quotes, e.g. find n/"Ravi s/o".` |
+| A quoted name is not closed, or text follows the closing quote | `A value that starts with " must end with a matching "...` or `Unexpected text after a quoted value...` |
 | An attribute value or gender list is invalid | The relevant attribute constraint or `Gender list must contain one or more of m, w, nb without duplicates.` |
+
+### Finding matches for one client: `find match/`
+
+Lists the clients who suit one client, best matches first.
+
+Format: `find match/INDEX`
+
+* `INDEX` is the client's position in the **currently displayed list**. The search then covers every other client.
+* A client is hidden if either of the two has a dealbreaker the other is known to have. For example, a client
+  saved with `<s/yes>` never sees smokers.
+* The rest are sorted by how many of each other's preferences they meet. Unrecorded details never hide anyone.
+* `list` or any other `find` restores the normal order. Records are not changed.
+* To see why one pair suits each other or not, use [`match`](#matching-two-clients-match).
+
+Examples:
+
+* `find match/2` lists clients compatible with the 2nd displayed client, best matches first.
+* `find n/Alex` followed by `find match/1` lists matches for the first Alex found.
+
+| Error handled | Message shown |
+| --- | --- |
+| The index is not a positive integer | `Index must be a positive integer.` |
+| The index is outside the displayed list | `The person index provided is invalid.` |
+| `match/` is combined with another search mode | `Invalid command format!` followed by the `find` usage |
 
 ### Matching two clients: `match`
 
-Assesses two clients against each other's saved preferences and dealbreakers.
+Shows whether two clients suit each other, checking each client's preferences and dealbreakers against the other.
 
-Format: `match INDEX_A INDEX_B`
+Format: `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`
 
-* Use two different positive indexes from the **currently displayed list**, including after `find`.
-* Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
-* The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
-  and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
-  and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
-* The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
+* Give exactly two different clients. Each is either a positive index from the **currently displayed list** or
+  `n/` followed by the client's name. Indexes come before names.
+* A name is looked up among **all** clients, so you do not need to `find` a client first. An exact name is used if
+  one exists; otherwise the name may differ in letter case and spacing, e.g. `n/alex   yeoh` finds `Alex Yeoh`.
+* The result replaces the client list until your next command. It shows the overall result in color, then one
+  table per direction listing each criterion, the other client's value, and its status.
+* The displayed list and client records stay unchanged, and no pairing is saved.
 
-The meanings, formats, allowed attributes and editing rules for recorded criteria are described under
-[Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker) and
-[Editing a preference or dealbreaker](#editing-a-preference-or-dealbreaker). The match result uses
-those criteria only; it does not modify them.
+Each criterion gets one status:
 
-Overall results, in priority order:
+| Status | Meaning |
+| --- | --- |
+| **Met** | The other client has a preferred value, or does not have an excluded one. |
+| **Unmet** | The other client does not have a preferred value. This alone never makes a pair incompatible. |
+| **Violated** | The other client has an excluded value. The pair is **Incompatible**. |
+| **Unknown** | The other client has not recorded that attribute. Without a violation, the pair has **Insufficient information**. |
 
-1. **Incompatible**: either client violates at least one of the other's dealbreakers.
-2. **Insufficient information**: no known violation, but an attribute needed for a recorded criterion is unknown,
-   or neither client has any criteria.
-3. **Compatible with recorded dealbreakers**: all recorded criteria can be evaluated and no dealbreaker is violated.
-   Unmet preferences alone do not make a pair incompatible.
+A pair with no violated or unknown criteria is **Compatible with recorded dealbreakers**.
+Criteria are recorded as described in [Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker).
 
-Missing gender, smoking status, religion, or relationship goal is unknown, not a match or a violation.
-An omitted criterion adds no constraint. `No religion` and `unsure` are explicit values, not missing information.
+Examples:
 
-Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
+* `match 1 3` assesses the first and third displayed clients.
+* `match n/Alex Yeoh n/Bernice Yu` assesses those two clients, whether or not they are displayed.
+* `match 2 n/Bernice Yu` assesses the second displayed client and Bernice Yu.
+
+| Error handled | Message shown |
+| --- | --- |
+| Not exactly two clients, a malformed index, or a name before an index | `Invalid command format!` followed by the `match` usage |
+| An index is outside the displayed list | `The person index provided is invalid.` |
+| Both refer to the same client | `Choose two different clients.` followed by the `match` usage |
+| No client has that name | `No client is named NAME.` |
+| Several clients have that name, ignoring case and spacing | `Several clients are named NAME. Use their list indexes instead.` |
+| A name is invalid | The name constraint |
 
 ### Organising clients into groups: `grp` and `show`
 
@@ -481,9 +516,10 @@ block only.
 
 #### Relationship goals
 
-The optional `rg/RELATIONSHIP_GOAL` field records what the client is **looking for**. The accepted
-goals are adapted from Hinge. Type the short keyword for speed, or the full goal name; either way,
-the full goal name is saved and shown on the client card:
+Relationship goals are recorded only as **partner criteria**. A client's `{rg/...}` preference lists the goals
+they are open to, and it also describes the client when others are matched against them. There is no separate
+`rg/` field for the client's own goal. The accepted goals are adapted from Hinge. Type the keyword; the full goal
+name is saved and shown on the client card:
 
 Keyword | Relationship goal
 --------|------------------
@@ -494,28 +530,29 @@ Keyword | Relationship goal
 `short` | Short-term fun
 `unsure` | Figuring out my goals
 
-* Keywords and goal names are matched without regard to letter case or repeated spaces: for example, `rg/LONG` and `rg/long-term   RELATIONSHIP` are both saved as `Long-term relationship`.
-* Omit the field if the goal is not known. The client card then displays `Relationship goal: Not specified`. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
-* Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
-* The relationship goal is saved between sessions. Older records without this field remain usable and display `Not specified`.
-* This field records the client's own goal; partner criteria use the same accepted values.
+| Valid values | Bad values |
+| --- | --- |
+| `{rg/long}`, `{rg/long,long-open}`, `<rg/short>`, `{rg/LONG}`; `find rg/long,short` | outer `rg/long`, `{rg/Long-term relationship}`, `{rg/marriage}`, `{rg/long,long}`, `{rg/long,}` |
 
 | Scope | Syntax | Meaning |
 | ----- | ------ | ------- |
-| Client characteristic | Outer `rg/GOAL` | The relationship goal the client is looking for. |
-| Partner preference | `{rg/GOAL[,GOAL]...}` | One or more relationship goals the client would like a partner to have. |
-| Partner dealbreaker | `<rg/GOAL[,GOAL]...>` | One or more relationship goals the partner **must not have**. |
-| Search | `find rg/GOAL` | Search the client's own relationship goal only. |
+| Partner preference | `{rg/GOAL[,GOAL]...}` | The goals the client is open to. These also describe the client to others. |
+| Partner dealbreaker | `<rg/GOAL[,GOAL]...>` | Goals the partner **must not** be open to. |
+| Search | `find rg/GOAL[,GOAL]...` | Clients whose goal preference includes any listed goal. |
 
-* The outer `rg/` may occur once only. `edit INDEX rg/GOAL` replaces the recorded goal, and
-  `edit INDEX rg/` clears it.
-* Each preference or dealbreaker block may contain `rg/` once only and may use a comma-separated list.
-  On `edit`, each new relationship goal is added; a goal already recorded is retained and reported as a
-  duplicate warning. A value repeated within the same comma-separated list is stored once. On `edit`,
-  `{rg/}` or `<rg/>` removes all relationship-goal values in that bucket; `{}` and `<>` clear the
-  whole bucket.
-* No relationship goal can be both preferred and excluded, including criteria retained from an earlier
-  edit. If even one goal conflicts, the command is rejected and leaves the record unchanged.
+* Goals match by **overlap**. `{rg/long}` is met by a partner whose own `{rg/...}` includes `long`. `<rg/short>` is
+  violated by a partner whose `{rg/...}` includes `short`.
+* A partner with no goal preference is unknown for goal criteria, not a match or a violation.
+* `rg/unsure` is a real goal ("Figuring out my goals"), not missing information.
+* Data saved by older versions with an own relationship goal is moved into the client's goal preference when loaded,
+  unless they already have a goal preference or exclude that goal.
+
+| Invalid input | How to correct it |
+| ------------- | ----------------- |
+| `add ... rg/long` or `edit 1 rg/long` | Put the goal in a block: `{rg/long}` |
+| `{rg/Long-term relationship}` | Use the keyword: `{rg/long}` |
+| `{rg/long,long}` or `{rg/long,}` | List each goal once, separated by commas |
+| `{rg/long} <rg/long>` | Do not prefer and exclude the same goal |
 
 ### Deleting a person: `delete`
 
@@ -628,15 +665,15 @@ Furthermore, certain edits can cause the AddressBook to behave in unexpected way
 
 Action | Format, Examples
 --------|------------------
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 rg/long t/friend t/colleague`
+**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 {rg/long} t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, `find s/no`, or `find match/INDEX`<br> e.g., `find n/James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`, `find match/2`
+**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL[,GOAL]...`, `find s/yes`, `find s/no`, `find n/"PHRASE"` or `find match/INDEX`<br> e.g., `find n/James Jake`, `find n/"Ravi s/o"`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long,long-open`, `find s/no`, `find match/2`
 **List** | `list`
 **Group members** | `grp NAME add INDEX [MORE_INDEXES]` or `grp NAME remove INDEX [MORE_INDEXES]`<br> e.g., `grp VIP add 1 3`, `grp VIP remove 2`
 **Group matches** | `grp NAME matches INDEX`<br> e.g., `grp Candidates matches 1`
 **Show group** | `show NAME`<br> e.g., `show VIP`
-**Match** | `match INDEX_A INDEX_B`<br> e.g., `match 1 3`
+**Match** | `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`<br> e.g., `match 1 3`, `match n/Alex Yeoh n/Bernice Yu`
 **Help** | `help`
 **Exit** | `exit`
