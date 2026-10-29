@@ -18,8 +18,6 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-W09-1/tp/releases).
 
 1. Copy the file to the folder you want to use as the _home folder_ for CupidMaxxing.
-   Use a writable location with no folder name ending in `!` anywhere in the JAR's path
-   (for example, use `Cupid` rather than `Cupid!`). See [Known issues](#known-issues) for the workaround.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
@@ -59,10 +57,6 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
-
-* To use text that looks like a prefix inside a value, such as `s/o` in a name, put the whole value in double quotes.<br>
-  For example, `n/"Ravi s/o Kumar"` records the name `Ravi s/o Kumar`; the quotes are not saved. The closing `"` must be
-  followed by a space or the end of the command. Quotes do not allow `{`, `}`, `<` or `>` inside a value.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -106,17 +100,9 @@ Examples:
 ### Adding a client: `add`
 
 Adds a client to CupidMaxxing with contact details and dating attributes. Tags, gender, smoking status,
-religion and partner criteria are optional.
-Adds a client to CupidMaxxing with contact details and age. Gender, smoking status, religion, tags and partner criteria are optional.
+religion and relationship goal are optional.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
-
-* `{CRITERIA}` records partner preferences and `<CRITERIA>` records dealbreakers. Each block accepts `age/`, `g/`, `s/`, `r/`, and `rg/`. See [Matching two clients](#matching-two-clients-match) for values and examples.
-* `AGE` is compulsory and must be an integer from 18 to 99 (inclusive).
-* `g/GENDER` records the client's own gender: `m` (man), `w` (woman), or `nb` (non-binary). Values are case-insensitive and surrounding whitespace is ignored. Omit `g/` or leave it empty for unspecified gender. Only one value and one outer `g/` prefix are allowed per command. Each preference or dealbreaker block may also contain one separate gender criterion.
-* Relationship goals are recorded only as criteria, e.g. `{rg/long}`. See [Relationship goals](#relationship-goals) below.
-
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
 
 * `AGE` is compulsory. The valid values for `AGE`, `SMOKING`, `GENDER`, `RELIGION` and
   `RELATIONSHIP_GOAL` are listed in [Parameter list](#parameter-list).
@@ -125,12 +111,6 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GEND
 * Criteria blocks constitute preferences and dealbreakers that the client has for their partner. See
   [Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker) and the
   [Parameter list](#parameter-list) for their syntax and value rules.
-* Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
-* Omit the field if the status is unknown. The client card shows Smoking as *not set* under Attributes.
-* On `add`, a supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records. On `edit`, an empty outer `s/` clears the status instead.
-* An unquoted ` s/` always starts the smoking status. For example, `n/Ravi s/o Kumar` is read as the name `Ravi` followed by the invalid smoking status `o Kumar`, and is rejected. Write `n/"Ravi s/o Kumar"` instead. Names may contain letters, digits, spaces and `/`, so `n/Siti d/o Ahmad` works without quotes because `d/` is not a prefix.
-* Smoking status is saved between sessions. Older records without this field remain usable and show *not set*.
-* This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 <div markdown="span" class="alert alert-primary">:bulb: **Tip:**
 A person can have any number of tags, including zero. Tags are user-defined labels, such as
@@ -144,79 +124,7 @@ Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 age/25`
 * `add n/Sarah Tan p/91234567 e/sarah@example.com a/12 Clementi Rd age/28 g/w` Records Sarah as a woman.
 * `add n/Alice Tan p/91234567 e/alice@example.com a/Clementi age/30 s/no` Records Alice as a non-smoker.
-* `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 {rg/long}` Records Priya as looking for a long-term relationship.
 * `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 rg/long` Records Priya as looking for a long-term relationship.
-* `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 {rg/long,long-open}` Records Priya as open to a long-term relationship, or one open to short.
-* `add n/Amy Bee p/85355255 e/amy@example.com a/Jurong West age/25 r/Jainism`
-
-#### Religion fields
-
-Use one of these 21 categories: `Christianity`, `Islam`, `Hinduism`, `Buddhism`,
-`Sikhism`, `Judaism`, `Jainism`, `Baha'i Faith`, `Shinto`, `Taoism`, `Confucianism`,
-`Zoroastrianism`, `Rastafari`, `Wicca`, `Paganism`, `Tenrikyo`, `Cao Dai`, `Druze`,
-`Atheism`, `Agnosticism`, or `No religion`. Case and repeated spaces are normalized:
-`r/jAiNiSm` is saved as `Jainism`. Partial names, misspellings, lists, free text and
-`Other` are not supported.
-
-| Scope | Syntax | Meaning | Leaving it unknown or clearing it |
-| ----- | ------ | ------- | --------------------------------- |
-| Client characteristic | Outer `r/RELIGION` | The client's own religion | Omit on `add`; empty outer `r/` clears it on `edit` |
-| Partner preference | `{r/RELIGION}` | A religion the client would like a partner to have | Omit to preserve on `edit`; `{}` clears **all** preferences |
-| Partner dealbreaker | `<r/RELIGION>` | A religion the partner **must not have** | Omit to preserve on `edit`; `<>` clears **all** dealbreakers |
-| Search | `find r/RELIGION` | Search the client's **own** religion only | Unknown religion never matches, including `find r/No religion` |
-
-* Unknown religion is different from the explicit answer `No religion`. Do not select
-  `No religion` just because none of the listed categories applies.
-* Type `{}` and `<>` literally. A command permits one non-nested environment of each
-  type, one outer `r/`, and one `r/` within each environment. Blank religion values
-  are invalid except an outer `r/` in `edit`.
-* Own religion is independent of partner criteria. A normalized religion cannot be
-  both preferred and excluded; this is checked against the **resulting record**, including
-  criteria retained from a previous command.
-* A non-empty edit environment adds supplied gender, religion and relationship-goal values; other criteria remain.
-  Values already recorded are left unchanged and reported as a warning. Age and smoking remain single-valued.
-  All values persist across restarts.
-
-Example: `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>`
-records own Jainism, preferred Buddhism and excluded Islam; contact details and age stay outside the environments.
-
-| Invalid input | How to correct it |
-| ------------- | ----------------- |
-| `add ... r/` or `find r/` | Supply a listed category; omit `r/` on `add` if unknown |
-| `{r/}` or `<r/>` | Supply a category; use `{}` or `<>` only when clearing the entire corresponding bucket on `edit` |
-| `{r/Islam} <r/islam>` | Choose criteria that do not prefer and exclude the same religion |
-| Repeated `r/` or `r/Other` | Supply one listed category in each scope; use a comma-separated list only inside a criteria block |
-| Legacy `rp/`, `rr/`, or `rx/`, including empty values | Use the current scope syntax in the table above |
-
-Rejected commands leave the stored records unchanged. See [Finding clients](#finding-clients-find)
-for the single-search-mode restriction.
-
-#### Relationship goals
-
-A relationship goal says what kind of relationship a client is **looking for**. Goals are recorded only
-in the partner criteria: `{rg/...}` lists the goals the client is open to, and `<rg/...>` lists goals the
-client rules out. The goals in `{rg/...}` also describe the client, so another client's goal criteria
-are checked against them. The accepted goals are adapted from Hinge. Type the keyword; the full goal
-name is saved and shown on the client card:
-
-Keyword | Relationship goal
---------|------------------
-`life` | Life partner
-`long` | Long-term relationship
-`long-open` | Long-term relationship, open to short
-`short-open` | Short-term relationship, open to long
-`short` | Short-term fun
-`unsure` | Figuring out my goals
-
-* Only keywords are accepted, ignoring letter case and surrounding spaces: `{rg/LONG}` is saved as `Long-term relationship`. Full goal names and other values, such as `{rg/marriage}`, are rejected with the list of keywords.
-* List several goals with commas, e.g. `{rg/long,long-open}`. Empty or repeated items, such as `{rg/long,}` or `{rg/long,LONG}`, are rejected.
-* Two goal lists match when they share at least one goal. For example, a client with `{rg/long}` prefers anyone whose `{rg/...}` includes `long`.
-* A goal cannot be both preferred and excluded: `{rg/long,short} <rg/short>` is rejected.
-* A client without `{rg/...}` has an unknown goal. This is different from `{rg/unsure}`, which records that the client is still figuring out their goals.
-* An outer `rg/` outside the blocks is rejected with a hint to use `{rg/...}` or `<rg/...>` instead.
-* Data files from earlier versions that store a client's own goal keep loading: that goal becomes the client's `{rg/...}` preference, unless the client already has one or excludes that goal.
-
-### Listing all clients: `list`
 
 | Error handled | Message shown |
 | --- | --- |
@@ -229,8 +137,7 @@ Keyword | Relationship goal
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION]`
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
 * At least one of the optional fields must be provided.
@@ -241,15 +148,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
-* Relationship goals are recorded only as partner criteria, e.g. `{rg/long}`. See [Relationship goals](#relationship-goals).
-* Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status, and an empty `s/` clears it to *not set*.
-* For own religion, partner religion and clearing rules, use the [religion reference table](#religion-fields).
-  Own religion and omitted criteria remain unchanged unless explicitly edited; conflicting preferred/excluded
-  religions reject the whole edit.
-* **A non-empty environment adds only new gender, religion and relationship-goal values.** For example, if Buddhism is already preferred, `edit 1 {r/Buddhism, Jainism}` keeps Buddhism, adds Jainism, and warns that Buddhism already exists. The same rule applies to exclusions/dealbreakers in `<...>`. Age and smoking remain single-valued and are replaced by a new value.
-* Omit an environment to preserve its entire bucket. Use `{}` to clear all preferences, or `<>` to clear all exclusions/dealbreakers. These do not clear the client's own religion. `{r/}` and `<r/>` are invalid, not clearing commands. A rejected edit leaves the whole record unchanged.
-* The removed `rp/`, `rr/`, and `rx/` prefixes are rejected, including empty values.
-* Use `{rg/GOAL[,GOAL]…}` to add goals the client is open to, or `<rg/GOAL[,GOAL]…>` to add goals they rule out. See [Relationship goals](#relationship-goals).
+* Use `rg/RELATIONSHIP_GOAL` to update the relationship goal. Omitting `rg/` preserves the existing goal, and `rg/` with no value clears it.
 
 Examples:
 
@@ -257,14 +156,8 @@ Examples:
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 *  `edit 1 r/Christianity` Sets the client's own religion.
 *  `edit 1 r/` Clears the client's own religion to unknown, preserving both partner-criteria buckets.
-*  `edit 3 {rg/short-open}` Records the 3rd displayed client as looking for a short-term relationship, open to long, preserving their other details.
-*  `edit 1 {r/Buddhism} <r/Islam>` Updates the preferred religion to Buddhism and the excluded religion to Islam; other criteria, own religion and other client details are preserved.
-*  `edit 1 {r/Buddhism age/25}` Updates the preferred religion to Buddhism and preferred age to 25; other preferences and all exclusions are preserved.
-*  `edit 1 {}` Clears all preferences, preserving exclusions and own religion.
-*  `edit 1 <>` Clears all exclusions/dealbreakers, preserving preferences and own religion.
-*  `edit 3 {rg/short-open,short}` Adds short-term fun and a short-term relationship, open to long, to the goals the 3rd displayed client is open to, preserving their other criteria.
-*  `edit 3 <rg/life>` Records that the 3rd displayed client rules out clients looking for a life partner.
-*  `edit 2 s/` Clears the 2nd displayed client's smoking status.
+*  `edit 3 rg/short-open` Records the 3rd displayed client as looking for a short-term relationship, open to long, preserving their other details.
+*  `edit 3 rg/` Clears the 3rd displayed client's relationship goal.
 * `edit 1 g/nb` changes the first displayed client's gender to non-binary.
 * `edit 1 g/` clears that client's gender.
 
@@ -323,24 +216,21 @@ Examples:
 
 ### Finding clients: `find`
 
-Search by name, age, or the client's own gender, religion or smoking status, their relationship-goal preference, or compatibility with a client. Each search examines the full client list and replaces the displayed results.
+Search by name, age, or the client's own gender, religion, relationship goal or smoking status, or by compatibility with a client. Each search examines the full client list and replaces the displayed results.
 
 Formats:
 
 * `find n/KEYWORD [MORE_KEYWORDS]` searches names. Matching is case-insensitive and uses whole words; a client is returned if any keyword matches. The `n/` prefix is required, like the other search modes: `find Alex` without it is rejected. A blank `n/` and repeated `n/` prefixes are also rejected.
-* `find n/"PHRASE"` searches for a quoted phrase, which may contain `/`. A client is returned if the phrase's words appear together, in order, as whole words of the name, ignoring case. Use it for names such as `Ravi s/o Kumar`, since an unquoted keyword containing `/` is rejected.
 * `find age/AGE` or `find age/MIN-MAX` searches an exact age or an inclusive range. See [Age](#age)
   for accepted values and range rules.
 * `find g/GENDER[,GENDER]…` returns clients matching any listed gender: `m`, `w`, or `nb`, in any order, ignoring case and surrounding whitespace.
 * `find g/` returns every client with a specified gender, equivalent to `find g/m,w,nb`. Unspecified genders are excluded from gender searches.
 * `find r/RELIGION` searches the client's **own religion**, not partner criteria. Use one category from the
   [religion reference table](#religion), which also explains unknown values and invalid inputs.
-* `find rg/GOAL[,GOAL]...` returns clients whose relationship-goal preference includes any listed goal. `GOAL` is a keyword from [Relationship goals](#relationship-goals), such as `long` or `long-open`. Clients with no goal preference are excluded.
-  [religion reference table](#religion-fields), which also explains unknown values and invalid inputs.
-* `find rg/GOAL[,GOAL]…` returns clients whose `{rg/...}` preference includes any listed goal. `GOAL` accepts the same keywords as the criteria: `life`, `long`, `long-open`, `short-open`, `short` or `unsure`. Clients with no goal preference are excluded.
+* `find rg/GOAL` returns clients with that relationship goal. `GOAL` accepts the same keywords and full names as `add` and `edit`, such as `life`, `long`, `long-open`, `short-open`, `short` or `unsure`. Clients with no recorded goal are excluded.
 * `find s/yes` or `find s/no` searches the client's **own smoking habit**, ignoring case and surrounding whitespace in the value. Clients with unspecified smoking status are excluded from both searches; unspecified does not mean non-smoker. Partner preferences and dealbreakers do not affect these results.
 * A blank `s/`, unsupported values (such as `unknown`), repeated `s/` prefixes and lists such as `s/yes,no` are rejected.
-* `find match/INDEX` lists suitable matches for one client. See [Finding matches for one client](#finding-matches-for-one-client-find-match).
+* `find match/INDEX` lists clients compatible with the client at `INDEX` in the displayed list, best matches first. It uses the same rules as [`match`](#matching-two-clients-match). The rest are sorted by how many recorded criteria they meet. Unrecorded details never hide anyone. Use `match INDEX_A INDEX_B` to see the full breakdown for one pair. `list` or any other `find` restores the normal order.
 
 Use one search mode at a time. Name keywords, age, gender, religion, relationship-goal, smoking and match criteria cannot be combined. Combined-trait searches are not supported in this increment.
 
@@ -349,17 +239,16 @@ Use each prefix only once. Duplicate gender values (including `m,M`), unsupporte
 Examples:
 
 * `find n/Alex Sam` finds clients whose names contain Alex or Sam.
-* `find n/"Ravi s/o"` finds `Ravi s/o Kumar`, but not `Kumar Ravi`.
 * `find age/25-35` finds clients aged 25 to 35, inclusive.
 * `find g/w` finds women.
 * `find g/m,nb` finds men or non-binary clients.
 * `find r/jAiNiSm` finds clients whose own religion is Jainism.
 * `find r/Baha'i   Faith` finds clients recorded as Baha'i Faith, ignoring repeated spaces.
 * `find r/No religion` finds clients who explicitly have no religion.
-* `find rg/long,long-open` finds clients open to a long-term relationship, or to a long-term one open to short.
-* `find rg/long,life` finds clients open to a long-term relationship or a life partner.
+* `find rg/long` finds clients looking for a long-term relationship.
 * `find s/YES` finds clients recorded as smokers.
 * `find s/no` finds clients explicitly recorded as non-smokers.
+* `find match/2` lists clients compatible with the 2nd displayed client, best matches first.
 
 A valid search with no matches displays an empty result list and a count of zero.
 Use `list` to show every client again; searching does not modify the stored records.
@@ -367,108 +256,44 @@ Use `list` to show every client again; searching does not modify the stored reco
 | Error handled | Message shown |
 | --- | --- |
 | More than one search mode, an empty name search, or malformed syntax | `Invalid command format!` followed by the `find` usage |
-| An unquoted name keyword contains `/` | `Name keywords cannot contain /. To search for a name containing /, put it in quotes, e.g. find n/"Ravi s/o".` |
-| A quoted name is not closed, or text follows the closing quote | `A value that starts with " must end with a matching "...` or `Unexpected text after a quoted value...` |
+| An index for `find match/INDEX` is invalid | `The person index provided is invalid.` |
 | An attribute value or gender list is invalid | The relevant attribute constraint or `Gender list must contain one or more of m, w, nb without duplicates.` |
-
-### Finding matches for one client: `find match/`
-
-Lists the clients who suit one client, best matches first.
-
-Format: `find match/INDEX`
-
-* `INDEX` is the client's position in the **currently displayed list**. The search then covers every other client.
-* A client is hidden if either of the two has a dealbreaker the other is known to have. For example, a client
-  saved with `<s/yes>` never sees smokers.
-* The rest are sorted by how many of each other's preferences they meet. Unrecorded details never hide anyone.
-* `list` or any other `find` restores the normal order. Records are not changed.
-* To see why one pair suits each other or not, use [`match`](#matching-two-clients-match).
-
-Examples:
-
-* `find match/2` lists clients compatible with the 2nd displayed client, best matches first.
-* `find n/Alex` followed by `find match/1` lists matches for the first Alex found.
-
-| Error handled | Message shown |
-| --- | --- |
-| The index is not a positive integer | `Index must be a positive integer.` |
-| The index is outside the displayed list | `The person index provided is invalid.` |
-| `match/` is combined with another search mode | `Invalid command format!` followed by the `find` usage |
 
 ### Matching two clients: `match`
 
-Shows whether two clients suit each other, checking each client's preferences and dealbreakers against the other.
+Assesses two clients against each other's saved preferences and dealbreakers.
 
-Format: `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`
+Format: `match INDEX_A INDEX_B`
 
-* Give exactly two different clients. Each is either a positive index from the **currently displayed list** or
-  `n/` followed by the client's name. Indexes come before names.
-* A name is looked up among **all** clients, so you do not need to `find` a client first. An exact name is used if
-  one exists; otherwise the name may differ in letter case and spacing, e.g. `n/alex   yeoh` finds `Alex Yeoh`.
-* The result replaces the client list until your next command. It shows the overall result in color, then one
-  table per direction listing each criterion, the other client's value, and its status.
-* The displayed list and client records stay unchanged, and no pairing is saved.
-* Give exactly two different clients. Each is either a positive index from the **currently displayed list**
-  (including after `find`) or `n/` followed by the client's name. Indexes come before names.
-* A name is looked up among **all** clients, so you do not need to `find` a client first. An exact name is used
-  if one exists; otherwise the name may differ in letter case and spacing, e.g. `n/alex   yeoh` finds `Alex Yeoh`.
-* Invalid, repeated, or out-of-range indexes display an error. So does a name no client has, or a name that matches
-  several clients only when letter case and spacing are ignored; use their indexes instead.
-* The result replaces the client list until your next command. An **Overall result** box names both clients and shows
-  the outcome in color (green for compatible, red for incompatible, amber for insufficient information) with a
-  one-line reason.
-* Below it, each client's criteria are checked against the other client in a table with three columns: the
-  requirement (for example, `dealbreaker — excludes smoking: yes`), the other client's value, and the assessment
-  (**Met**, **Unmet**, **Violated**, or **Unknown**).
+* Use two different positive indexes from the **currently displayed list**, including after `find`.
+* Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
+* The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
+  and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
+  and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
 * The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
 
-Each criterion gets one status:
+The meanings, formats, allowed attributes and editing rules for recorded criteria are described under
+[Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker) and
+[Editing a preference or dealbreaker](#editing-a-preference-or-dealbreaker). The match result uses
+those criteria only; it does not modify them.
 
-| Status | Meaning |
-| --- | --- |
-| **Met** | The other client has a preferred value, or does not have an excluded one. |
-| **Unmet** | The other client does not have a preferred value. This alone never makes a pair incompatible. |
-| **Violated** | The other client has an excluded value. The pair is **Incompatible**. |
-| **Unknown** | The other client has not recorded that attribute. Without a violation, the pair has **Insufficient information**. |
-Each block is optional and may appear once. Inside a block, use each of `age/`, `g/`, `s/`, `r/`, or `rg/` at most once.
-Age accepts an exact age or inclusive range, with bounds from 18 to 99.
-Gender, religion and relationship goal each accept a comma-separated list, for example `g/m, w` or `r/Buddhism, Jainism`.
-An empty value in a preference or dealbreaker block, such as `{g/}`, removes that criterion.
-Smoking and religion criteria use the same values as the client's own fields and compare exact normalized categories.
-Relationship-goal criteria take one or more keywords and match when any goal is shared; see [Relationship goals](#relationship-goals).
-When editing, a non-empty block adds new multi-valued criteria without removing existing ones; already recorded
-values generate a warning. Other criteria are preserved.
-Use `{}` to clear preferences or `<>` to clear dealbreakers.
+Overall results, in priority order:
 
-A pair with no violated or unknown criteria is **Compatible with recorded dealbreakers**.
-Criteria are recorded as described in [Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker).
+1. **Incompatible**: either client violates at least one of the other's dealbreakers.
+2. **Insufficient information**: no known violation, but an attribute needed for a recorded criterion is unknown,
+   or neither client has any criteria.
+3. **Compatible with recorded dealbreakers**: all recorded criteria can be evaluated and no dealbreaker is violated.
+   Unmet preferences alone do not make a pair incompatible.
 
-Examples:
-
-* `match 1 3` assesses the first and third displayed clients.
-* `match n/Alex Yeoh n/Bernice Yu` assesses those two clients, whether or not they are displayed.
-* `match 2 n/Bernice Yu` assesses the second displayed client and Bernice Yu.
-Missing gender, smoking status, religion, or goal preference is unknown, not a match or a violation.
+Missing gender, smoking status, religion, or relationship goal is unknown, not a match or a violation.
 An omitted criterion adds no constraint. `No religion` and `unsure` are explicit values, not missing information.
 
-| Error handled | Message shown |
-| --- | --- |
-| Not exactly two clients, a malformed index, or a name before an index | `Invalid command format!` followed by the `match` usage |
-| An index is outside the displayed list | `The person index provided is invalid.` |
-| Both refer to the same client | `Choose two different clients.` followed by the `match` usage |
-| No client has that name | `No client is named NAME.` |
-| Several clients have that name, ignoring case and spacing | `Several clients are named NAME. Use their list indexes instead.` |
-| A name is invalid | The name constraint |
-Examples:
-* `list` followed by `match 1 3` assesses the first and third clients without changing their records.
-* `match n/Alex Yeoh n/Bernice Yu` assesses those two clients, whether or not they are displayed.
-* `match 2 n/Bernice Yu` assesses the second displayed client and Bernice Yu.
+Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
 
 ### Organising clients into groups: `grp` and `show`
 
 Keep named collections of clients, such as event invitations or a shortlist. A client can belong to
-several groups. Membership is shown as a chip after **Groups** at the bottom of the client card, separate from the
-chips for ordinary `t/` tags.
+several groups. Membership is shown as a separate `Group: NAME` badge; ordinary `t/` tags are unchanged.
 
 Action | Format | Example
 -------|--------|--------
@@ -481,7 +306,7 @@ Show a group's members | `show NAME` | `show VIP`
 
 * A name has 1–30 ASCII letters (`A`–`Z`, `a`–`z`), digits, hyphens or underscores, and starts with a letter or digit.
   Spaces and prefixes such as `/` or `g/` are not accepted. Names are case-insensitive: `VIP` and `vip` identify
-  the same group. The spelling used when the group was created is retained on the card and in feedback.
+  the same group. The spelling used when the group was created is retained on badges and in feedback.
 * Every index refers to the **currently displayed list**, including after `find` or `show`. Use positive integers
   separated by spaces, not commas. A repeated, invalid or out-of-range index rejects the entire command.
 * Commands and operation words are lowercase (`grp`, `add`, `remove`, `matches`, `show`).
@@ -505,11 +330,6 @@ Show a group's members | `show NAME` | `show VIP`
 Example: With at least three clients displayed, run `grp VIP add 1 3`, then `show VIP`.
 The two members now have displayed indexes 1 and 2. `grp VIP remove 2` removes the second displayed member
 from VIP, leaving their client record intact. `list` shows all clients again.
-
-For example, with Amy Tan, Ben Lim, Chris Ong and Dana Koh listed in that order, `grp Shortlist add 2 3` and
-`grp VIP add 2` followed by `show Shortlist` display only Ben and Chris. Ben's card shows both of his groups:
-
-![Group members shown with Groups chips on each card](images/ug/groupShow.png)
 
 **Creating a matching shortlist**
 
@@ -661,10 +481,9 @@ block only.
 
 #### Relationship goals
 
-Relationship goals are recorded only as **partner criteria**. A client's `{rg/...}` preference lists the goals
-they are open to, and it also describes the client when others are matched against them. There is no separate
-`rg/` field for the client's own goal. The accepted goals are adapted from Hinge. Type the keyword; the full goal
-name is saved and shown on the client card:
+The optional `rg/RELATIONSHIP_GOAL` field records what the client is **looking for**. The accepted
+goals are adapted from Hinge. Type the short keyword for speed, or the full goal name; either way,
+the full goal name is saved and shown on the client card:
 
 Keyword | Relationship goal
 --------|------------------
@@ -675,29 +494,28 @@ Keyword | Relationship goal
 `short` | Short-term fun
 `unsure` | Figuring out my goals
 
-| Valid values | Bad values |
-| --- | --- |
-| `{rg/long}`, `{rg/long,long-open}`, `<rg/short>`, `{rg/LONG}`; `find rg/long,short` | outer `rg/long`, `{rg/Long-term relationship}`, `{rg/marriage}`, `{rg/long,long}`, `{rg/long,}` |
+* Keywords and goal names are matched without regard to letter case or repeated spaces: for example, `rg/LONG` and `rg/long-term   RELATIONSHIP` are both saved as `Long-term relationship`.
+* Omit the field if the goal is not known. The client card then displays `Relationship goal: Not specified`. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
+* Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
+* The relationship goal is saved between sessions. Older records without this field remain usable and display `Not specified`.
+* This field records the client's own goal; partner criteria use the same accepted values.
 
 | Scope | Syntax | Meaning |
 | ----- | ------ | ------- |
-| Partner preference | `{rg/GOAL[,GOAL]...}` | The goals the client is open to. These also describe the client to others. |
-| Partner dealbreaker | `<rg/GOAL[,GOAL]...>` | Goals the partner **must not** be open to. |
-| Search | `find rg/GOAL[,GOAL]...` | Clients whose goal preference includes any listed goal. |
+| Client characteristic | Outer `rg/GOAL` | The relationship goal the client is looking for. |
+| Partner preference | `{rg/GOAL[,GOAL]...}` | One or more relationship goals the client would like a partner to have. |
+| Partner dealbreaker | `<rg/GOAL[,GOAL]...>` | One or more relationship goals the partner **must not have**. |
+| Search | `find rg/GOAL` | Search the client's own relationship goal only. |
 
-* Goals match by **overlap**. `{rg/long}` is met by a partner whose own `{rg/...}` includes `long`. `<rg/short>` is
-  violated by a partner whose `{rg/...}` includes `short`.
-* A partner with no goal preference is unknown for goal criteria, not a match or a violation.
-* `rg/unsure` is a real goal ("Figuring out my goals"), not missing information.
-* Data saved by older versions with an own relationship goal is moved into the client's goal preference when loaded,
-  unless they already have a goal preference or exclude that goal.
-
-| Invalid input | How to correct it |
-| ------------- | ----------------- |
-| `add ... rg/long` or `edit 1 rg/long` | Put the goal in a block: `{rg/long}` |
-| `{rg/Long-term relationship}` | Use the keyword: `{rg/long}` |
-| `{rg/long,long}` or `{rg/long,}` | List each goal once, separated by commas |
-| `{rg/long} <rg/long>` | Do not prefer and exclude the same goal |
+* The outer `rg/` may occur once only. `edit INDEX rg/GOAL` replaces the recorded goal, and
+  `edit INDEX rg/` clears it.
+* Each preference or dealbreaker block may contain `rg/` once only and may use a comma-separated list.
+  On `edit`, each new relationship goal is added; a goal already recorded is retained and reported as a
+  duplicate warning. A value repeated within the same comma-separated list is stored once. On `edit`,
+  `{rg/}` or `<rg/>` removes all relationship-goal values in that bucket; `{}` and `<>` clear the
+  whole bucket.
+* No relationship goal can be both preferred and excluded, including criteria retained from an earlier
+  edit. If even one goal conflicts, the command is rejected and leaves the record unchanged.
 
 ### Deleting a person: `delete`
 
@@ -732,11 +550,6 @@ CupidMaxxing automatically saves client data after every successful command exce
 which do not change client records. These two commands remain available if the client data file cannot
 be saved. You do not need to save manually. Gender is saved with each client; valid existing records
 without a gender load as unspecified. The existing required-age rule still applies.
-
-If a command reports that saving failed, the app restores the client records, groups and displayed
-list to their state before that command. Resolve the reported storage problem before retrying the
-retained command; its displayed indexes still refer to the original clients. `help` and `exit` remain
-available without attempting another client-data save.
 
 Groups and memberships are saved in the same file as the clients and restored when the app restarts.
 Older valid files without a `groups` field load with no groups.
@@ -775,9 +588,9 @@ invalid names and malformed entries reject the data file. Back up the file and c
 
 Records with valid required fields but no own-religion property load with unknown
 own religion, not `No religion`. Partner criteria are saved in the `preferences` and
-`dealbreakers` maps: for example, `"preferences": {"religion": ["Buddhism", "Jainism"]}` and
-`"dealbreakers": {"religion": ["Islam"]}`. The latter records an exclusion, not a requirement
-to have Islam. Older single-string values remain valid, and records without these maps load with empty partner criteria.
+`dealbreakers` maps: for example, `"preferences": {"religion": "Buddhism"}` and
+`"dealbreakers": {"religion": "Islam"}`. The latter records an exclusion, not a requirement
+to have Islam. Older valid records without these maps load with empty partner criteria.
 Invalid religion values (including a null religion entry inside a criteria map), or the
 same normalized religion in both maps, reject the file through the existing invalid-data
 handling. A missing or null own-religion property still means unknown.
@@ -806,13 +619,6 @@ Furthermore, certain edits can cause the AddressBook to behave in unexpected way
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-3. **A folder name ending in `!` in the JAR's path can prevent startup.** This was reproduced on macOS;
-   Windows/Linux behaviour has not been verified. JavaFX may report `Error initializing QuantumRenderer`
-   or `No toolkit found` instead of opening the window. Close any running instance, then rename the
-   affected folder (for example, `Cupid!` to `Cupid`) or move the whole home folder to a writable path
-   with no folder name ending in `!`. Keep the JAR, `data` folder and `preferences.json` together so your
-   records and settings move with the app, then launch it again. Changing only the terminal's working
-   folder or quoting the JAR path does not resolve this resource-loading problem.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -822,20 +628,15 @@ Furthermore, certain edits can cause the AddressBook to behave in unexpected way
 
 Action | Format, Examples
 --------|------------------
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 {rg/long} t/friend t/colleague`
+**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 rg/long t/friend t/colleague`
 **Clear** | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL[,GOAL]...`, `find s/yes`, `find s/no`, `find n/"PHRASE"` or `find match/INDEX`<br> e.g., `find n/James Jake`, `find n/"Ravi s/o"`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long,long-open`, `find s/no`, `find match/2`
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 t/friend t/colleague {rg/long}`
-**Clear** | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL[,GOAL]…`, `find s/yes`, `find s/no`, or `find match/INDEX`<br> e.g., `find n/James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`, `find match/2`
+**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
+**Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, `find s/no`, or `find match/INDEX`<br> e.g., `find n/James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`, `find match/2`
 **List** | `list`
 **Group members** | `grp NAME add INDEX [MORE_INDEXES]` or `grp NAME remove INDEX [MORE_INDEXES]`<br> e.g., `grp VIP add 1 3`, `grp VIP remove 2`
 **Group matches** | `grp NAME matches INDEX`<br> e.g., `grp Candidates matches 1`
 **Show group** | `show NAME`<br> e.g., `show VIP`
-**Match** | `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`<br> e.g., `match 1 3`, `match n/Alex Yeoh n/Bernice Yu`
+**Match** | `match INDEX_A INDEX_B`<br> e.g., `match 1 3`
 **Help** | `help`
 **Exit** | `exit`
