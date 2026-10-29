@@ -735,23 +735,42 @@ Given below are instructions to test the app manually.
 
 Use an isolated writable JAR folder with test data. Do not clear a real client database.
 
-1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
-   Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
-2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, each with a
-   `VIP` chip after **Groups**. Alice's ordinary VIP tag chip should still appear after **Tags**. Check at a narrow
-   window size that the chips wrap and the client details remain readable.
-3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
-   records remain and their VIP group chips disappear, while Alice's ordinary tag remains.
-4. Run `grp VIP add 2` then `grp VIP add 1 2`. Expect the second command to fail without adding Alice.
-   `show VIP` should display only Bob. Run `grp VIP remove 1 2`; it must fail without removing Bob.
-5. Run `edit 1 n/Group Robert`, then `show VIP`. Expect Robert still in VIP. Restart the app and run `show VIP`
-   again; membership and the new name must survive. `delete 1` should retain an empty VIP group.
-6. Run `list`, then `grp Candidates matches 1`. With only Alice and Cara remaining, expect an error because
-   Alice excludes smokers. Add a fourth client with unknown smoking status, run `list` and repeat the command.
-   Expect a new Candidates group containing only the fourth client, with Alice excluded.
-7. Edit the fourth client's smoking status to `yes`, then `show Candidates`. The client should remain a member:
-   membership is a snapshot. `grp candidates matches 1` must reject the existing group name.
-8. Restart and check both groups. Finally run `clear`, restart and run `show VIP`; expect an unknown-group error.
+- [ ] Run `clear`, then add three clients:
+  `add n/Group Alice p/91110001 e/alice@example.com a/Test Lane age/25 s/no t/VIP <s/yes>`,
+  `add n/Group Bob p/91110002 e/bob@example.com a/Test Lane age/26 s/no` and
+  `add n/Group Cara p/91110003 e/cara@example.com a/Test Lane age/27 s/yes`.
+  **Expected:** The list shows Alice, Bob and Cara in that order. Alice has a `VIP` chip after **Tags**.
+- [ ] Run `grp VIP add 1 3`, then `show vip`.
+  **Expected:** Only Alice and Cara are shown, in address-book order, each with a `VIP` chip after **Groups**.
+  Alice's `VIP` tag chip still appears after **Tags**. At a narrow window width, the chips wrap and the client
+  details stay readable.
+- [ ] Run `grp VIP remove 1 2`, then `list`.
+  **Expected:** After the removal, zero clients are displayed and VIP is an empty group. After `list`, all three
+  clients remain, without `VIP` group chips, and Alice's `VIP` tag chip remains.
+- [ ] Run `grp VIP add 2`, then `grp VIP add 1 2`, then `show VIP`.
+  **Expected:** The first command adds Bob. The second fails because Bob is already a member, and Alice is not
+  added. `show VIP` shows only Bob.
+- [ ] With VIP shown, run `grp VIP remove 1 2`.
+  **Expected:** Rejected, because index 2 is outside the one-client list. Bob stays a member.
+- [ ] Run `edit 1 n/Group Robert`, then `show VIP`. Exit, relaunch and run `show VIP` again.
+  **Expected:** Robert (formerly Bob) is still in VIP, and both the membership and the new name survive the restart.
+- [ ] With VIP shown, run `delete 1`.
+  **Expected:** Robert is deleted from the address book and from VIP. VIP remains as an empty group, so
+  `show VIP` lists zero clients.
+- [ ] Run `list`, then `grp Candidates matches 1`.
+  **Expected:** Rejected with "No matching candidates": only Alice and Cara remain, and Alice excludes smokers.
+  No Candidates group is created.
+- [ ] Run `add n/Group Dan p/91110004 e/dan@example.com a/Test Lane age/28`, then `list` and
+  `grp Candidates matches 1`.
+  **Expected:** Candidates is created with only Dan. Alice (the source client) and Cara (a smoker) are excluded.
+- [ ] Run `list`, then `edit 3 s/yes`, then `show Candidates`. Then run `grp candidates matches 1`.
+  **Expected:** Dan is still in Candidates although he now smokes: a matching shortlist is a snapshot.
+  The second command is rejected because the group already exists.
+- [ ] Try `grp VIP add 0`, `grp VIP add 1 1`, `grp VIP add 1,2`, `grp -VIP add 1`, `grp VIP ADD 1`, `show`,
+  `show VIP extra` and `show Unknown`.
+  **Expected:** Each command is rejected with an error. No group or displayed list changes.
+- [ ] Exit, relaunch and run `show VIP`, then `show Candidates`. Then run `clear`, exit, relaunch and run `show VIP`.
+  **Expected:** Both groups survive the first restart. After `clear`, `show VIP` reports an unknown group.
 
 ### Recording religion preferences and exclusions
 
@@ -1004,6 +1023,34 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
    1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
 
+### Recording and clearing smoking status
+
+Use an isolated writable JAR folder with test data. Do not clear a real client database.
+
+- [ ] Run `clear`, then add three clients:
+  `add n/Smoke Yes p/92220001 e/sy@example.com a/Test Lane age/25 s/YES {s/no} <s/yes>`,
+  `add n/Smoke No p/92220002 e/sn@example.com a/Test Lane age/26 s/ no` and
+  `add n/Smoke Unknown p/92220003 e/su@example.com a/Test Lane age/27`.
+  **Expected:** The cards show Smoking `Yes`, `No` and `not set`, and the feedback shows `Smoking: yes`,
+  `Smoking: no` and `Smoking: Not specified`. Smoke Yes keeps its own status `Yes` while preferring `no` and
+  excluding `yes`.
+- [ ] Try `add n/Smoke Bad p/92220004 e/sb@example.com a/Test Lane age/25 s/`, then the same command ending in
+  `s/maybe`, then ending in `s/yes s/no`.
+  **Expected:** Each command is rejected and no client is added. The first two give the smoking-status error;
+  the third reports the repeated `s/` prefix.
+- [ ] Try `add n/Ravi s/o Kumar p/92220005 e/rk@example.com a/Test Lane age/25`.
+  **Expected:** Rejected. The error says that `s/` always starts the smoking status, so other fields cannot
+  contain ` s/` (e.g. `s/o` in a name). No client is added.
+- [ ] Run `edit 3 s/no`, then `edit 3 s/`, then `edit 3 s/` again.
+  **Expected:** Smoke Unknown becomes `No`, then `not set`; the third command succeeds without changing anything.
+  Name, contact details and age stay the same throughout.
+- [ ] Run `edit 1 p/99990000`.
+  **Expected:** Only the phone changes. Smoke Yes is still `Yes`, with the same preference and dealbreaker.
+- [ ] Try `edit 1 s/maybe` and `edit 1 s/no s/yes`.
+  **Expected:** Both are rejected, and Smoke Yes is unchanged.
+- [ ] Exit and relaunch.
+  **Expected:** The three statuses are still `Yes`, `No` and `not set`.
+
 ### Finding clients by smoking status
 
 The `FindCommandParser` reuses `ParserUtil.parseSmokingStatus` to validate a single `s/yes` or `s/no`
@@ -1011,18 +1058,21 @@ criterion. `SmokingStatusMatchesPredicate` compares only the client's recorded s
 It rejects an unspecified search criterion, and unspecified client statuses match neither value.
 The existing `FindCommand` filters the full address book without changing stored records.
 
-Manual checks (use a separate test data set):
+Continue with the three clients from [Recording and clearing smoking status](#recording-and-clearing-smoking-status).
 
-1. Add three clients with distinct names: one with `s/yes`, one with `s/no`, and one with no `s/`.
-   Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
-2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
-   even though the previous search hid that client. Check that the displayed count is correct.
-3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find n/Alice s/yes`.
-   Each should report an error and preserve the previous results and records.
-4. Run `list` to restore all three clients. Restart the application and repeat the searches;
-   the results should remain the same. With no clients of the searched status, expect zero matches.
-5. After `find s/no`, run `edit 1 s/yes` or `delete 1` on disposable test data.
-   Confirm that it targets the first displayed client, not the first client in the full book.
+- [ ] Run `find s/YES`, then `find s/no`.
+  **Expected:** The first lists only Smoke Yes and the second only Smoke No, each with a count of 1, even though
+  the previous search hid that client. Smoke Unknown is never listed: unspecified does not mean non-smoker.
+  Smoke Yes's `{s/no}` preference does not make it appear for `find s/no`.
+- [ ] Try `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25` and `find n/Smoke s/yes`.
+  **Expected:** Each command is rejected with an error. The previous results and all records are unchanged.
+- [ ] Run `find s/no`, then `edit 1 s/yes`, then `find s/yes`.
+  **Expected:** The edit changes Smoke No, the first displayed client, not Smoke Yes, which is first in the
+  full list. `find s/yes` then lists both Smoke Yes and Smoke No.
+- [ ] Run `find s/no`.
+  **Expected:** No client is listed and the count is zero.
+- [ ] Run `list`, exit, relaunch and repeat `find s/yes`.
+  **Expected:** The same two clients are listed after the restart.
 
 ### Saving data
 

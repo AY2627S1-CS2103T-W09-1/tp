@@ -275,6 +275,11 @@ Set partner criteria with `add` or `edit`: `{...}` contains preferences and `<..
 For example, `edit 1 {age/25-35 rg/long} <s/yes>` prefers ages 25–35 and a long-term relationship,
 and excludes smokers. Ordinary fields outside the blocks describe the client's own attributes.
 
+Each client card lists its preferences under **Prefers** and its dealbreakers under **Dealbreakers**, in the
+**Partner criteria** column:
+
+![Client cards showing partner preferences and dealbreakers](images/ug/criteriaCards.png)
+
 Each block is optional and may appear once. Inside a block, use each of `age/`, `g/`, `s/`, `r/`, or `rg/` at most once.
 Age accepts an exact age or inclusive range, with bounds from 18 to 99.
 Gender accepts one value: `g/m`, `g/w`, or `g/nb`, ignoring case. Empty values and gender lists are rejected inside blocks.
@@ -295,6 +300,15 @@ Missing gender, smoking status, religion, or relationship goal is unknown, not a
 An omitted criterion adds no constraint. `No religion` and `unsure` are explicit values, not missing information.
 
 Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
+
+In the screenshots below, `list` shows Amy Tan, Ben Lim (a non-smoker), Chris Ong (a smoker) and Dana Koh, in that
+order. `match 1 2` finds no violated dealbreaker:
+
+![Match result: compatible with recorded dealbreakers](images/ug/matchCompatible.png)
+
+`match 1 3` is incompatible, because Chris smokes and Amy's dealbreaker excludes smokers:
+
+![Match result: incompatible because a dealbreaker is violated](images/ug/matchIncompatible.png)
 
 ### Organising clients into groups: `grp` and `show`
 
@@ -337,6 +351,11 @@ Show a group's members | `show NAME` | `show VIP`
 Example: With at least three clients displayed, run `grp VIP add 1 3`, then `show VIP`.
 The two members now have displayed indexes 1 and 2. `grp VIP remove 2` removes the second displayed member
 from VIP, leaving their client record intact. `list` shows all clients again.
+
+After `grp Shortlist add 2 3` and `grp VIP add 2` on the list above, `show Shortlist` displays only Ben and Chris.
+Ben's card shows both of his groups:
+
+![Group members shown with Groups chips on each card](images/ug/groupShow.png)
 
 **Creating a matching shortlist**
 
