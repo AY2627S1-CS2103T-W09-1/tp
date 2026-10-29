@@ -176,11 +176,6 @@ This section describes some noteworthy details on how certain features are imple
 `find Alice g/m` and `find n/Alice age/25` are all rejected with the usage message. This replaces AB3's bare-keyword
 form and removes the special case that previously treated any unprefixed text as a name search.
 
-`parseNameSearch` trims the `n/` value, rejects a blank value with a specific message, and rejects values containing
-`/` so that a mistyped prefix (e.g. `n/Alice x/1`) is never searched for as a name. The remaining text is split on
-whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
-any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
-
 ### Recording Dating Data
 
 ##### Recording age
@@ -274,13 +269,18 @@ they do not represent additional stored associations.
 
 ##### Recording relationship goals
 
+A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
+`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
+`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
+Keeping one copy avoids an own goal and a goal preference that disagree.
+
 `RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge. Each value
 holds a short keyword (for example, `long-open`) and a full name. Users type keywords only:
 `RelationshipGoal#parseKeywordList` splits the input on commas and rejects unknown, empty or repeated keywords.
-`RelationshipGoal#formatCriterion` stores the goals as their full names joined by ` or `, in enum order. Commas
-cannot separate stored goals because some full names contain one. `DatingAttribute#parseCriterion` uses the
-keyword path for user input, while `DatingAttribute#normalizeCriterion` uses the more lenient
-`RelationshipGoal#parseStoredCriterion` for the hand-editable data file.
+`DatingCriteriaParser` stores each goal as its full name, one per value in the criterion's set, like other
+multi-valued criteria. Users cannot separate full names with commas because some full names contain one.
+`DatingAttribute#normalizeCriterion` uses the more lenient `RelationshipGoal#fromStoredValue`, which also accepts
+keywords and ignores case, for the hand-editable data file.
 
 `DatingCriteria#getRelationshipGoals` returns the goals in the preference, and `Person#getRelationshipGoals`
 exposes them; an empty set means the goal is **unknown**, not `Figuring out my goals`. The `DatingCriteria`
@@ -294,6 +294,7 @@ already has one or excludes that goal, so an older file never fails to load beca
 `find rg/GOAL[,GOAL]...` parses the list with `ParserUtil#parseRelationshipGoals`.
 `RelationshipGoalMatchesPredicate` keeps clients whose goals share at least one goal with the list, so clients
 with an unknown goal are never returned.
+
 
 ###### Internal representation
 
@@ -323,7 +324,6 @@ A relationship goal is recorded only as a partner criterion: `{rg/...}` lists th
 `<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
 `{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
 Keeping one copy avoids an own goal and a goal preference that disagree.
-
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching): a criterion is met when it
 shares at least one goal with the other client's goals.
@@ -385,6 +385,13 @@ are reported through the existing `IllegalValueException` invalid-data path.
 > **Class diagram:** To be uploaded here.
 
 
+A quoted value, `find n/"PHRASE"`, is searched as one phrase instead. The tokenizer removes the quotes, so the
+parser checks the raw argument text after `n/` for a leading `"`. A quoted value may contain `/` and becomes a
+`NameContainsPhrasePredicate`, which splits the phrase and the name into lower-case words and matches when the
+phrase's words appear together and in order in the name (`Collections#indexOfSubList`). `find n/"Ravi s/o"`
+therefore finds `Ravi s/o Kumar` but not `Kumar Ravi s/o x` or `Ravisankar`. An unquoted value containing `/`
+is rejected with a message suggesting quotes.
+
 ### Maintaining preferences and dealbreakers
 
 
@@ -414,7 +421,7 @@ For example, `{r/Buddhism} <r/buddhism>` and a retained preferred `age/25-30` pl
 `age/28-35` are rejected. The `DatingCriteria` constructor and `fromStorage` apply the same invariant,
 so a malformed JSON file cannot introduce a state that commands would reject.
 
-## Special characters in Dating Attributes
+### Quoted argument values
 
 `ArgumentTokenizer` scans the arguments once, left to right, recording the earliest prefix occurrence each time.
 When the first non-space character after a prefix is `"`, the value is quoted: the scan skips to the next `"` that
@@ -427,19 +434,33 @@ and in the preamble, are kept as typed.
 Every command that uses the tokenizer gets this behaviour, including values inside `{...}` and `<...>`.
 `DatingCriteriaParser` still runs first, so quotes do not protect `{`, `}`, `<` or `>`.
 `Name` allows `/` after its first character, so quoted names such as `Ravi s/o Kumar` pass validation.
-`FindCommandParser` still rejects name keywords that contain `/`, because a keyword such as `s/o` usually means
-a mistyped prefix; such clients are found by their other name words.
+`FindCommandParser` still rejects unquoted name keywords that contain `/`, because a keyword such as `s/o` usually
+means a mistyped prefix. A quoted name search is described under [Prefixed name search](#prefixed-name-search).
 
 ### Matching
 
 #### Pairwise matching
 
-`MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
-`MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
-`MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
-gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
-inside each preference or dealbreaker environment; gender lists are rejected. An empty criterion value removes
+`MatchCommandParser` accepts exactly two clients. Preamble tokens are parsed as indexes with
+`ParserUtil.parseIndex` and `n/` values as names with `ParserUtil.parseName`, so indexes come before names.
+Each becomes a `ClientReference`, a sealed interface whose `resolve(Model)` returns the client:
+
+* `ClientReference.ByIndex` looks the index up in `Model.getFilteredPersonList()` and rejects out-of-range indexes.
+* `ClientReference.ByName` searches the whole address book, so the matchmaker need not filter the list first.
+  It returns the client with exactly that `Name` if there is one. Otherwise it accepts a single client whose name
+  differs only in letter case and spacing, and rejects a name with no such client or with several.
+
+The parser rejects two identical references, and `MatchCommand` rejects two references that resolve to the same
+client, such as `match 1 n/Alex Yeoh` when Alex Yeoh is displayed first.
+The parser rejects two identical references. `MatchCommand` also rejects two references that resolve to the same
+client, such as `match 1 n/Alex Yeoh` when Alex Yeoh is displayed first. Records keep the references comparable,
+so `MatchCommand#equals` compares them directly.
+
+`MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes and goal
+preference, preserving unknown gender, smoking status, religion, and goals. Age uses the existing inclusive
+`AgeMatchesPredicate`; a relationship-goal criterion is met when it shares a goal with the other client's goal
+preference; other attributes compare canonical values. Gender, religion and relationship-goal criteria may hold
+several values, and a preference is met when any of its values matches. An empty criterion value removes
 that attribute from the corresponding preference or dealbreaker set.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
