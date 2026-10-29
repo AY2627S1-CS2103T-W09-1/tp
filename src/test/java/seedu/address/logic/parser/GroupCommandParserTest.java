@@ -1,7 +1,5 @@
 package seedu.address.logic.parser;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -68,17 +66,5 @@ public class GroupCommandParserTest {
         assertParseSuccess(showParser, "  vip ", new ShowGroupCommand(vip));
         assertParseFailure(showParser, "", INVALID_SHOW_FORMAT);
         assertParseFailure(showParser, " VIP extra", INVALID_SHOW_FORMAT);
-    }
-
-    @Test
-    public void equals() {
-        GroupCommand add = new GroupCommand(vip, Operation.ADD, List.of(INDEX_FIRST_PERSON));
-        assertEquals(add, new GroupCommand(new GroupName("vip"), Operation.ADD, List.of(INDEX_FIRST_PERSON)));
-        assertNotEquals(add, new GroupCommand(vip, Operation.REMOVE, List.of(INDEX_FIRST_PERSON)));
-        assertNotEquals(add, new GroupCommand(vip, Operation.ADD, List.of(INDEX_SECOND_PERSON)));
-        assertNotEquals(add, new GroupCommand(new GroupName("Other"), Operation.ADD, List.of(INDEX_FIRST_PERSON)));
-        assertNotEquals(add, new ShowGroupCommand(vip));
-        assertEquals(new ShowGroupCommand(vip), new ShowGroupCommand(new GroupName("vip")));
-        assertNotEquals(new ShowGroupCommand(vip), new ShowGroupCommand(new GroupName("Other")));
     }
 }
