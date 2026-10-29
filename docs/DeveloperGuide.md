@@ -585,7 +585,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **Main success scenario (MSS)**
 
-1. The matchmaker requests to add a client with contact details and optional gender, age, smoking habit, religion, preferences, and dealbreakers.
+1. The matchmaker requests to add a client with contact details and age, and optional gender, smoking habit, religion, preferences, and dealbreakers.
 2. CupidMaxxing validates the supplied values and checks for repeated attributes within the command.
 3. CupidMaxxing creates the client record and shows the stored information.
 4. At a later visit, the matchmaker requests to edit that client with a new preference or characteristic.
@@ -595,7 +595,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **Extensions**
 
-* 2a. A supplied value is invalid, an attribute is repeated, or a preference conflicts with a dealbreaker in the same command.
+* 2a. A supplied value is invalid, an attribute is repeated, or the same normalized religion is both preferred and excluded.
     * 2a1. CupidMaxxing explains the invalid input and changes no data.
 
       Use case ends.
@@ -608,25 +608,25 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **MSS**
 
-1. The matchmaker requests `filter` with at least one criterion, such as an age range and smoking status.
-2. CupidMaxxing checks that each criterion is supported and has a valid value.
-3. CupidMaxxing searches the entire address book and shows each client who satisfies **all** supplied criteria exactly once.
+1. The matchmaker requests `find` using one recorded characteristic, such as `find age/25-35` or `find s/no`.
+2. CupidMaxxing checks that the search uses one supported mode and that its input is valid.
+3. CupidMaxxing searches the entire address book and shows each client who matches the search criterion exactly once.
 4. CupidMaxxing reports how many clients matched. The displayed indexes are updated to match the filtered list.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. No criterion is supplied, or a criterion is invalid or repeated.
+* 2a. No search mode is supplied, multiple modes are combined, a prefix is repeated, or the input is invalid.
     * 2a1. CupidMaxxing reports the problem and keeps the previously displayed list unchanged.
 
       Use case ends.
-* 3a. No client satisfies every criterion.
+* 3a. No client matches the search criterion.
     * 3a1. CupidMaxxing shows an empty list and reports that no clients match.
 
       Use case ends.
 
-A missing client attribute does not satisfy a filter criterion. Separate client records with the same name remain separate results.
+A missing client attribute does not satisfy a search criterion. Client records with the same exact name are treated as duplicates, even if other details differ.
 
 **Use case: Assess a pair of clients**
 
@@ -634,7 +634,7 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
 
 1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
-3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
+3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, violated, or unknown, and an overall assessment.
 4. The displayed list and stored client records remain unchanged.
 
    Use case ends.
