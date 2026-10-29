@@ -195,7 +195,7 @@ public class EditCommand extends Command {
     /**
      * Stores the details to edit a person. Supplied ordinary fields replace existing values.
      * Non-empty criteria maps merge supplied entries; empty maps clear their respective buckets.
-     * An explicitly empty religion field clears the recorded religion; an unspecified smoking status clears it.
+     * An explicitly empty religion field clears the recorded religion.
      */
     public static class EditPersonDescriptor {
         private Name name;
