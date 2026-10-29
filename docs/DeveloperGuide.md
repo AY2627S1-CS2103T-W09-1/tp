@@ -250,9 +250,9 @@ The optional `s/` parameter in `add` and `edit` records a client's own smoking h
 `SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
 not a non-smoker. The parsers reject invalid and repeated `s/` parameters, and empty ones in `add` and `find`.
 `EditCommandParser` maps an empty `s/` to `SmokingStatus.UNSPECIFIED`, clearing the status the same way an empty
-`g/` or `r/` clears gender or religion. Because `ArgumentTokenizer` treats every ` s/` as a prefix, text such as
-`s/o` inside a name is read as a smoking value. `ParserUtil.MESSAGE_INVALID_SMOKING_STATUS` names this cause for
-command input, while storage keeps the shorter `SmokingStatus.MESSAGE_CONSTRAINTS`.
+`g/` or `r/` clears gender or religion. An unquoted ` s/` inside another value, as in `n/Ravi s/o Kumar`, is read as
+the smoking prefix; [quoted values](#quoted-argument-values) avoid this. `ParserUtil.MESSAGE_INVALID_SMOKING_STATUS`
+suggests quoting for command input, while storage keeps the shorter `SmokingStatus.MESSAGE_CONSTRAINTS`.
 
 `Person` includes smoking status in full equality and hashing, while its existing name-based identity rule is unchanged.
 `EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
@@ -263,6 +263,22 @@ The person card and command feedback display the status. Missing information is 
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
+
+### Quoted argument values
+
+`ArgumentTokenizer` scans the arguments once, left to right, recording the earliest prefix occurrence each time.
+When the first non-space character after a prefix is `"`, the value is quoted: the scan skips to the next `"` that
+is followed by whitespace or the end of the string, so prefixes inside the quotes, such as `s/` in
+`n/"Ravi s/o Kumar"`, are not recognized. The quotes and surrounding spaces are removed from the stored value.
+A missing closing quote (`MESSAGE_UNCLOSED_QUOTE`) or text between the closing quote and the next prefix
+(`MESSAGE_TEXT_AFTER_QUOTE`) raises a `ParseException`, so `tokenize` now declares it. Quotes later in a value,
+and in the preamble, are kept as typed.
+
+Every command that uses the tokenizer gets this behaviour, including values inside `{...}` and `<...>`.
+`DatingCriteriaParser` still runs first, so quotes do not protect `{`, `}`, `<` or `>`.
+`Name` allows `/` after its first character, so quoted names such as `Ravi s/o Kumar` pass validation.
+`FindCommandParser` still rejects name keywords that contain `/`, because a keyword such as `s/o` usually means
+a mistyped prefix; such clients are found by their other name words.
 
 ### Application data sandbox
 
@@ -1039,8 +1055,15 @@ Use an isolated writable JAR folder with test data. Do not clear a real client d
   **Expected:** Each command is rejected and no client is added. The first two give the smoking-status error;
   the third reports the repeated `s/` prefix.
 - [ ] Try `add n/Ravi s/o Kumar p/92220005 e/rk@example.com a/Test Lane age/25`.
-  **Expected:** Rejected. The error says that `s/` always starts the smoking status, so other fields cannot
-  contain ` s/` (e.g. `s/o` in a name). No client is added.
+  **Expected:** Rejected. The error says that `s/` starts the smoking status and suggests quoting the value,
+  e.g. `n/"Ravi s/o Kumar"`. No client is added.
+- [ ] Run `add n/"Ravi s/o Kumar" p/92220005 e/rk@example.com a/Test Lane age/25 s/no`, then `delete 4`.
+  **Expected:** The client is added as `Ravi s/o Kumar` with Smoking `No`; the quotes are not part of the name.
+  `delete 4` removes it again so that the indexes below still apply.
+- [ ] Try `add n/"Ravi s/o Kumar p/92220005 e/rk@example.com a/Test Lane age/25` and
+  `add n/"Ravi s/o" Kumar p/92220005 e/rk@example.com a/Test Lane age/25`.
+  **Expected:** Both are rejected: the first for a missing closing quote, the second for text after the closing
+  quote. No client is added.
 - [ ] Run `edit 3 s/no`, then `edit 3 s/`, then `edit 3 s/` again.
   **Expected:** Smoke Unknown becomes `No`, then `not set`; the third command succeeds without changing anything.
   Name, contact details and age stay the same throughout.

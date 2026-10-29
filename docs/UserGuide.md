@@ -58,6 +58,10 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
+* To use text that looks like a prefix inside a value, such as `s/o` in a name, put the whole value in double quotes.<br>
+  For example, `n/"Ravi s/o Kumar"` records the name `Ravi s/o Kumar`; the quotes are not saved. The closing `"` must be
+  followed by a space or the end of the command. Quotes do not allow `{`, `}`, `<` or `>` inside a value.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
@@ -89,7 +93,7 @@ The optional `s/SMOKING` field records the client's **own smoking habit**:
 * Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
 * Omit the field if the status is unknown. The client card shows Smoking as *not set* under Attributes.
 * On `add`, a supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records. On `edit`, an empty outer `s/` clears the status instead.
-* `s/` always starts the smoking status, so no other field can contain ` s/`. For example, `n/Ravi s/o Kumar` is read as a name `Ravi` followed by the invalid smoking status `o Kumar`, and is rejected. Names may only contain letters, digits and spaces, so write such names without the `/` (e.g. `n/Ravi so Kumar`).
+* An unquoted ` s/` always starts the smoking status. For example, `n/Ravi s/o Kumar` is read as the name `Ravi` followed by the invalid smoking status `o Kumar`, and is rejected. Write `n/"Ravi s/o Kumar"` instead. Names may contain letters, digits, spaces and `/`, so `n/Siti d/o Ahmad` works without quotes because `d/` is not a prefix.
 * Smoking status is saved between sessions. Older records without this field remain usable and show *not set*.
 * This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 

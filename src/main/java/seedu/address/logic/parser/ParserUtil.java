@@ -31,7 +31,8 @@ public class ParserUtil {
             + "Use outer r/ for the client's own religion, {r/RELIGION} for a partner preference, "
             + "or <r/RELIGION> for an excluded partner religion (must not have).";
     public static final String MESSAGE_INVALID_SMOKING_STATUS = SmokingStatus.MESSAGE_CONSTRAINTS
-            + " s/ always starts the smoking status, so other fields cannot contain \" s/\" (e.g. s/o in a name).";
+            + " s/ starts the smoking status, so to use \" s/\" inside another field, put that value in quotes,"
+            + " e.g. n/\"Ravi s/o Kumar\".";
 
     /**
      * Rejects removed partner-criteria prefixes before they can become part of another field's value.

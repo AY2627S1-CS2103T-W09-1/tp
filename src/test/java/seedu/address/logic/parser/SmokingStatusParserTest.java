@@ -82,11 +82,29 @@ public class SmokingStatusParserTest {
     }
 
     @Test
-    public void parse_nameContainingSmokingPrefix_explainsReservedPrefix() {
+    public void parse_unquotedNameContainingSmokingPrefix_suggestsQuotes() {
         String details = " n/Ravi s/o Kumar p/91234567 e/ravi@example.com a/Home age/25";
         assertParseFailure(addParser, details, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
         assertParseFailure(editParser, "1 n/Ravi s/o Kumar", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
-        assertTrue(ParserUtil.MESSAGE_INVALID_SMOKING_STATUS.contains("s/o"));
+        assertTrue(ParserUtil.MESSAGE_INVALID_SMOKING_STATUS.contains("n/\"Ravi s/o Kumar\""));
+    }
+
+    @Test
+    public void parse_quotedNameContainingSmokingPrefix_keepsNameAndSmokingStatus() {
+        Person person = new PersonBuilder().withName("Ravi s/o Kumar").withSmokingStatus("yes").build();
+        String details = " " + PersonUtil.getPersonDetails(person)
+                .replace("n/Ravi s/o Kumar ", "n/\"Ravi s/o Kumar\" ");
+        assertParseSuccess(addParser, details, new AddCommand(person));
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Ravi s/o Kumar")
+                .withSmokingStatus("no").build();
+        assertParseSuccess(editParser, "1 n/\"Ravi s/o Kumar\" s/no", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_badlyQuotedName_rejectsCommand() {
+        assertParseFailure(editParser, "1 n/\"Ravi s/o Kumar s/no", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTE);
+        assertParseFailure(editParser, "1 n/\"Ravi s/o\" Kumar s/no", ArgumentTokenizer.MESSAGE_TEXT_AFTER_QUOTE);
     }
 
     @Test
