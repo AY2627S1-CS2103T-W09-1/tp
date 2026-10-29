@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.commands.ClientReference;
 import seedu.address.logic.commands.MatchCommand;
 import seedu.address.logic.commands.MatchCommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -122,6 +123,19 @@ public class MatchCommandIntegrationTest {
         assertThrows(CommandException.class, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX, ()
             -> logic.execute("match 1 2"));
         assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_names_matchesHiddenClientsWithoutChangingList() throws Exception {
+        String expected = logic.execute("match 2 3").getFeedbackToUser();
+        logic.execute("find n/Nobody");
+        String saved = Files.readString(storage.getAddressBookFilePath());
+
+        assertEquals(expected, logic.execute("match n/alice n/Bob").getFeedbackToUser());
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+        assertThrows(CommandException.class, String.format(ClientReference.MESSAGE_CLIENT_NOT_FOUND, "Carol"), ()
+            -> logic.execute("match n/Alice n/Carol"));
     }
 
     private void initializeLogic() {

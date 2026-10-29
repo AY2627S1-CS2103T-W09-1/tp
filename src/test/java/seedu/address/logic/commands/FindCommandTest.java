@@ -14,10 +14,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) for {@code FindCommand}.
@@ -71,6 +74,18 @@ public class FindCommandTest {
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
         assertEquals(List.of(CARL, ELLE, FIONA), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_quotedNameWithSlash_findsPhrase() throws Exception {
+        Person ravi = new PersonBuilder().withName("Ravi s/o Kumar").withPhone("90000001").build();
+        Person kumar = new PersonBuilder().withName("Kumar Ravi").withPhone("90000002").build();
+        model.addPerson(ravi);
+        model.addPerson(kumar);
+
+        new AddressBookParser().parseCommand("find n/\"ravi S/O\"").execute(model);
+
+        assertEquals(List.of(ravi), model.getFilteredPersonList());
     }
 
     @Test

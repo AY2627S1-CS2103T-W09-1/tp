@@ -16,6 +16,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -230,7 +231,8 @@ public class EditCommandTest {
         Person expectedPerson = withDatingCriteria(personWithCriteria, new DatingCriteria(
                 Map.of(DatingAttribute.AGE, "25-35", DatingAttribute.SMOKING, "no",
                         DatingAttribute.RELIGION, "Buddhism"),
-                Map.of(DatingAttribute.RELIGION, "Hinduism", DatingAttribute.RELATIONSHIP_GOAL, "long",
+                Map.of(DatingAttribute.RELIGION, Set.of("Islam", "Hinduism"),
+                        DatingAttribute.RELATIONSHIP_GOAL, "long",
                         DatingAttribute.AGE, "18-24")));
 
         assertFirstPersonEditSuccess(descriptor, expectedPerson);

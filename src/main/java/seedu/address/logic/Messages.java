@@ -60,11 +60,13 @@ public class Messages {
         return builder.toString();
     }
 
-    private static void appendCriteria(StringBuilder builder, String label, Map<DatingAttribute, String> criteria) {
+    private static void appendCriteria(StringBuilder builder, String label,
+            Map<DatingAttribute, Set<String>> criteria) {
         if (!criteria.isEmpty()) {
             builder.append("; ").append(label).append(": ")
                     .append(criteria.entrySet().stream()
-                            .map(entry -> entry.getKey().getDisplayName() + " = " + entry.getValue())
+                            .map(entry -> entry.getKey().getDisplayName() + " = "
+                                    + entry.getValue().stream().sorted().collect(Collectors.joining(", ")))
                             .collect(Collectors.joining(", ")));
         }
     }

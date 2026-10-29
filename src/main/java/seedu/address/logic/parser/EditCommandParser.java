@@ -22,6 +22,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -79,18 +80,20 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         parseTagsForEdit(argMultimap.getAllValues(PREFIX_TAG)).ifPresent(editPersonDescriptor::setTags);
         if (argMultimap.getValue(PREFIX_SMOKING).isPresent()) {
-            editPersonDescriptor.setSmokingStatus(ParserUtil.parseSmokingStatus(argMultimap.getValue(PREFIX_SMOKING)
-                    .get()));
+            String value = argMultimap.getValue(PREFIX_SMOKING).get();
+            editPersonDescriptor.setSmokingStatus(value.isEmpty()
+                    ? SmokingStatus.UNSPECIFIED : ParserUtil.parseSmokingStatus(value));
         }
         if (argMultimap.getValue(PREFIX_RELIGION).isPresent()) {
             String value = argMultimap.getValue(PREFIX_RELIGION).get();
             editPersonDescriptor.setReligion(value.isEmpty() ? null : ParserUtil.parseReligion(value));
         }
         if (parsedCriteria.preferencesSupplied()) {
-            editPersonDescriptor.setPreferences(parsedCriteria.preferences());
+            editPersonDescriptor.setPreferences(parsedCriteria.preferences(), parsedCriteria.preferencesToRemove());
         }
         if (parsedCriteria.dealbreakersSupplied()) {
-            editPersonDescriptor.setDealbreakers(parsedCriteria.dealbreakers());
+            editPersonDescriptor.setDealbreakers(parsedCriteria.dealbreakers(),
+                    parsedCriteria.dealbreakersToRemove());
         }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {

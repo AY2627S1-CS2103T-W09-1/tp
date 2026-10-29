@@ -35,6 +35,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -94,6 +95,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_CONSTRAINTS); // invalid phone
         assertParseFailure(parser, "1" + INVALID_EMAIL_DESC, Email.MESSAGE_CONSTRAINTS); // invalid email
         assertParseFailure(parser, "1" + INVALID_ADDRESS_DESC, Address.MESSAGE_CONSTRAINTS); // invalid address
+        assertParseFailure(parser, "1 a/\u2003", Address.MESSAGE_CONSTRAINTS); // Unicode whitespace-only address
         assertParseFailure(parser, "1" + INVALID_TAG_DESC, Tag.MESSAGE_CONSTRAINTS); // invalid tag
 
         // invalid phone followed by valid email
@@ -239,7 +241,7 @@ public class EditCommandParserTest {
     public void parse_relationshipGoalCriteria_success() {
         EditPersonDescriptor descriptor = new EditPersonDescriptor();
         descriptor.setPreferences(Map.of(DatingAttribute.RELATIONSHIP_GOAL,
-                "Long-term relationship or Short-term fun"));
+                Set.of("Long-term relationship", "Short-term fun")));
         descriptor.setDealbreakers(Map.of(DatingAttribute.RELATIONSHIP_GOAL, "Figuring out my goals"));
 
         assertParseSuccess(parser, "1 {rg/short,long} <rg/unsure>", new EditCommand(INDEX_FIRST_PERSON, descriptor));

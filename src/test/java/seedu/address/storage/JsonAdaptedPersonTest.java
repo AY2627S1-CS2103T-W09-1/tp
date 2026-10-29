@@ -302,7 +302,7 @@ public class JsonAdaptedPersonTest {
         Person person = new PersonBuilder(BENSON).withRelationshipGoal("long").build();
         JsonNode json = new ObjectMapper().readTree(JsonUtil.toJsonString(new JsonAdaptedPerson(person)));
         assertFalse(json.has("relationshipGoal"));
-        assertEquals("Long-term relationship", json.get("preferences").get("relationshipGoal").asText());
+        assertEquals("Long-term relationship", json.get("preferences").get("relationshipGoal").get(0).asText());
     }
 
 }

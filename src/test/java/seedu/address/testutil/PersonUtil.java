@@ -88,20 +88,20 @@ public class PersonUtil {
         return sb.toString();
     }
 
-    private static void appendCriteria(StringBuilder builder, Map<DatingAttribute, String> criteria,
+    private static void appendCriteria(StringBuilder builder, Map<DatingAttribute, Set<String>> criteria,
             char openingDelimiter, char closingDelimiter) {
         builder.append(openingDelimiter);
-        criteria.forEach((attribute, value) -> builder.append(getPrefix(attribute))
-                .append(toCommandValue(attribute, value)).append(" "));
+        criteria.forEach((attribute, values) -> builder.append(getPrefix(attribute))
+                .append(toCommandValue(attribute, values)).append(" "));
         builder.append(closingDelimiter).append(" ");
     }
 
-    private static String toCommandValue(DatingAttribute attribute, String value) {
+    private static String toCommandValue(DatingAttribute attribute, Set<String> values) {
         if (attribute != DatingAttribute.RELATIONSHIP_GOAL) {
-            return value;
+            return String.join(", ", values);
         }
-        return RelationshipGoal.parseStoredCriterion(value).stream()
-                .map(RelationshipGoal::getKeyword)
+        return values.stream()
+                .map(value -> RelationshipGoal.fromStoredValue(value).getKeyword())
                 .collect(Collectors.joining(","));
     }
 

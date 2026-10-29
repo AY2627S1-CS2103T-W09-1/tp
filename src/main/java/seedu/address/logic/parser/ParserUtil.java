@@ -34,6 +34,9 @@ public class ParserUtil {
     public static final String MESSAGE_OWN_RELATIONSHIP_GOAL =
             "Relationship goals are partner criteria. Use {rg/GOAL} for the goals the client is open to, "
             + "or <rg/GOAL> for goals the client rules out.";
+    public static final String MESSAGE_INVALID_SMOKING_STATUS = SmokingStatus.MESSAGE_CONSTRAINTS
+            + " s/ starts the smoking status, so to use \" s/\" inside another field, put that value in quotes,"
+            + " e.g. n/\"Ravi s/o Kumar\".";
 
     /**
      * Rejects removed partner-criteria prefixes before they can become part of another field's value.
@@ -53,7 +56,7 @@ public class ParserUtil {
 
     /**
      * Parses a smoking status, ignoring surrounding whitespace and case.
-     * Rejects empty input: an explicitly supplied {@code s/} must have a value.
+     * Rejects empty input; {@code edit} treats an empty {@code s/} as a clear before calling this.
      *
      * @throws ParseException if the status is neither yes nor no.
      */
@@ -61,7 +64,7 @@ public class ParserUtil {
         requireNonNull(status);
         String trimmedStatus = status.trim();
         if (trimmedStatus.isEmpty() || !SmokingStatus.isValidSmokingStatus(trimmedStatus)) {
-            throw new ParseException(SmokingStatus.MESSAGE_CONSTRAINTS);
+            throw new ParseException(MESSAGE_INVALID_SMOKING_STATUS);
         }
         return new SmokingStatus(trimmedStatus);
     }
@@ -117,7 +120,7 @@ public class ParserUtil {
      */
     public static Address parseAddress(String address) throws ParseException {
         requireNonNull(address);
-        String trimmedAddress = address.trim();
+        String trimmedAddress = address.strip();
         if (!Address.isValidAddress(trimmedAddress)) {
             throw new ParseException(Address.MESSAGE_CONSTRAINTS);
         }

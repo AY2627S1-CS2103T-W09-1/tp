@@ -47,6 +47,7 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
+        Runnable restorePoint = model.createRestorePoint();
         commandResult = command.execute(model);
         // Help and exit do not change client data and must remain available when saving fails.
         if (commandResult.isShowHelp() || commandResult.isExit()) {
@@ -56,8 +57,11 @@ public class LogicManager implements Logic {
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
+            restorePoint.run();
             throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
         } catch (IOException ioe) {
+            // Failed input stays in CommandBox; restore its displayed indexes before allowing a retry.
+            restorePoint.run();
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
 

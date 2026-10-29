@@ -84,6 +84,29 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public Runnable createRestorePoint() {
+        AddressBook original = new AddressBook(addressBook);
+        Predicate<? super Person> predicate = filteredPersons.getPredicate();
+        Comparator<? super Person> comparator = sortedPersons.getComparator();
+        GroupName group = displayedGroup;
+        return () -> {
+            // Ranked comparators may only support the old shortlist. Disable them before restoring data.
+            displayedGroup = null;
+            sortedPersons.setComparator(null);
+            filteredPersons.setPredicate(null);
+            addressBook.resetData(original);
+            displayedGroup = group;
+            if (group == null) {
+                filteredPersons.setPredicate(predicate);
+            } else {
+                // Rebuild the live membership filter, not just a fixed list of previously visible clients.
+                applyGroupFilter();
+            }
+            sortedPersons.setComparator(comparator);
+        };
+    }
+
+    @Override
     public boolean hasPerson(Person person) {
         requireNonNull(person);
         return addressBook.hasPerson(person);

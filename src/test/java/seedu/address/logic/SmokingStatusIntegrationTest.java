@@ -22,6 +22,7 @@ import seedu.address.model.person.SmokingStatus;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.PersonBuilder;
 
 public class SmokingStatusIntegrationTest {
 
@@ -116,7 +117,7 @@ public class SmokingStatusIntegrationTest {
         assertEquals(SmokingStatus.UNSPECIFIED, firstPerson().getSmokingStatus());
         AddressBook before = new AddressBook(model.getAddressBook());
         String saved = Files.readString(storage.getAddressBookFilePath());
-        for (String command : new String[] {"edit 1 s/", "edit 1 s/sometimes", "edit 1 s/no s/yes",
+        for (String command : new String[] {"edit 1 s/sometimes", "edit 1 s/no s/yes", "edit 1 s/ s/",
             "add n/Bob p/87654321 e/bob@example.com a/Office age/25 s/unknown"}) {
             assertThrows(ParseException.class, () -> logic.execute(command));
         }
@@ -126,6 +127,26 @@ public class SmokingStatusIntegrationTest {
         assertThrows(CommandException.class, () -> logic.execute(duplicateCommand));
         assertEquals(before, model.getAddressBook());
         assertEquals(saved, Files.readString(storage.getAddressBookFilePath()));
+    }
+
+    @Test
+    public void execute_editEmptySmokingStatus_clearsAndPreservesOtherFields() throws Exception {
+        logic.execute("add n/Alice p/12345678 e/alice@example.com a/Home age/25 g/w t/friend s/yes {s/no} <s/yes>");
+        logic.execute("grp VIP add 1");
+        Person before = firstPerson();
+
+        String feedback = logic.execute("edit 1 s/").getFeedbackToUser();
+
+        Person after = firstPerson();
+        assertTrue(feedback.contains("Smoking: Not specified"));
+        assertEquals(SmokingStatus.UNSPECIFIED, after.getSmokingStatus());
+        assertEquals(new PersonBuilder(before).withSmokingStatus("").build(), after);
+        assertTrue(model.getAddressBook().getGroupList().get(0).contains(after));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+
+        // Clearing an already unspecified status is accepted and leaves the record unchanged.
+        logic.execute("edit 1 s/");
+        assertEquals(after, firstPerson());
     }
 
     private Person firstPerson() {

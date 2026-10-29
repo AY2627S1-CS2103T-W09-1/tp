@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Age;
@@ -14,6 +15,7 @@ import seedu.address.model.person.Gender;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.Religion;
 import seedu.address.model.person.SmokingStatus;
 import seedu.address.model.tag.Tag;
@@ -39,8 +41,8 @@ public class PersonBuilder {
     private Set<Tag> tags;
     private SmokingStatus smokingStatus;
     private Religion religion;
-    private Map<DatingAttribute, String> preferences = new EnumMap<>(DatingAttribute.class);
-    private Map<DatingAttribute, String> dealbreakers = new EnumMap<>(DatingAttribute.class);
+    private Map<DatingAttribute, Set<String>> preferences = new EnumMap<>(DatingAttribute.class);
+    private Map<DatingAttribute, Set<String>> dealbreakers = new EnumMap<>(DatingAttribute.class);
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -150,7 +152,8 @@ public class PersonBuilder {
      * Sets the relationship goals the {@code Person} we are building is open to, recorded as a preference.
      */
     public PersonBuilder withRelationshipGoal(String relationshipGoals) {
-        preferences.put(DatingAttribute.RELATIONSHIP_GOAL, relationshipGoals);
+        preferences.put(DatingAttribute.RELATIONSHIP_GOAL, RelationshipGoal.parseStoredCriterion(relationshipGoals)
+                .stream().map(RelationshipGoal::toString).collect(Collectors.toSet()));
         return this;
     }
 
@@ -158,7 +161,7 @@ public class PersonBuilder {
      * Adds a partner preference to the {@code Person} that we are building.
      */
     public PersonBuilder withPreference(DatingAttribute attribute, String value) {
-        preferences.put(attribute, value);
+        preferences.computeIfAbsent(attribute, ignored -> new HashSet<>()).add(value);
         return this;
     }
 
@@ -166,7 +169,7 @@ public class PersonBuilder {
      * Adds a partner dealbreaker to the {@code Person} that we are building.
      */
     public PersonBuilder withDealbreaker(DatingAttribute attribute, String value) {
-        dealbreakers.put(attribute, value);
+        dealbreakers.computeIfAbsent(attribute, ignored -> new HashSet<>()).add(value);
         return this;
     }
 
