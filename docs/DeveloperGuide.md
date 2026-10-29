@@ -169,55 +169,6 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Named client groups
-
-`grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
-`GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
-Group names use the shared `GroupName` validation: 1–30 ASCII letters, digits, hyphens or underscores,
-with an alphanumeric first character. Equality and hashing use a `Locale.ROOT` lowercase key, while
-display and storage retain the original spelling. Operations and command words remain case-sensitive.
-
-`ClientGroup` is an immutable value containing a name and an immutable, duplicate-free membership list.
-`AddressBook` owns the observable group list and exposes an unmodifiable view. `setGroups` snapshots and
-validates the complete replacement (unique group names and members present in the book) before publishing it.
-
-The command flow is:
-
-1. Parse the operation and distinct positive indexes. Compare their numeric values, since `Index` does not
-   implement value-based hashing.
-2. Resolve **all** indexes against the displayed list before any mutation. This matters when removing multiple
-   members from a shown group: the first removal must not shift the meaning of later indexes.
-3. Build a replacement membership list and validate the operation. Add creates a missing group; remove
-   requires an existing group. Any already-present member on add or absent member on remove rejects the
-   whole command. Single-member groups and empty groups after removal are valid.
-4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
-
-Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
-`INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
-including insufficient-information candidates, but does not apply its preference-score ordering. An existing
-group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
-
-`ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
-order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
-clear the selected-group state. `AddressBook.setPerson` replaces membership references when immutable
-persons are edited; `removePerson` removes references but retains empty groups. Bulk person replacement
-prunes obsolete references. `resetData` validates a complete copy before replacing persons and groups;
-clearing the book therefore clears groups too. Existing add/edit commands still restore the full list.
-
-`JsonAdaptedGroup` stores `name` and `memberNames`, resolving members against the loaded persons' unique
-names. This uses the existing name-based client identity and is independent of displayed or file-array
-positions. App-driven renames are saved consistently; manual JSON renames must update group references.
-Missing groups in legacy files default to an empty collection. Malformed entries, duplicate group names
-or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
-
-`Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
-change. `PersonCard` displays alphabetically ordered `Group: NAME` badges separately from tags, hiding the
-badge container when empty. No additional client fields or external dependencies are required.
-
-Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
-matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
-persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
-
 ### Prefixed name search
 
 `FindCommandParser` tokenizes `n/` together with the other search prefixes (`age/`, `g/`, `r/`, `rg/`, `s/` and
@@ -230,7 +181,11 @@ form and removes the special case that previously treated any unprefixed text as
 whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
 any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
 
-### Client gender
+### Recording Dating Data
+
+#### Recording profile attributes
+
+##### Client gender
 
 `Person` stores a `Gender` enum (`MAN`, `WOMAN`, `NON_BINARY`, or `UNSPECIFIED`). Its command and JSON values are `m`, `w`, `nb`, and the empty string respectively. `Gender.parseValue` is the shared validation and normalization method; `ParserUtil.parseGender` translates invalid input into the existing `ParseException` flow. Gender is included in full person equality, but does not change the name-based duplicate-client check.
 
@@ -244,7 +199,7 @@ Name, age and gender are separate search modes. Combined-trait searches remain d
 
 Tests cover gender value validation, parser rules, full command execution, filtering, editing the correct displayed client, persistence, older JSON records and unchanged data/results after invalid commands. Existing name-search tests are retained. Shared builders and command helpers carry gender so they do not silently discard it.
 
-### Recording smoking status
+##### Recording smoking status
 
 The optional `s/` parameter in `add` and `edit` records a client's own smoking habit.
 `SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
@@ -259,28 +214,10 @@ The person card and command feedback display the status, including `Not specifie
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
 Clearing a recorded smoking status is not supported.
-### Application data sandbox
 
-`AppPaths` derives the packaged application's home folder from its JAR code source,
-not the working directory. `MainApp` resolves preferences and client data under this
-folder; `LogsCenter` confines rotating logs there and escapes log-pattern characters.
-`FileUtil` and `JsonUtil` validate packaged data paths before reading or writing,
-rejecting traversal and existing symbolic links that lead outside the home folder.
-Unsafe log destinations fall back to console logging rather than another directory.
+#### Recording preference and dealbreaker attributes
 
-`Main` configures JavaFX's native-library cache and temporary-file directory inside
-that same home before starting JavaFX. These settings are JVM-process properties,
-not persistent OS configuration changes. The private `.javafx/` and `.tmp/` runtime
-folders must be ordinary directories: all symbolic links at either root or any
-descendant are rejected, including inward links that could hide outward-linked
-children in their targets. This stricter rule applies only to these runtime folders;
-normal in-home data and preferences links retain the existing path-validation behavior.
-An unsafe or unwritable runtime layout aborts startup before JavaFX starts, without
-falling back outside the sandbox or automatically deleting or rewriting existing
-caches or client data. Class-directory runs have no JAR home and retain working-directory
-behavior for development and JUnit fixtures; verify the sandbox against the packaged JAR.
-
-### Religion attributes
+##### Religion attributes
 
 `Religion` accepts only the categories listed in the User Guide. It strips leading and trailing
 whitespace, collapses repeated internal whitespace, and compares names without regard to case.
@@ -303,6 +240,8 @@ the own field with an empty outer `r/`. Omitting it preserves the own religion. 
 `r/` is permitted in each environment independently of the outer `r/`. Blank religion
 values inside environments, duplicate prefixes within an environment, repeated
 environments and nested or unbalanced delimiters are rejected.
+
+#### Internal representation
 
 `DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
 the own field. `Person` holds an immutable `DatingCriteria` with separate preference
@@ -355,7 +294,7 @@ JAR-home-confined storage; religion criteria introduce no new files or OS config
 field, not either partner-criteria map. Criteria-environment searching is not supported. Use `match` for
 compatibility evaluation.
 
-### Recording relationship goals
+##### Recording relationship goals
 
 The optional `rg/` parameter in `add` and `edit` records a client's own relationship goal.
 `RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge.
@@ -387,7 +326,37 @@ comma-separated list, because some full goal names contain commas.
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
 
-### Pairwise matching
+### Maintaining preferences and dealbreakers
+
+#### Editing preferences and dealbreakers
+
+`EditPersonDescriptor` represents an edit as optional updates, rather than mutable updates to a
+`Person`. `DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment (preserve the
+bucket), an empty environment (clear the bucket), and a populated environment (merge the supplied
+attributes). `EditCommand` creates a replacement immutable `Person` only after all fields and the
+resulting `DatingCriteria` have validated. This makes a rejected add, edit, or remove request atomic.
+
+#### Preserving consistency when a field changes
+
+Profile values and criteria use the same `DatingAttribute` value types and normalisation rules. Updating
+one profile field does not alter a criterion, and updating one supplied criterion does not erase omitted
+criteria. The storage adapter serialises the completed immutable record only after the model accepts it;
+therefore parser failures, duplicate-client failures, and contradiction failures leave both the in-memory
+record and persisted data unchanged.
+
+#### Resolving contradictory preferences and dealbreakers
+
+A contradiction is a value that is simultaneously preferred and excluded after an add or edit has been
+merged with retained criteria. For scalar attributes (gender, smoking status, religion, and relationship
+goal), equality after normalisation is contradictory. For age, overlapping preferred and excluded ranges
+are contradictory. The policy is to reject the entire command rather than prioritise either bucket.
+For example, `{r/Buddhism} <r/buddhism>` and a retained preferred `age/25-30` plus a new excluded
+`age/28-35` are rejected. The `DatingCriteria` constructor and `fromStorage` apply the same invariant,
+so a malformed JSON file cannot introduce a state that commands would reject.
+
+### Matching
+
+#### Pairwise matching
 
 `MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
 `MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
@@ -412,7 +381,7 @@ save after successful commands; the saved client data is unchanged. Invalid comm
 Tests cover parsing and dispatch, comparison rules and missing values, filtered indexes, reloads, and unchanged
 records and saved data. Run `./gradlew test --tests '*Match*'` for the matching tests.
 
-### Finding compatible clients
+#### Finding compatible clients for one client
 
 `find match/INDEX` lists the clients compatible with the client at `INDEX` in the displayed list.
 `FindCommandParser` treats `match/` as another exclusive search mode and returns a `FindMatchCommand`.
@@ -438,6 +407,108 @@ To support sorting, `ModelManager` wraps its `FilteredList` in a `SortedList`, a
 the user sees. `Model#updateFilteredPersonList(Predicate, Comparator)` sets both the filter and the
 sort order. The one-argument `updateFilteredPersonList(Predicate)` clears the sort order, so `list`
 and other searches return to insertion order without any changes.
+
+### Forming groups
+
+#### Forming arbitrary groups and tagging
+
+`grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
+`GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
+Group names use the shared `GroupName` validation: 1–30 ASCII letters, digits, hyphens or underscores,
+with an alphanumeric first character. Equality and hashing use a `Locale.ROOT` lowercase key, while
+display and storage retain the original spelling. Operations and command words remain case-sensitive.
+
+`ClientGroup` is an immutable value containing a name and an immutable, duplicate-free membership list.
+`AddressBook` owns the observable group list and exposes an unmodifiable view. `setGroups` snapshots and
+validates the complete replacement (unique group names and members present in the book) before publishing it.
+
+The command flow is:
+
+1. Parse the operation and distinct positive indexes. Compare their numeric values, since `Index` does not
+   implement value-based hashing.
+2. Resolve **all** indexes against the displayed list before any mutation. This matters when removing multiple
+   members from a shown group: the first removal must not shift the meaning of later indexes.
+3. Build a replacement membership list and validate the operation. Add creates a missing group; remove
+   requires an existing group. Any already-present member on add or absent member on remove rejects the
+   whole command. Single-member groups and empty groups after removal are valid.
+4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
+
+#### Forming groups based on match and tagging
+
+Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
+`INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
+including insufficient-information candidates, but does not apply its preference-score ordering. An existing
+group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
+
+`ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
+order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
+clear the selected-group state. `AddressBook.setPerson` replaces membership references when immutable
+persons are edited; `removePerson` removes references but retains empty groups. Bulk person replacement
+prunes obsolete references. `resetData` validates a complete copy before replacing persons and groups;
+clearing the book therefore clears groups too. Existing add/edit commands still restore the full list.
+
+`JsonAdaptedGroup` stores `name` and `memberNames`, resolving members against the loaded persons' unique
+names. This uses the existing name-based client identity and is independent of displayed or file-array
+positions. App-driven renames are saved consistently; manual JSON renames must update group references.
+Missing groups in legacy files default to an empty collection. Malformed entries, duplicate group names
+or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
+
+`Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
+change. `PersonCard` displays alphabetically ordered `Group: NAME` badges separately from tags, hiding the
+badge container when empty. No additional client fields or external dependencies are required.
+
+Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
+matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
+persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
+
+### Extending the application
+
+#### Extending matching parameters
+
+To add a dating attribute, introduce a `DatingAttribute` entry and a strongly typed value object (or enum)
+that owns parsing, normalisation, equality and its user-visible constraint. Add the outer profile prefix and
+criteria-block prefix to the parser, then carry the value through `Person`, `EditPersonDescriptor`,
+`DatingCriteria`, `JsonAdaptedPerson`, the client card, and any relevant `find` predicate. Finally, teach
+`MatchAssessment` how to evaluate the attribute as a preference and as a dealbreaker. Do not use a raw
+string comparison for a new attribute: matching, searching, command validation and JSON loading must share
+the same normalised representation.
+
+#### Required validation, storage and test updates
+
+For every new attribute, add parser tests for valid, blank, repeated and malformed prefixes; model tests
+for equality and contradiction rules; command tests for add/edit/find/match; storage round-trip and malformed
+JSON tests; and an integration test that confirms the displayed index is honoured after filtering or sorting.
+Update the User Guide parameter list and both criteria sections at the same time. This keeps the parser,
+storage schema, matching semantics and public documentation in lockstep.
+
+### Reliability
+
+#### Application data sandbox
+
+`AppPaths` derives the packaged application's home folder from its JAR code source, not the working directory.
+`MainApp` resolves preferences and client data under this folder; `LogsCenter` confines rotating logs there and
+escapes log-pattern characters. `FileUtil` and `JsonUtil` validate packaged data paths before reading or writing,
+rejecting traversal and existing symbolic links that lead outside the home folder. Unsafe log destinations fall
+back to console logging rather than another directory.
+
+`Main` configures JavaFX's native-library cache and temporary-file directory inside that same home before
+starting JavaFX. These settings are JVM-process properties, not persistent OS configuration changes. The private
+`.javafx/` and `.tmp/` runtime folders must be ordinary directories: all symbolic links at either root or any
+descendant are rejected, including inward links that could hide outward-linked children in their targets. This
+stricter rule applies only to these runtime folders; normal in-home data and preferences links retain the existing
+path-validation behavior. An unsafe or unwritable runtime layout aborts startup before JavaFX starts, without
+falling back outside the sandbox or automatically deleting or rewriting existing caches or client data.
+Class-directory runs have no JAR home and retain working-directory behavior for development and JUnit fixtures;
+verify the sandbox against the packaged JAR.
+
+#### Error handling, validation and recovery
+
+Command parsers report invalid input through `ParseException`; command execution reports state-dependent errors
+through `CommandException`; and JSON loading reports invalid persisted data through `IllegalValueException` and
+the existing storage error path. Validation happens before model mutation. The protected invariants include valid
+typed attributes, unique client identity, non-conflicting criteria, valid group membership, and sandbox-confined
+paths. Consequently, a failed command leaves the current model and saved data unchanged; a malformed data file
+does not create a partially loaded model. Tests exercise these paths alongside normal command behaviour.
 
 ### \[Proposed\] Undo/redo feature
 
