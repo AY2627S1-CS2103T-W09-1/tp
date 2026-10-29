@@ -327,10 +327,8 @@ environments and nested or unbalanced delimiters are rejected.
 
 `DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
 the own field. `Person` holds an immutable `DatingCriteria` with separate preference
-and dealbreaker maps indexed by `DatingAttribute`, each mapping to a set of canonical values.
-Gender, religion and relationship goal accept comma-separated value lists; age (an exact
-point or an interval) and smoking remain single-valued. The resulting criteria must not
-prefer and exclude any same normalized gender, smoking status, religion, or relationship
+and dealbreaker maps indexed by `DatingAttribute`. The resulting criteria must not
+prefer and exclude the same normalized gender, smoking status, religion, or relationship
 goal. Preferred and excluded age ranges must not overlap. These checks also apply when
 an edit updates only one bucket and retains the other. Age ranges accept spaces around
 the hyphen, such as `age/25 - 30`. The own religion is independent: it may equal or
@@ -428,8 +426,8 @@ so `MatchCommand#equals` compares them directly.
 
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
 gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender, religion and relationship-goal criteria accept
-comma-separated values inside each preference or dealbreaker environment. An empty criterion value removes
+other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
+inside each preference or dealbreaker environment; gender lists are rejected. An empty criterion value removes
 that attribute from the corresponding preference or dealbreaker set.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met

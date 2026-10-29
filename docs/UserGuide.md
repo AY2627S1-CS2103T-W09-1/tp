@@ -287,9 +287,8 @@ For example, `edit 1 {age/25-35 rg/long} <s/yes>` prefers ages 25–35 and a lon
 and excludes smokers. Ordinary fields outside the blocks describe the client's own attributes.
 
 Each block is optional and may appear once. Inside a block, use each of `age/`, `g/`, `s/`, `r/`, or `rg/` at most once.
-Age accepts one exact age or inclusive range, with bounds from 18 to 99. Smoking also accepts one value.
-Gender, religion and relationship goal each accept a comma-separated list, for example `g/m, w`,
-`r/Buddhism, Jainism`, or `rg/long, short`. A full relationship-goal name containing a comma is still accepted as one value.
+Age accepts an exact age or inclusive range, with bounds from 18 to 99.
+Gender accepts one value: `g/m`, `g/w`, or `g/nb`, ignoring case. Gender lists are rejected inside blocks.
 An empty value in a preference or dealbreaker block, such as `{g/}`, removes that criterion.
 Other criteria use the same values as the client's own fields and compare exact normalized categories.
 Different relationship-goal categories are not treated as equivalent.
