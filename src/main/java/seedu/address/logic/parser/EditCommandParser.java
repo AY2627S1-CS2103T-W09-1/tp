@@ -92,10 +92,11 @@ public class EditCommandParser implements Parser<EditCommand> {
             editPersonDescriptor.setRelationshipGoal(value.isEmpty() ? null : ParserUtil.parseRelationshipGoal(value));
         }
         if (parsedCriteria.preferencesSupplied()) {
-            editPersonDescriptor.setPreferences(parsedCriteria.preferences());
+            editPersonDescriptor.setPreferences(parsedCriteria.preferences(), parsedCriteria.preferencesToRemove());
         }
         if (parsedCriteria.dealbreakersSupplied()) {
-            editPersonDescriptor.setDealbreakers(parsedCriteria.dealbreakers());
+            editPersonDescriptor.setDealbreakers(parsedCriteria.dealbreakers(),
+                    parsedCriteria.dealbreakersToRemove());
         }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {

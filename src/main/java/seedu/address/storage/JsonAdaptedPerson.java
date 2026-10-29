@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,8 +42,8 @@ class JsonAdaptedPerson {
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final String religion;
     private final String relationshipGoal;
-    private final Map<String, String> preferences;
-    private final Map<String, String> dealbreakers;
+    private final Map<String, List<String>> preferences;
+    private final Map<String, List<String>> dealbreakers;
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -55,8 +56,8 @@ class JsonAdaptedPerson {
             @JsonProperty("smokingStatus") String smokingStatus, @JsonProperty("gender") String gender,
             @JsonProperty("religion") String religion,
             @JsonProperty("relationshipGoal") String relationshipGoal,
-            @JsonProperty("preferences") Map<String, String> preferences,
-            @JsonProperty("dealbreakers") Map<String, String> dealbreakers) {
+            @JsonProperty("preferences") Map<String, ?> preferences,
+            @JsonProperty("dealbreakers") Map<String, ?> dealbreakers) {
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -69,8 +70,8 @@ class JsonAdaptedPerson {
             this.tags.addAll(tags);
         }
         this.relationshipGoal = relationshipGoal;
-        this.preferences = preferences;
-        this.dealbreakers = dealbreakers;
+        this.preferences = convertCriteria(preferences);
+        this.dealbreakers = convertCriteria(dealbreakers);
     }
 
     /**
@@ -114,6 +115,31 @@ class JsonAdaptedPerson {
         relationshipGoal = source.getRelationshipGoal().map(RelationshipGoal::toString).orElse(null);
         preferences = source.getDatingCriteria().getPreferencesForStorage();
         dealbreakers = source.getDatingCriteria().getDealbreakersForStorage();
+    }
+
+    /** Accepts legacy single-string values while writing all criteria as value lists. */
+    private static Map<String, List<String>> convertCriteria(Map<String, ?> criteria) {
+        if (criteria == null) {
+            return null;
+        }
+        Map<String, List<String>> converted = new LinkedHashMap<>();
+        criteria.forEach((attribute, rawValues) -> {
+            if (rawValues instanceof String value) {
+                converted.put(attribute, List.of(value));
+            } else if (rawValues instanceof List<?> values) {
+                List<String> strings = new ArrayList<>();
+                for (Object value : values) {
+                    if (!(value instanceof String string)) {
+                        throw new IllegalArgumentException("Dating criteria values must be strings.");
+                    }
+                    strings.add(string);
+                }
+                converted.put(attribute, List.copyOf(strings));
+            } else {
+                throw new IllegalArgumentException("Dating criteria values must be strings or lists of strings.");
+            }
+        });
+        return Map.copyOf(converted);
     }
 
     /**

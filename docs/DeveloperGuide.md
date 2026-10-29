@@ -327,10 +327,14 @@ environments and nested or unbalanced delimiters are rejected.
 
 `DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
 the own field. `Person` holds an immutable `DatingCriteria` with separate preference
-and dealbreaker maps indexed by `DatingAttribute`. The resulting criteria must not
-prefer and exclude the same normalized religion, including when an edit updates only
-one bucket and retains the other. The own religion is independent: it may equal or differ
-from either partner criterion. A failed add or edit leaves stored records unchanged.
+and dealbreaker maps indexed by `DatingAttribute`, each mapping to a set of canonical values.
+Gender, religion and relationship goal accept comma-separated value lists; age (an exact
+point or an interval) and smoking remain single-valued. The resulting criteria must not
+prefer and exclude any same normalized gender, smoking status, religion, or relationship
+goal. Preferred and excluded age ranges must not overlap. These checks also apply when
+an edit updates only one bucket and retains the other. Age ranges accept spaces around
+the hyphen, such as `age/25 - 30`. The own religion is independent: it may equal or
+differ from either partner criterion. A failed add or edit leaves stored records unchanged.
 
 The class diagram below focuses on the religion-related model. Unrelated `Person`
 members and the other `DatingAttribute` enum values are omitted.
@@ -345,9 +349,10 @@ they do not represent additional stored associations.
 
 `DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an
 explicitly empty one. `EditPersonDescriptor` carries these optional bucket updates;
-`EditCommand` preserves an omitted bucket and merges a non-empty update by attribute.
-For example, `{r/Buddhism}` changes the preferred religion while preserving age, smoking
-and relationship-goal preferences. `{}` clears all preferences and `<>`
+`EditCommand` preserves an omitted bucket and merges a non-empty update by value for
+multi-valued attributes. For example, `{r/Buddhism}` adds Buddhism to the preferred religions
+while preserving age, smoking and relationship-goal preferences; an already recorded value is
+left in place and reported as a warning. `{}` clears all preferences and `<>`
 clears all exclusions/dealbreakers, without changing the own religion or the other bucket.
 Unrelated person fields are preserved unless separately supplied in the edit.
 
@@ -358,10 +363,10 @@ silently becoming part of another field.
 
 `JsonAdaptedPerson` saves the canonical own-religion name and treats a missing or null
 own-religion property as unknown. It persists criteria via `DatingCriteria` as the
-`preferences` and `dealbreakers` maps, using the key `religion` and a canonical category
-string, for example `"preferences": {"religion": "Buddhism"}` and
-`"dealbreakers": {"religion": "Islam"}`. `DatingCriteria.fromStorage` restores these
-maps; older valid records without them load with empty criteria. Invalid religion
+`preferences` and `dealbreakers` maps, using the key `religion` and a list of canonical categories,
+for example `"preferences": {"religion": ["Buddhism", "Jainism"]}` and
+`"dealbreakers": {"religion": ["Islam"]}`. `DatingCriteria.fromStorage` restores these
+maps and accepts the old single-string format; older valid records without them load with empty criteria. Invalid religion
 criteria, including null map values and a normalized preference/exclusion conflict,
 are reported through the existing `IllegalValueException` invalid-data path rather
 than an unchecked crash. The existing unknown-property handling ignores obsolete
@@ -423,8 +428,9 @@ so `MatchCommand#equals` compares them directly.
 
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
 gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
-other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
-inside each preference or dealbreaker environment; empty values and gender lists are rejected.
+other attributes compare canonical values. Gender, religion and relationship-goal criteria accept
+comma-separated values inside each preference or dealbreaker environment. An empty criterion value removes
+that attribute from the corresponding preference or dealbreaker set.
 
 Preferences describe desired values; dealbreakers describe excluded values. A dealbreaker comparison is met
 when a known value is outside the exclusion, unmet when it falls inside, and unknown when the attribute is absent.

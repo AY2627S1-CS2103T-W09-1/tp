@@ -124,8 +124,8 @@ public class CandidateSearchEdgeCaseTest {
     }
 
     @Test
-    public void findMatch_agePreferenceAndExclusion_evaluatesEverySupportedAge() throws Exception {
-        addClient("Target", 25, "{age/25-35} <age/30-32>");
+    public void findMatch_nonOverlappingAgePreferenceAndExclusion_evaluatesEverySupportedAge() throws Exception {
+        addClient("Target", 25, "{age/25-29} <age/30-32>");
         List<String> preferred = new ArrayList<>();
         List<String> other = new ArrayList<>();
         for (int age = 18; age <= 99; age++) {
@@ -134,7 +134,7 @@ public class CandidateSearchEdgeCaseTest {
             if (age >= 30 && age <= 32) {
                 continue;
             }
-            if (age >= 25 && age <= 35) {
+            if (age >= 25 && age <= 29) {
                 preferred.add(name);
             } else {
                 other.add(name);

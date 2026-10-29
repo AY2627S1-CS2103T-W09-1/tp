@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -117,13 +119,15 @@ public class PersonCard extends UiPart<Region> {
         names.forEach(badgeName -> badges.getChildren().add(createLabel(badgeName, badgeStyleClass)));
     }
 
-    private static void setCriteria(VBox container, Map<DatingAttribute, String> criteria) {
+    private static void setCriteria(VBox container, Map<DatingAttribute, Set<String>> criteria) {
         if (criteria.isEmpty()) {
             container.getChildren().add(createLabel("none", "card-field-unset"));
             return;
         }
-        criteria.forEach((attribute, value) -> container.getChildren().add(createLabel(
-                attribute.getDisplayName().toLowerCase(Locale.ROOT) + " = " + value, "card-criterion")));
+        criteria.forEach((attribute, values) -> container.getChildren().add(createLabel(
+                attribute.getDisplayName().toLowerCase(Locale.ROOT) + " = "
+                        + values.stream().sorted().collect(Collectors.joining(", ")),
+                "card-criterion")));
     }
 
     private static Optional<String> formatSmokingStatus(SmokingStatus smokingStatus) {

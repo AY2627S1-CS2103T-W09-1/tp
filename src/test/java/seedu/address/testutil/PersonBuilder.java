@@ -41,8 +41,8 @@ public class PersonBuilder {
     private SmokingStatus smokingStatus;
     private Religion religion;
     private RelationshipGoal relationshipGoal;
-    private Map<DatingAttribute, String> preferences = new EnumMap<>(DatingAttribute.class);
-    private Map<DatingAttribute, String> dealbreakers = new EnumMap<>(DatingAttribute.class);
+    private Map<DatingAttribute, Set<String>> preferences = new EnumMap<>(DatingAttribute.class);
+    private Map<DatingAttribute, Set<String>> dealbreakers = new EnumMap<>(DatingAttribute.class);
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -161,7 +161,7 @@ public class PersonBuilder {
      * Adds a partner preference to the {@code Person} that we are building.
      */
     public PersonBuilder withPreference(DatingAttribute attribute, String value) {
-        preferences.put(attribute, value);
+        preferences.computeIfAbsent(attribute, ignored -> new HashSet<>()).add(value);
         return this;
     }
 
@@ -169,7 +169,7 @@ public class PersonBuilder {
      * Adds a partner dealbreaker to the {@code Person} that we are building.
      */
     public PersonBuilder withDealbreaker(DatingAttribute attribute, String value) {
-        dealbreakers.put(attribute, value);
+        dealbreakers.computeIfAbsent(attribute, ignored -> new HashSet<>()).add(value);
         return this;
     }
 

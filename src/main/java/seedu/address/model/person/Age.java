@@ -49,13 +49,15 @@ public class Age {
         requireNonNull(value);
         String[] bounds = value.trim().split("-", -1);
         boolean isValidLength = bounds.length <= 2;
-        boolean isFirstBoundValid = isValidAge(bounds[0]);
-        boolean isSecondBoundValid = bounds.length != 2 || isValidAge(bounds[1]);
+        String lowerBoundText = bounds[0].trim();
+        String upperBoundText = bounds.length == 2 ? bounds[1].trim() : lowerBoundText;
+        boolean isFirstBoundValid = isValidAge(lowerBoundText);
+        boolean isSecondBoundValid = isValidAge(upperBoundText);
         if (!isValidLength || !isFirstBoundValid || !isSecondBoundValid) {
             throw new IllegalArgumentException(MESSAGE_CONSTRAINTS);
         }
-        int lowerBound = Integer.parseInt(bounds[0]);
-        int upperBound = bounds.length == 2 ? Integer.parseInt(bounds[1]) : lowerBound;
+        int lowerBound = Integer.parseInt(lowerBoundText);
+        int upperBound = Integer.parseInt(upperBoundText);
         if (lowerBound > upperBound) {
             throw new IllegalArgumentException(MESSAGE_INVALID_RANGE);
         }

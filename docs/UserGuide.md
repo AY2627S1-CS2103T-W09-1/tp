@@ -139,7 +139,8 @@ Use one of these 21 categories: `Christianity`, `Islam`, `Hinduism`, `Buddhism`,
 * Own religion is independent of partner criteria. A normalized religion cannot be
   both preferred and excluded; this is checked against the **resulting record**, including
   criteria retained from a previous command.
-* A non-empty edit environment updates only supplied entries; other criteria remain.
+* A non-empty edit environment adds supplied gender, religion and relationship-goal values; other criteria remain.
+  Values already recorded are left unchanged and reported as a warning. Age and smoking remain single-valued.
   All values persist across restarts.
 
 Example: `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>`
@@ -150,7 +151,7 @@ records own Jainism, preferred Buddhism and excluded Islam; contact details and 
 | `add ... r/` or `find r/` | Supply a listed category; omit `r/` on `add` if unknown |
 | `{r/}` or `<r/>` | Supply a category; use `{}` or `<>` only when clearing the entire corresponding bucket on `edit` |
 | `{r/Islam} <r/islam>` | Choose criteria that do not prefer and exclude the same religion |
-| Repeated `r/`, a list, or `r/Other` | Supply one listed category in each scope |
+| Repeated `r/` or `r/Other` | Supply one listed category in each scope; use a comma-separated list only inside a criteria block |
 | Legacy `rp/`, `rr/`, or `rx/`, including empty values | Use the current scope syntax in the table above |
 
 Rejected commands leave the stored records unchanged. See [Finding clients](#finding-clients-find)
@@ -202,7 +203,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * For own religion, partner religion and clearing rules, use the [religion reference table](#religion-fields).
   Own religion and omitted criteria remain unchanged unless explicitly edited; conflicting preferred/excluded
   religions reject the whole edit.
-* **A non-empty environment adds or updates only the supplied criteria.** For example, `{r/Buddhism}` changes the preferred religion while preserving existing age, gender, smoking and relationship-goal preferences. The same rule applies to exclusions/dealbreakers in `<...>`.
+* **A non-empty environment adds only new gender, religion and relationship-goal values.** For example, if Buddhism is already preferred, `edit 1 {r/Buddhism, Jainism}` keeps Buddhism, adds Jainism, and warns that Buddhism already exists. The same rule applies to exclusions/dealbreakers in `<...>`. Age and smoking remain single-valued and are replaced by a new value.
 * Omit an environment to preserve its entire bucket. Use `{}` to clear all preferences, or `<>` to clear all exclusions/dealbreakers. These do not clear the client's own religion. `{r/}` and `<r/>` are invalid, not clearing commands. A rejected edit leaves the whole record unchanged.
 * The removed `rp/`, `rr/`, and `rx/` prefixes are rejected, including empty values.
 * Use `rg/RELATIONSHIP_GOAL` to update the relationship goal. Omitting `rg/` preserves the existing goal, and `rg/` with no value clears it.
@@ -286,11 +287,14 @@ For example, `edit 1 {age/25-35 rg/long} <s/yes>` prefers ages 25–35 and a lon
 and excludes smokers. Ordinary fields outside the blocks describe the client's own attributes.
 
 Each block is optional and may appear once. Inside a block, use each of `age/`, `g/`, `s/`, `r/`, or `rg/` at most once.
-Age accepts an exact age or inclusive range, with bounds from 18 to 99.
-Gender accepts one value: `g/m`, `g/w`, or `g/nb`, ignoring case. Empty values and gender lists are rejected inside blocks.
+Age accepts one exact age or inclusive range, with bounds from 18 to 99. Smoking also accepts one value.
+Gender, religion and relationship goal each accept a comma-separated list, for example `g/m, w`,
+`r/Buddhism, Jainism`, or `rg/long, short`. A full relationship-goal name containing a comma is still accepted as one value.
+An empty value in a preference or dealbreaker block, such as `{g/}`, removes that criterion.
 Other criteria use the same values as the client's own fields and compare exact normalized categories.
 Different relationship-goal categories are not treated as equivalent.
-When editing, a non-empty block adds or updates only its supplied criteria; other criteria are preserved.
+When editing, a non-empty block adds new multi-valued criteria without removing existing ones; already recorded
+values generate a warning. Other criteria are preserved.
 Use `{}` to clear preferences or `<>` to clear dealbreakers.
 
 Overall results, in priority order:
@@ -447,9 +451,9 @@ invalid names and malformed entries reject the data file. Back up the file and c
 
 Records with valid required fields but no own-religion property load with unknown
 own religion, not `No religion`. Partner criteria are saved in the `preferences` and
-`dealbreakers` maps: for example, `"preferences": {"religion": "Buddhism"}` and
-`"dealbreakers": {"religion": "Islam"}`. The latter records an exclusion, not a requirement
-to have Islam. Older valid records without these maps load with empty partner criteria.
+`dealbreakers` maps: for example, `"preferences": {"religion": ["Buddhism", "Jainism"]}` and
+`"dealbreakers": {"religion": ["Islam"]}`. The latter records an exclusion, not a requirement
+to have Islam. Older single-string values remain valid, and records without these maps load with empty partner criteria.
 Invalid religion values (including a null religion entry inside a criteria map), or the
 same normalized religion in both maps, reject the file through the existing invalid-data
 handling. A missing or null own-religion property still means unknown.

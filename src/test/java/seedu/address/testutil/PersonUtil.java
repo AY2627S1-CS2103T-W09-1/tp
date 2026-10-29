@@ -92,10 +92,11 @@ public class PersonUtil {
         return sb.toString();
     }
 
-    private static void appendCriteria(StringBuilder builder, Map<DatingAttribute, String> criteria,
+    private static void appendCriteria(StringBuilder builder, Map<DatingAttribute, Set<String>> criteria,
             char openingDelimiter, char closingDelimiter) {
         builder.append(openingDelimiter);
-        criteria.forEach((attribute, value) -> builder.append(getPrefix(attribute)).append(value).append(" "));
+        criteria.forEach((attribute, values) -> builder.append(getPrefix(attribute))
+                .append(String.join(", ", values)).append(" "));
         builder.append(closingDelimiter).append(" ");
     }
 
