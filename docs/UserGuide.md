@@ -385,6 +385,10 @@ accepted and normalized to `MIN-MAX`.
 non-smoker; values are case-insensitive and surrounding whitespace is ignored. Omit the field if the
 status is unknown. Older records without this field display `Not specified`.
 
+* To use text that looks like a prefix inside a value, such as `s/o` in a name, put the whole value in double quotes.<br>
+  For example, `n/"Ravi s/o Kumar"` records the name `Ravi s/o Kumar`; the quotes are not saved. The closing `"` must be
+  followed by a space or the end of the command. Quotes do not allow `{`, `}`, `<` or `>` inside a value.
+
 | Valid values | Bad values |
 | --- | --- |
 | `s/yes`, `s/no`, `s/YES` | `s/unknown`, `s/yes,no` |
