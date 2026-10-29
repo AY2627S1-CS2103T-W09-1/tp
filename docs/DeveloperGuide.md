@@ -172,8 +172,6 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Recording Dating Data
 
-### Prefixed name search
-
 #### Recording profile attributes
 
 ##### Recording age
@@ -267,13 +265,18 @@ they do not represent additional stored associations.
 
 ##### Recording relationship goals
 
+A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
+`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
+`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
+Keeping one copy avoids an own goal and a goal preference that disagree.
+
 `RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge. Each value
 holds a short keyword (for example, `long-open`) and a full name. Users type keywords only:
 `RelationshipGoal#parseKeywordList` splits the input on commas and rejects unknown, empty or repeated keywords.
-`RelationshipGoal#formatCriterion` stores the goals as their full names joined by ` or `, in enum order. Commas
-cannot separate stored goals because some full names contain one. `DatingAttribute#parseCriterion` uses the
-keyword path for user input, while `DatingAttribute#normalizeCriterion` uses the more lenient
-`RelationshipGoal#parseStoredCriterion` for the hand-editable data file.
+`DatingCriteriaParser` stores each goal as its full name, one per value in the criterion's set, like other
+multi-valued criteria. Users cannot separate full names with commas because some full names contain one.
+`DatingAttribute#normalizeCriterion` uses the more lenient `RelationshipGoal#fromStoredValue`, which also accepts
+keywords and ignores case, for the hand-editable data file.
 
 `DatingCriteria#getRelationshipGoals` returns the goals in the preference, and `Person#getRelationshipGoals`
 exposes them; an empty set means the goal is **unknown**, not `Figuring out my goals`. The `DatingCriteria`
@@ -287,43 +290,6 @@ already has one or excludes that goal, so an older file never fails to load beca
 `find rg/GOAL[,GOAL]...` parses the list with `ParserUtil#parseRelationshipGoals`.
 `RelationshipGoalMatchesPredicate` keeps clients whose goals share at least one goal with the list, so clients
 with an unknown goal are never returned.
-
-###### Internal representation
-
-`RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge.
-Each enum value holds its short keyword (for example, `long-open`) and its full name, so a goal can
-be entered either way; keywords exist because fast typing is a core goal of the product.
-`RelationshipGoal#fromString` strips the input, collapses repeated internal whitespace, and ignores
-case when matching. Each goal is stored and displayed using its full name: for example, `rg/LONG`
-becomes `Long-term relationship`.
-
-`AddCommandParser` and `EditCommandParser` reject invalid and repeated `rg/` parameters.
-`Person` exposes the goal as an `Optional`, because an absent goal means **unknown**, not
-`Figuring out my goals`, which is an explicit category. `Person` includes the goal in full equality
-and hashing, while its existing name-based identity rule is unchanged. `EditPersonDescriptor`
-records whether `rg/` was supplied separately from its value, so `rg/` with no value clears the goal
-and edits to other fields preserve it.
-
-`JsonAdaptedPerson` saves the full category name as the `relationshipGoal` string and reads absent
-or null fields in older JSON files as unknown. Other invalid stored values are rejected using the
-existing storage-error path. The person card and command feedback display the goal, including
-`Not specified` for missing information.
-
-`find rg/GOAL` searches by relationship goal. `FindCommandParser` treats `rg/` as one more search
-mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
-combines modes, mixes a prefix with name keywords, or repeats `rg/`. The value is parsed with
-`ParserUtil#parseRelationshipGoal`, so search accepts exactly the keywords and full names that `add`
-and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal equals the parsed goal,
-so clients with an unknown goal are never returned. A single goal is accepted rather than a
-comma-separated list, because some full goal names contain commas.
-
-Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
-
-A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
-`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
-`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
-Keeping one copy avoids an own goal and a goal preference that disagree.
-
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching): a criterion is met when it
 shares at least one goal with the other client's goals.
@@ -396,6 +362,13 @@ form and removes the special case that previously treated any unprefixed text as
 whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
 any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
 
+A quoted value, `find n/"PHRASE"`, is searched as one phrase instead. The tokenizer removes the quotes, so the
+parser checks the raw argument text after `n/` for a leading `"`. A quoted value may contain `/` and becomes a
+`NameContainsPhrasePredicate`, which splits the phrase and the name into lower-case words and matches when the
+phrase's words appear together and in order in the name (`Collections#indexOfSubList`). `find n/"Ravi s/o"`
+therefore finds `Ravi s/o Kumar` but not `Kumar Ravi s/o x` or `Ravisankar`. An unquoted value containing `/`
+is rejected with a message suggesting quotes.
+
 ### Maintaining preferences and dealbreakers
 
 
@@ -425,7 +398,7 @@ For example, `{r/Buddhism} <r/buddhism>` and a retained preferred `age/25-30` pl
 `age/28-35` are rejected. The `DatingCriteria` constructor and `fromStorage` apply the same invariant,
 so a malformed JSON file cannot introduce a state that commands would reject.
 
-## Special characters in Dating Attributes
+### Quoted argument values
 
 `ArgumentTokenizer` scans the arguments once, left to right, recording the earliest prefix occurrence each time.
 When the first non-space character after a prefix is `"`, the value is quoted: the scan skips to the next `"` that
@@ -438,44 +411,12 @@ and in the preamble, are kept as typed.
 Every command that uses the tokenizer gets this behaviour, including values inside `{...}` and `<...>`.
 `DatingCriteriaParser` still runs first, so quotes do not protect `{`, `}`, `<` or `>`.
 `Name` allows `/` after its first character, so quoted names such as `Ravi s/o Kumar` pass validation.
-`FindCommandParser` still rejects name keywords that contain `/`, because a keyword such as `s/o` usually means
-a mistyped prefix; such clients are found by their other name words.
+`FindCommandParser` still rejects unquoted name keywords that contain `/`, because a keyword such as `s/o` usually
+means a mistyped prefix. A quoted name search is described under [Prefixed name search](#prefixed-name-search).
 
 ### Matching
 
 #### Pairwise matching
-### Recording relationship goals
-
-A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
-`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
-`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
-Keeping one copy avoids an own goal and a goal preference that disagree.
-
-`RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge. Each value
-holds a short keyword (for example, `long-open`) and a full name. Users type keywords only:
-`RelationshipGoal#parseKeywordList` splits the input on commas and rejects unknown, empty or repeated keywords.
-`DatingCriteriaParser` stores each goal as its full name, one per value in the criterion's set, like other
-multi-valued criteria. Users cannot separate full names with commas because some full names contain one.
-`DatingAttribute#normalizeCriterion` uses the more lenient `RelationshipGoal#fromStoredValue`, which also accepts
-keywords and ignores case, for the hand-editable data file.
-
-`DatingCriteria#getRelationshipGoals` returns the goals in the preference, and `Person#getRelationshipGoals`
-exposes them; an empty set means the goal is **unknown**, not `Figuring out my goals`. The `DatingCriteria`
-constructor rejects a goal that is both preferred and excluded. `AddCommandParser` and `EditCommandParser`
-call `ParserUtil#rejectOwnRelationshipGoal`, so an outer `rg/` is rejected with a hint to use the criteria.
-
-Older data files stored a client's own goal in a `relationshipGoal` field. `JsonAdaptedPerson` still reads that
-field but no longer writes it. When loading, it moves the goal into the `{rg/...}` preference unless the client
-already has one or excludes that goal, so an older file never fails to load because of the migration.
-
-`find rg/GOAL[,GOAL]...` parses the list with `ParserUtil#parseRelationshipGoals`.
-`RelationshipGoalMatchesPredicate` keeps clients whose goals share at least one goal with the list, so clients
-with an unknown goal are never returned.
-
-Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching): a criterion is met when it
-shares at least one goal with the other client's goals.
-
-### Pairwise matching
 
 `MatchCommandParser` accepts exactly two clients. Preamble tokens are parsed as indexes with
 `ParserUtil.parseIndex` and `n/` values as names with `ParserUtil.parseName`, so indexes come before names.
