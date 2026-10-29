@@ -18,6 +18,7 @@ import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.Gender;
 import seedu.address.model.person.GenderMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.NameContainsPhrasePredicate;
 import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.person.RelationshipGoalMatchesPredicate;
 import seedu.address.model.person.Religion;
@@ -70,10 +71,30 @@ public class FindCommandParserTest {
     public void parse_blankOrPrefixLikeNameKeywords_throwsParseException() {
         assertParseFailure(parser, "n/", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
         assertParseFailure(parser, "n/   ", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
+        assertParseFailure(parser, "n/Alice x/1", FindCommandParser.MESSAGE_SLASH_IN_NAME_KEYWORDS);
+        assertParseFailure(parser, "n/Siti d/o Ahmad", FindCommandParser.MESSAGE_SLASH_IN_NAME_KEYWORDS);
         String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
-        for (String args : new String[] {"n/Alice x/1", "N/Alice", "n /Alice", "name/Alice"}) {
+        for (String args : new String[] {"N/Alice", "n /Alice", "name/Alice"}) {
             assertParseFailure(parser, args, usage);
         }
+    }
+
+    @Test
+    public void parse_quotedName_returnsPhraseSearch() {
+        FindCommand expected = new FindCommand(new NameContainsPhrasePredicate("Ravi s/o"));
+        assertParseSuccess(parser, "n/\"Ravi s/o\"", expected);
+        assertParseSuccess(parser, " n/  \"  ravi   S/O \"  ", expected);
+        assertParseSuccess(parser, "n/\"Alice\"", new FindCommand(new NameContainsPhrasePredicate("Alice")));
+    }
+
+    @Test
+    public void parse_invalidQuotedName_throwsParseException() {
+        assertParseFailure(parser, "n/\"\"", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
+        assertParseFailure(parser, "n/\"   \"", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
+        assertParseFailure(parser, "n/\"Ravi s/o", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTE);
+        assertParseFailure(parser, "n/\"Ravi s/o\" Kumar", ArgumentTokenizer.MESSAGE_TEXT_AFTER_QUOTE);
+        assertParseFailure(parser, "n/\"Ravi s/o\" s/yes",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
     }
 
     @Test
@@ -199,7 +220,7 @@ public class FindCommandParserTest {
     public void parse_blankOrInvalidSmoking_throwsParseException() {
         for (String value : new String[] {"", "   ", "unknown", "sometimes", "true", "0", "y", "n",
             "yes,no", "yes no", "y es", "yeſ", "yes Alice", "yes x/no", "yes\ts/no"}) {
-            assertParseFailure(parser, "s/" + value, SmokingStatus.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "s/" + value, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
         }
     }
 
@@ -227,8 +248,8 @@ public class FindCommandParserTest {
         for (String args : new String[] {"S/yes", "s /yes", "smoking/yes", "{s/yes}", "<s/no>"}) {
             assertParseFailure(parser, args, message);
         }
-        assertParseFailure(parser, "s/yes {s/no}", SmokingStatus.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "s/no <s/yes>", SmokingStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/yes {s/no}", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
+        assertParseFailure(parser, "s/no <s/yes>", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
     }
 
     @Test

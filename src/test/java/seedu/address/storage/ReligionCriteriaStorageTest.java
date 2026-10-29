@@ -6,6 +6,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,9 +33,9 @@ public class ReligionCriteriaStorageTest {
                 + "\"dealbreakers\":{\"religion\":\"ISLAM\"}}";
         Person original = JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType();
         assertEquals("Jainism", original.getReligion().orElseThrow().toString());
-        assertEquals(Map.of(DatingAttribute.RELIGION, "Baha'i Faith"),
+        assertEquals(Map.of(DatingAttribute.RELIGION, Set.of("Baha'i Faith")),
                 original.getDatingCriteria().getPreferences());
-        assertEquals(Map.of(DatingAttribute.RELIGION, "Islam"), original.getDatingCriteria().getDealbreakers());
+        assertEquals(Map.of(DatingAttribute.RELIGION, Set.of("Islam")), original.getDatingCriteria().getDealbreakers());
         String saved = JsonUtil.toJsonString(new JsonAdaptedPerson(original));
         assertEquals(original, JsonUtil.fromJsonString(saved, JsonAdaptedPerson.class).toModelType());
     }

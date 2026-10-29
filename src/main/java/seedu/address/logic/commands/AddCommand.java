@@ -39,7 +39,7 @@ public class AddCommand extends Command {
             + "[" + PREFIX_RELATIONSHIP_GOAL + "RELATIONSHIP_GOAL] [{CRITERIA}] [<CRITERIA>]\n"
             + "Gender: m, w, nb, or empty for unspecified.\n"
             + "Partner criteria: {...} prefers; <...> excludes (must not have). "
-            + "Use age/, g/, s/, r/, or rg/ once per block, each with a value.\n"
+            + "Use age/, g/, s/, r/, or rg/ once per block. g/, r/, and rg/ accept comma-separated values.\n"
             + "Outer r/ records only the client's own religion.\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + "John Doe "
