@@ -342,13 +342,61 @@ record and persisted data unchanged.
 
 #### Resolving contradictory preferences and dealbreakers
 
-A contradiction is a value that is simultaneously preferred and excluded after an add or edit has been
-merged with retained criteria. For scalar attributes (gender, smoking status, religion, and relationship
-goal), equality after normalisation is contradictory. For age, overlapping preferred and excluded ranges
-are contradictory. The policy is to reject the entire command rather than prioritise either bucket.
-For example, `{r/Buddhism} <r/buddhism>` and a retained preferred `age/25-30` plus a new excluded
-`age/28-35` are rejected. The `DatingCriteria` constructor and `fromStorage` apply the same invariant,
-so a malformed JSON file cannot introduce a state that commands would reject.
+##### Definition of a contradiction
+
+Each `DatingCriteria` object has at most one canonical value for each `DatingAttribute` in its
+preferences map and at most one in its dealbreakers map. A contradiction is evaluated only after an
+`add` supplies both maps, or an `edit` has merged its supplied additions, removals, or clears with the
+stored maps. An omitted environment preserves its current map; an empty environment clears that map;
+and an empty attribute value removes only that attribute. Consequently, removed or cleared values cannot
+conflict with a value in the other map.
+
+For gender, smoking status, religion, and relationship goal, a contradiction exists only when both
+maps contain the **same normalized value** for that attribute. Different values are allowed: for example,
+`{g/m} <g/w>` prefers men while excluding women and is not contradictory. Age is different: a
+contradiction exists when the preferred and excluded inclusive age ranges overlap, even if their textual
+forms differ.
+
+| Attribute | Normalized comparison | Contradictory example | Valid contrasting example |
+| --- | --- | --- | --- |
+| Gender | `m`, `w`, or `nb` | `{g/m} <g/m>` | `{g/m} <g/w>` |
+| Smoking status | `yes` or `no` | `{s/no} <s/no>` | `{s/no} <s/yes>` |
+| Religion | Canonical category, case- and whitespace-insensitive | `{r/Buddhism} <r/ buddhism >` | `{r/Buddhism} <r/Islam>` |
+| Relationship goal | Canonical full goal name; keywords and full names are equivalent | `{rg/long} <rg/Long-term relationship>` | `{rg/long} <rg/short>` |
+| Age | Inclusive normalized range | `{age/20-30} <age/25-35>` | `{age/20-24} <age/25-35>` |
+
+An exact age is an inclusive one-value range. Therefore, `{age/25} <age/25-35>` is also contradictory,
+while neighbouring ranges such as `20-24` and `25-35` are not.
+
+##### Resolution policy
+
+The application rejects the entire `add` or `edit` command; it never gives a preference or a dealbreaker
+priority. `AddCommandParser` builds a new `DatingCriteria` from the parsed maps, so a conflict is reported
+as a `ParseException` before a client is added. For `edit`, `EditCommand` first combines the retained
+maps with the requested changes, then constructs a replacement `DatingCriteria`. A conflict becomes a
+`CommandException` before `Model#setPerson` is called. The original client, its other criteria, and the
+saved data therefore remain unchanged.
+
+The same policy applies while loading JSON. `JsonAdaptedPerson` calls `DatingCriteria.fromStorage`, which
+uses the same validation as normal construction. A malformed or contradictory `preferences`/
+`dealbreakers` pair is rejected through the existing `IllegalValueException` path instead of introducing
+an invalid record into the model.
+
+##### Validation logic and examples
+
+`DatingCriteriaParser` validates every non-empty criterion through
+`DatingAttribute#normalizeCriterion` before it reaches the model: age uses `Age.normalizeRange`, gender
+uses `Gender.parseValue`, smoking uses `SmokingStatus`, religion uses `Religion`, and relationship goal
+uses `RelationshipGoal.fromString`. `DatingCriteria` normalizes both maps again defensively, then checks
+each `DatingAttribute` that occurs in both maps. For age it tests whether the inclusive bounds overlap;
+for the other four attributes it tests canonical-value equality. It throws an attribute-specific error:
+gender, smoking status, religion, relationship goal, or overlapping age ranges.
+
+For example, `add ... {s/no} <s/no>` and `add ... {age/20 - 30} <age/25-35>` fail during parsing.
+If an existing client has `{r/Buddhism}`, `edit 1 <r/bUdDhIsM>` fails after the edit merge, with no
+change to that client. In contrast, `add ... {age/20-24} <age/25-35>` succeeds because the two inclusive
+ranges do not share an age. The `DatingCriteria` unit tests cover each scalar attribute and overlapping
+age ranges; integration tests cover parser errors, edit rejection, and unchanged persisted data.
 
 ### Matching
 
