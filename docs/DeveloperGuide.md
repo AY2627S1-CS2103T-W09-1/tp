@@ -38,7 +38,7 @@ The following provides a quick overview of the main components and their interac
 
 **Main components of the architecture**
 
-**`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
+**`Main`** (consisting of classes [`Main`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
 * At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
 * At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
@@ -70,13 +70,13 @@ The sections below give more details of each component.
 
 ### UI component
 
-The **API** of this component is specified in [`Ui.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/Ui.java)
+The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
 ![Structure of the UI Component](images/UiClassDiagram.png)
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
-The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
 
@@ -87,7 +87,7 @@ The `UI` component,
 
 ### Logic component
 
-**API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
+**API** : [`Logic.java`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/logic/Logic.java)
 
 Here's a (partial) class diagram of the `Logic` component:
 
@@ -122,7 +122,7 @@ How the parsing works:
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
-**API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
+**API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
 <img src="images/ModelClassDiagram.png" width="800" />
 
@@ -146,7 +146,7 @@ The `Model` component,
 
 ### Storage component
 
-**API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
+**API** : [`Storage.java`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <img src="images/StorageClassDiagram.png" width="650" alt="JSON storage classes for preferences, persons, tags and named groups" />
 
@@ -169,78 +169,30 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Named client groups
-
-`grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
-`GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
-Group names use the shared `GroupName` validation: 1–30 ASCII letters, digits, hyphens or underscores,
-with an alphanumeric first character. Equality and hashing use a `Locale.ROOT` lowercase key, while
-display and storage retain the original spelling. Operations and command words remain case-sensitive.
-
-`ClientGroup` is an immutable value containing a name and an immutable, duplicate-free membership list.
-`AddressBook` owns the observable group list and exposes an unmodifiable view. `setGroups` snapshots and
-validates the complete replacement (unique group names and members present in the book) before publishing it.
-
-The command flow is:
-
-1. Parse the operation and distinct positive indexes. Compare their numeric values, since `Index` does not
-   implement value-based hashing.
-2. Resolve **all** indexes against the displayed list before any mutation. This matters when removing multiple
-   members from a shown group: the first removal must not shift the meaning of later indexes.
-3. Build a replacement membership list and validate the operation. Add creates a missing group; remove
-   requires an existing group. Any already-present member on add or absent member on remove rejects the
-   whole command. Single-member groups and empty groups after removal are valid.
-4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
-
-Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
-`INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
-including insufficient-information candidates, but does not apply its preference-score ordering. An existing
-group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
-
-`ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
-order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
-clear the selected-group state. `AddressBook.setPerson` replaces membership references when immutable
-persons are edited; `removePerson` removes references but retains empty groups. Bulk person replacement
-prunes obsolete references. `resetData` validates a complete copy before replacing persons and groups;
-clearing the book therefore clears groups too. Existing add/edit commands still restore the full list.
-
-`JsonAdaptedGroup` stores `name` and `memberNames`, resolving members against the loaded persons' unique
-names. This uses the existing name-based client identity and is independent of displayed or file-array
-positions. App-driven renames are saved consistently; manual JSON renames must update group references.
-Missing groups in legacy files default to an empty collection. Malformed entries, duplicate group names
-or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
-
-`Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
-change. `PersonCard` displays alphabetically ordered group chips after a **Groups** label, separately from tag chips,
-in a strip below the card's columns that is hidden when the client has no tags or groups. No additional client fields or external dependencies are required.
-
-Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
-matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
-persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
-
-### Prefixed name search
-
-`FindCommandParser` tokenizes `n/` together with the other search prefixes (`age/`, `g/`, `r/`, `rg/`, `s/` and
-`match/`) and counts how many are present. Exactly one prefix and an empty preamble are required, so `find Alice`,
-`find Alice g/m` and `find n/Alice age/25` are all rejected with the usage message. This replaces AB3's bare-keyword
-form and removes the special case that previously treated any unprefixed text as a name search.
-
-`parseNameSearch` trims the `n/` value, rejects a blank value with a specific message, and rejects values containing
-`/` so that a mistyped prefix (e.g. `n/Alice x/1`) is never searched for as a name. The remaining text is split on
-whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
-any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
-
-Names such as `Ravi s/o Kumar` contain `/`, so a quoted value is searched as one phrase. `ArgumentTokenizer` reads
-`n/"..."` as a single value, ignoring prefixes inside the quotes, and removes the quotes. Because name search is the
-only mode left at this point, `FindCommandParser` checks whether the text after `n/` starts with `"`. If so, the
-value becomes a `NameContainsPhrasePredicate`, which accepts `/` and keeps a client when the phrase's words appear
-consecutively in the name as whole words, ignoring case. An unquoted `/` is still rejected, with a hint to quote.
 
 ### Recording Dating Data
 
+### Prefixed name search
+
 #### Recording profile attributes
 
-##### Client gender
+##### Recording age
+
+`age/` records a client's current age and is required by every `add` command. `edit` accepts `age/`
+to replace that value. The profile field accepts one exact age only; an age range is valid only inside a
+preference or dealbreaker environment.
+
+
+###### Internal representation
+
+`Person` stores age as an immutable `Age` value with an integer between 18 and 99, inclusive.
+`ParserUtil.parseAge` trims the supplied value, requires digits only, and constructs `Age` only after
+that validation. In contrast, `DatingAttribute.AGE` normalizes a criterion such as `age/25 - 30` to
+the inclusive range `25-30` for preference/dealbreaker comparison.
+
+##### Recording gender
+
+###### Internal representation
 
 `Person` stores a `Gender` enum (`MAN`, `WOMAN`, `NON_BINARY`, or `UNSPECIFIED`). Its command and JSON values are `m`, `w`, `nb`, and the empty string respectively. `Gender.parseValue` is the shared validation and normalization method; `ParserUtil.parseGender` translates invalid input into the existing `ParseException` flow. Gender is included in full person equality, but does not change the name-based duplicate-client check.
 
@@ -250,13 +202,14 @@ consecutively in the name as whole words, ignoring case. An unquoted `/` is stil
 * `JsonAdaptedPerson` saves the canonical gender code. Missing, null or empty gender values load as `UNSPECIFIED`, so valid records containing the required age need no gender migration. Invalid non-empty values use the existing storage error handling.
 * `PersonCard` and command feedback display the full gender label, including “Unspecified”.
 
-Name, age and gender are separate search modes. Combined-trait searches remain deferred. The required age and optional smoking fields from upstream are preserved when adding, editing and saving gender.
-
 Tests cover gender value validation, parser rules, full command execution, filtering, editing the correct displayed client, persistence, older JSON records and unchanged data/results after invalid commands. Existing name-search tests are retained. Shared builders and command helpers carry gender so they do not silently discard it.
 
 ##### Recording smoking status
 
 The optional `s/` parameter in `add` and `edit` records a client's own smoking habit.
+
+###### Internal representation
+
 `SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
 not a non-smoker. The parsers reject invalid and repeated `s/` parameters, and empty ones in `add` and `find`.
 `EditCommandParser` maps an empty `s/` to `SmokingStatus.UNSPECIFIED`, clearing the status the same way an empty
@@ -275,27 +228,7 @@ This increment supplies personal-characteristic data for later filtering and mat
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
 Clearing a recorded smoking status is not supported.
 
-### Quoted argument values
-
-`ArgumentTokenizer` scans the arguments once, left to right, recording the earliest prefix occurrence each time.
-When the first non-space character after a prefix is `"`, the value is quoted: the scan skips to the next `"` that
-is followed by whitespace or the end of the string, so prefixes inside the quotes, such as `s/` in
-`n/"Ravi s/o Kumar"`, are not recognized. The quotes and surrounding spaces are removed from the stored value.
-A missing closing quote (`MESSAGE_UNCLOSED_QUOTE`) or text between the closing quote and the next prefix
-(`MESSAGE_TEXT_AFTER_QUOTE`) raises a `ParseException`, so `tokenize` now declares it. Quotes later in a value,
-and in the preamble, are kept as typed.
-
-Every command that uses the tokenizer gets this behaviour, including values inside `{...}` and `<...>`.
-`DatingCriteriaParser` still runs first, so quotes do not protect `{`, `}`, `<` or `>`.
-`Name` allows `/` after its first character, so quoted names such as `Ravi s/o Kumar` pass validation.
-`FindCommandParser` still rejects name keywords that contain `/`, because a keyword such as `s/o` usually means
-a mistyped prefix; such clients are found by their other name words.
-
-### Application data sandbox
-
-#### Recording preference and dealbreaker attributes
-
-##### Religion attributes
+##### Recording religion attributes
 
 `Religion` accepts only the categories listed in the User Guide. It strips leading and trailing
 whitespace, collapses repeated internal whitespace, and compares names without regard to case.
@@ -304,14 +237,6 @@ Each valid input is stored and displayed using the category's canonical spelling
 and an `Other` category are not accepted. A finite list makes values directly comparable for
 search and matching without inventing a meaning for arbitrary free text.
 
-`AddCommandParser` and `EditCommandParser` first use the shared `DatingCriteriaParser`
-to extract at most one non-nested `{...}` preference environment and one non-nested
-`<...>` dealbreaker environment. They tokenize the remaining outer arguments for the
-client's own fields. Thus outer `r/` records own religion, `{r/Buddhism}` records a soft
-partner preference for Buddhism, and `<r/Islam>` records Islam as an excluded partner
-religion: the partner **must not have** it. Exclusion is not a requirement to have that
-religion. These commands record criteria; [pairwise matching](#pairwise-matching) evaluates them.
-
 The own religion is optional in `Person`; absent means **unknown**, not the explicit
 `No religion` category. `add` rejects a blank outer `r/`; `edit` supports clearing only
 the own field with an empty outer `r/`. Omitting it preserves the own religion. One
@@ -319,20 +244,18 @@ the own field with an empty outer `r/`. Omitting it preserves the own religion. 
 values inside environments, duplicate prefixes within an environment, repeated
 environments and nested or unbalanced delimiters are rejected.
 
-#### Internal representation
+###### Internal representation
 
-`DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
-the own field. `Person` holds an immutable `DatingCriteria` with separate preference
-and dealbreaker maps indexed by `DatingAttribute`. The resulting criteria must not
-prefer and exclude the same normalized gender, smoking status, religion, or relationship
-goal. Preferred and excluded age ranges must not overlap. These checks also apply when
-an edit updates only one bucket and retains the other. Age ranges accept spaces around
-the hyphen, such as `age/25 - 30`. The own religion is independent: it may equal or
-differ from either partner criterion. A failed add or edit leaves stored records unchanged.
+`Person` represents a recorded own religion as an optional `Religion`; `DatingAttribute.RELIGION`
+uses the same value type to normalize partner criteria. The own religion is independent of either
+partner-criteria map and may equal or differ from its values. `JsonAdaptedPerson` saves the canonical
+own-religion name and treats a missing or null property as unknown. The existing unknown-property
+handling ignores obsolete `preferredReligion`, `requiredReligion` and `excludedReligions` properties;
+they are omitted on the next save rather than migrated into the new maps.
+=======
 
-The class diagram below focuses on the religion-related model. Unrelated `Person`
-members and the other `DatingAttribute` enum values are omitted.
 
+The class diagram below focuses on the religion-related model.
 <img src="images/ReligionCriteriaClassDiagram.png" width="450" alt="Religion model: a Person has an optional own Religion and separate DatingCriteria maps keyed by DatingAttribute." />
 
 The `0..1` multiplicity represents an unknown or recorded own religion, while
@@ -341,44 +264,8 @@ are canonical strings in those maps, not references to the client's own `Religio
 The dashed dependencies show the map key type and the shared religion validation;
 they do not represent additional stored associations.
 
-`DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an
-explicitly empty one. `EditPersonDescriptor` carries these optional bucket updates;
-`EditCommand` preserves an omitted bucket and merges a non-empty update by value for
-multi-valued attributes. For example, `{r/Buddhism}` adds Buddhism to the preferred religions
-while preserving age, smoking and relationship-goal preferences; an already recorded value is
-left in place and reported as a warning. `{}` clears all preferences and `<>`
-clears all exclusions/dealbreakers, without changing the own religion or the other bucket.
-Unrelated person fields are preserved unless separately supplied in the edit.
-
-`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete outer
-`rp/`, `rr/` and `rx/` prefixes, including blank values; the shared environment parser
-also rejects them inside environments. This prevents a legacy criteria command from
-silently becoming part of another field.
-
-`JsonAdaptedPerson` saves the canonical own-religion name and treats a missing or null
-own-religion property as unknown. It persists criteria via `DatingCriteria` as the
-`preferences` and `dealbreakers` maps, using the key `religion` and a list of canonical categories,
-for example `"preferences": {"religion": ["Buddhism", "Jainism"]}` and
-`"dealbreakers": {"religion": ["Islam"]}`. `DatingCriteria.fromStorage` restores these
-maps and accepts the old single-string format; older valid records without them load with empty criteria. Invalid religion
-criteria, including null map values and a normalized preference/exclusion conflict,
-are reported through the existing `IllegalValueException` invalid-data path rather
-than an unchecked crash. The existing unknown-property handling ignores obsolete
-`preferredReligion`, `requiredReligion` and `excludedReligions` properties; they are
-omitted on the next save, not migrated into the new maps. Valid own religion and other
-attributes survive this transition. All persistence continues through the existing
-JAR-home-confined storage; religion criteria introduce no new files or OS configuration.
-
-`PersonCard` shows the client's own religion and recorded partner criteria. `find r/RELIGION` compares only that own
-field, not either partner-criteria map. Criteria-environment searching is not supported. Use `match` for
-compatibility evaluation.
 
 ##### Recording relationship goals
-
-A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
-`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
-`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
-Keeping one copy avoids an own goal and a goal preference that disagree.
 
 `RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge. Each value
 holds a short keyword (for example, `long-open`) and a full name. Users type keywords only:
@@ -401,10 +288,116 @@ already has one or excludes that goal, so an older file never fails to load beca
 `RelationshipGoalMatchesPredicate` keeps clients whose goals share at least one goal with the list, so clients
 with an unknown goal are never returned.
 
+###### Internal representation
+
+`RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge.
+Each enum value holds its short keyword (for example, `long-open`) and its full name, so a goal can
+be entered either way; keywords exist because fast typing is a core goal of the product.
+`RelationshipGoal#fromString` strips the input, collapses repeated internal whitespace, and ignores
+case when matching. Each goal is stored and displayed using its full name: for example, `rg/LONG`
+becomes `Long-term relationship`.
+
+`AddCommandParser` and `EditCommandParser` reject invalid and repeated `rg/` parameters.
+`Person` exposes the goal as an `Optional`, because an absent goal means **unknown**, not
+`Figuring out my goals`, which is an explicit category. `Person` includes the goal in full equality
+and hashing, while its existing name-based identity rule is unchanged. `EditPersonDescriptor`
+records whether `rg/` was supplied separately from its value, so `rg/` with no value clears the goal
+and edits to other fields preserve it.
+
+`JsonAdaptedPerson` saves the full category name as the `relationshipGoal` string and reads absent
+or null fields in older JSON files as unknown. Other invalid stored values are rejected using the
+existing storage-error path. The person card and command feedback display the goal, including
+`Not specified` for missing information.
+
+`find rg/GOAL` searches by relationship goal. `FindCommandParser` treats `rg/` as one more search
+mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
+combines modes, mixes a prefix with name keywords, or repeats `rg/`. The value is parsed with
+`ParserUtil#parseRelationshipGoal`, so search accepts exactly the keywords and full names that `add`
+and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal equals the parsed goal,
+so clients with an unknown goal are never returned. A single goal is accepted rather than a
+comma-separated list, because some full goal names contain commas.
+
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
+
+A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
+`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
+`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
+Keeping one copy avoids an own goal and a goal preference that disagree.
+
+
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching): a criterion is met when it
 shares at least one goal with the other client's goals.
 
+##### Miscellaneous values
+
+Within every `add` command, the user must supply exactly one `n/`, `a/`, `e/`, `age/`, and `p/` value. `AddCommandParser`
+rejects a command if any of these prefixes is absent, if it has unprefixed text, or if a required prefix
+is repeated. `ParserUtil` trims each supplied value before constructing the corresponding immutable
+`Person` field. The constraints are:
+
+| Value | Prefix | Underlying constraint |
+| --- | --- | --- |
+| Name | `n/` | Must be non-blank and contain only alphanumeric characters and spaces. |
+| Address | `a/` | Must be non-blank; after trimming, any characters are allowed. |
+| Email | `e/` | Must use `local-part@domain` format. The local part contains alphanumeric characters and `+`, `_`, `.`, or `-`, cannot start or end with one of them, and cannot contain consecutive periods. Domain labels are dot-separated, begin and end alphanumerically, may contain internal hyphens, and the final label has at least two characters. |
+| Age | `age/` | Must contain digits only and represent an integer from 18 through 99, inclusive. |
+| Phone number | `p/` | Must contain digits only and have at least three digits. |
+
+These fields are mandatory only when creating a client. An `edit` changes a supplied field after the
+same validation and retains every mandatory field that was omitted from the command.
+
+#### Recording preference and dealbreaker attributes
+
+`AddCommandParser` and `EditCommandParser` use `DatingCriteriaParser` to extract at most one
+non-nested `{...}` preference environment and one non-nested `<...>` dealbreaker environment before
+tokenizing the remaining outer arguments as the client's own fields. For example, `{r/Buddhism}`
+records a soft partner preference for Buddhism, while `<r/Islam>` records Islam as an excluded partner
+religion. Exclusion is not a requirement to have that religion. These commands record criteria;
+[pairwise matching](#pairwise-matching) evaluates them.
+
+`DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an explicitly empty one.
+It returns the criteria to update and the attributes to remove for each supplied environment.
+`EditPersonDescriptor` carries these optional bucket updates; `EditCommand` preserves an omitted bucket
+and merges a non-empty update by attribute. For example, `{r/Buddhism}` changes the preferred religion
+while preserving age, smoking and relationship-goal preferences. `{}` clears all preferences and `<>`
+clears all exclusions/dealbreakers, without changing the own religion or the other bucket. Unrelated
+person fields are preserved unless separately supplied in the edit.
+
+`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete outer `rp/`, `rr/` and
+`rx/` prefixes, including blank values; `DatingCriteriaParser` also rejects them inside an environment.
+This prevents a legacy criteria command from silently becoming part of another field.
+
+##### Internal representation
+
+`Person` holds an immutable `DatingCriteria` with separate preference and dealbreaker maps indexed by
+`DatingAttribute`. The resulting criteria must not prefer and exclude the same normalized gender,
+smoking status, religion, or relationship goal. Preferred and excluded age ranges must not overlap.
+These checks also apply when an edit updates only one bucket and retains the other. Age ranges accept
+spaces around the hyphen, such as `age/25 - 30`. A failed add or edit leaves stored records unchanged.
+
+`JsonAdaptedPerson` persists criteria as the `preferences` and `dealbreakers` maps. Each map uses the
+stable `DatingAttribute` storage key and a canonical value; for example,
+`"preferences": {"religion": "Buddhism"}` and `"dealbreakers": {"religion": "Islam"}`.
+`DatingCriteria.fromStorage` restores these maps; older valid records without them load with empty
+criteria. Invalid criteria, including null map values and normalized preference/dealbreaker conflicts,
+are reported through the existing `IllegalValueException` invalid-data path.
+
+> **Class diagram:** To be uploaded here.
+
+### Prefixed name search
+
+`FindCommandParser` tokenizes `n/` together with the other search prefixes (`age/`, `g/`, `r/`, `rg/`, `s/` and
+`match/`) and counts how many are present. Exactly one prefix and an empty preamble are required, so `find Alice`,
+`find Alice g/m` and `find n/Alice age/25` are all rejected with the usage message. This replaces AB3's bare-keyword
+form and removes the special case that previously treated any unprefixed text as a name search.
+
+`parseNameSearch` trims the `n/` value, rejects a blank value with a specific message, and rejects values containing
+`/` so that a mistyped prefix (e.g. `n/Alice x/1`) is never searched for as a name. The remaining text is split on
+whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
+any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
+
 ### Maintaining preferences and dealbreakers
+
 
 #### Editing preferences and dealbreakers
 
@@ -431,6 +424,22 @@ are contradictory. The policy is to reject the entire command rather than priori
 For example, `{r/Buddhism} <r/buddhism>` and a retained preferred `age/25-30` plus a new excluded
 `age/28-35` are rejected. The `DatingCriteria` constructor and `fromStorage` apply the same invariant,
 so a malformed JSON file cannot introduce a state that commands would reject.
+
+## Special characters in Dating Attributes
+
+`ArgumentTokenizer` scans the arguments once, left to right, recording the earliest prefix occurrence each time.
+When the first non-space character after a prefix is `"`, the value is quoted: the scan skips to the next `"` that
+is followed by whitespace or the end of the string, so prefixes inside the quotes, such as `s/` in
+`n/"Ravi s/o Kumar"`, are not recognized. The quotes and surrounding spaces are removed from the stored value.
+A missing closing quote (`MESSAGE_UNCLOSED_QUOTE`) or text between the closing quote and the next prefix
+(`MESSAGE_TEXT_AFTER_QUOTE`) raises a `ParseException`, so `tokenize` now declares it. Quotes later in a value,
+and in the preamble, are kept as typed.
+
+Every command that uses the tokenizer gets this behaviour, including values inside `{...}` and `<...>`.
+`DatingCriteriaParser` still runs first, so quotes do not protect `{`, `}`, `<` or `>`.
+`Name` allows `/` after its first character, so quoted names such as `Ravi s/o Kumar` pass validation.
+`FindCommandParser` still rejects name keywords that contain `/`, because a keyword such as `s/o` usually means
+a mistyped prefix; such clients are found by their other name words.
 
 ### Matching
 
@@ -536,7 +545,7 @@ and other searches return to insertion order without any changes.
 
 ### Forming groups
 
-#### Forming arbitrary groups and tagging
+#### Forming Named client groups
 
 `grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
 `GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
@@ -559,7 +568,33 @@ The command flow is:
    whole command. Single-member groups and empty groups after removal are valid.
 4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
 
-#### Forming groups based on match and tagging
+Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
+`INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
+including insufficient-information candidates, but does not apply its preference-score ordering. An existing
+group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
+
+`ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
+order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
+clear the selected-group state. `AddressBook.setPerson` replaces membership references when immutable
+persons are edited; `removePerson` removes references but retains empty groups. Bulk person replacement
+prunes obsolete references. `resetData` validates a complete copy before replacing persons and groups;
+clearing the book therefore clears groups too. Existing add/edit commands still restore the full list.
+
+`JsonAdaptedGroup` stores `name` and `memberNames`, resolving members against the loaded persons' unique
+names. This uses the existing name-based client identity and is independent of displayed or file-array
+positions. App-driven renames are saved consistently; manual JSON renames must update group references.
+Missing groups in legacy files default to an empty collection. Malformed entries, duplicate group names
+or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
+
+`Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
+change. `PersonCard` displays alphabetically ordered group chips after a **Groups** label, separately from tag chips,
+in a strip below the card's columns that is hidden when the client has no tags or groups. No additional client fields or external dependencies are required.
+
+Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
+matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
+persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
+
+#### Forming groups based on match
 
 Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
 `INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
@@ -587,45 +622,26 @@ Automated tests cover value validation/immutability, atomic failures, filtered a
 matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
 persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
 
-### Extending the application
-
-#### Extending matching parameters
-
-To add a dating attribute, introduce a `DatingAttribute` entry and a strongly typed value object (or enum)
-that owns parsing, normalisation, equality and its user-visible constraint. Add the outer profile prefix and
-criteria-block prefix to the parser, then carry the value through `Person`, `EditPersonDescriptor`,
-`DatingCriteria`, `JsonAdaptedPerson`, the client card, and any relevant `find` predicate. Finally, teach
-`MatchAssessment` how to evaluate the attribute as a preference and as a dealbreaker. Do not use a raw
-string comparison for a new attribute: matching, searching, command validation and JSON loading must share
-the same normalised representation.
-
-#### Required validation, storage and test updates
-
-For every new attribute, add parser tests for valid, blank, repeated and malformed prefixes; model tests
-for equality and contradiction rules; command tests for add/edit/find/match; storage round-trip and malformed
-JSON tests; and an integration test that confirms the displayed index is honoured after filtering or sorting.
-Update the User Guide parameter list and both criteria sections at the same time. This keeps the parser,
-storage schema, matching semantics and public documentation in lockstep.
-
 ### Reliability
 
 #### Application data sandbox
 
-`AppPaths` derives the packaged application's home folder from its JAR code source, not the working directory.
-`MainApp` resolves preferences and client data under this folder; `LogsCenter` confines rotating logs there and
-escapes log-pattern characters. `FileUtil` and `JsonUtil` validate packaged data paths before reading or writing,
-rejecting traversal and existing symbolic links that lead outside the home folder. Unsafe log destinations fall
-back to console logging rather than another directory.
+`AppPaths` determines the application home from the packaged JAR's code location. For a packaged run,
+the JAR's containing folder is the home; a development or test class-directory run retains its working
+directory behavior. `MainApp` places `preferences.json` and `data/addressbook.json` below that home. This fits 
+the constraint: Data-Sandbox
 
-`Main` configures JavaFX's native-library cache and temporary-file directory inside that same home before
-starting JavaFX. These settings are JVM-process properties, not persistent OS configuration changes. The private
-`.javafx/` and `.tmp/` runtime folders must be ordinary directories: all symbolic links at either root or any
-descendant are rejected, including inward links that could hide outward-linked children in their targets. This
-stricter rule applies only to these runtime folders; normal in-home data and preferences links retain the existing
-path-validation behavior. An unsafe or unwritable runtime layout aborts startup before JavaFX starts, without
-falling back outside the sandbox or automatically deleting or rewriting existing caches or client data.
-Class-directory runs have no JAR home and retain working-directory behavior for development and JUnit fixtures;
-verify the sandbox against the packaged JAR.
+All packaged data paths pass through `AppPaths.resolveDataPath` before file access. It normalizes each
+path, rejects traversal outside the home folder, and rejects existing symbolic links that resolve outside
+it. `JsonUtil` and `FileUtil` use this check for JSON reads and writes; `LogsCenter` applies the same
+containment check to rotating log files.
+
+Before JavaFX starts, `Main` calls `AppPaths.configureRuntimeCaches`. It creates `.javafx/` and `.tmp/`
+inside the application home and assigns them to the `javafx.cachedir` and `java.io.tmpdir` process
+properties. These runtime folders must be readable and writable and may not contain symbolic links.
+If the folder layout is unsafe or unusable, startup stops before JavaFX starts rather than writing
+runtime files outside the application home. These properties apply only to the running process and do
+not modify OS-level configuration.
 
 #### Error handling, validation and recovery
 
@@ -636,94 +652,14 @@ typed attributes, unique client identity, non-conflicting criteria, valid group 
 paths. Consequently, a failed command leaves the current model and saved data unchanged; a malformed data file
 does not create a partially loaded model. Tests exercise these paths alongside normal command behaviour.
 
-### \[Proposed\] Undo/redo feature
+If `data/addressbook.json` is manually edited and becomes malformed, or contains values that fail model
+validation, loading fails through the storage error path. `MainApp` logs a warning and starts the session
+with an empty `AddressBook` rather than loading only the valid records. The invalid JSON file is not changed
+during startup; a later successful command that saves data replaces it with the current address book.
 
-#### Proposed Implementation
-
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
-
-* `VersionedAddressBook#commit()` — Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` — Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` — Restores a previously undone address book state from its history.
-
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
-
-Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
-
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
-
-![UndoRedoState0](images/UndoRedoState0.png)
-
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
-
-![UndoRedoState1](images/UndoRedoState1.png)
-
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
-
-![UndoRedoState2](images/UndoRedoState2.png)
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
-
-</div>
-
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
-
-![UndoRedoState3](images/UndoRedoState3.png)
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
-
-</div>
-
-The following sequence diagram shows how an undo operation goes through the `Logic` component:
-
-![UndoSequenceDiagram](images/UndoSequenceDiagram-Logic.png)
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
-
-</div>
-
-Similarly, how an undo operation goes through the `Model` component is shown below:
-
-![UndoSequenceDiagram](images/UndoSequenceDiagram-Model.png)
-
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
-
-</div>
-
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
-
-![UndoRedoState4](images/UndoRedoState4.png)
-
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …​` command. This is the behavior that most modern desktop applications follow.
-
-![UndoRedoState5](images/UndoRedoState5.png)
-
-The following activity diagram summarizes what happens when a user executes a new command:
-
-<img src="images/CommitActivityDiagram.png" width="250" />
-
-#### Design considerations:
-
-**Aspect: How undo & redo execute:**
-
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
-
-* **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
-
-_{more aspects and alternatives to be added}_
-
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
+In line with the Human-Editable-File constraint, the application does not change the existing permissions of data/addressbook.json, 
+so users may edit it manually when permitted by the operating system. If the edited file is malformed or contains invalid values, 
+the application starts with an empty address book rather than partially loading the data. Users should back up the file before editing it manually.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -935,15 +871,6 @@ client, excluding the source. It rejects an existing name or zero candidates. Gr
 * **Label**: A categorisation attached to a client using the existing AB3 tag mechanism.
 * **Group**: A named collection of client records; membership does not create duplicate client records.
 
-### Details to confirm with the team
-
-The draft feature notes disagree on some validation rules. Resolve these before implementing or publishing precise command specifications:
-
-* The implemented age range is 18–99 for client data and age searches. Draft ranges up to 120 and age-range client records are not supported.
-* Religion data uses the 21 fixed categories in the User Guide, with no free-text or `Other` value. Future filtering must use the same canonical representation.
-* Name search now uses `find n/KEYWORD [MORE_KEYWORDS]`, so every `find` mode is selected by exactly one prefix. Bare keywords inherited from AB3 are rejected rather than treated as a name search. Combining characteristics into an OR search remains pending.
-* `show NAME` displays members of a known group. Listing all group names, group rename and whole-group deletion
-  remain deferred; no command syntax is reserved for these operations.
 
 --------------------------------------------------------------------------------------------------------------------
 
