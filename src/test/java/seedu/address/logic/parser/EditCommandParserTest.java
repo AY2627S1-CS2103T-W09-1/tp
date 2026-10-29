@@ -9,13 +9,11 @@ import static seedu.address.logic.commands.CommandTestUtil.INVALID_ADDRESS_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_EMAIL_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_NAME_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_PHONE_DESC;
-import static seedu.address.logic.commands.CommandTestUtil.INVALID_RELATIONSHIP_GOAL_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.INVALID_TAG_DESC;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.RELATIONSHIP_GOAL_DESC_AMY;
-import static seedu.address.logic.commands.CommandTestUtil.RELATIONSHIP_GOAL_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_HUSBAND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_AMY;
@@ -23,13 +21,11 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_RELATIONSHIP_GOAL_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -39,6 +35,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -241,19 +238,13 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_relationshipGoal_success() {
-        Index targetIndex = INDEX_FIRST_PERSON;
+    public void parse_relationshipGoalCriteria_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        descriptor.setPreferences(Map.of(DatingAttribute.RELATIONSHIP_GOAL,
+                Set.of("Long-term relationship", "Short-term fun")));
+        descriptor.setDealbreakers(Map.of(DatingAttribute.RELATIONSHIP_GOAL, "Figuring out my goals"));
 
-        // set a relationship goal
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
-                .withRelationshipGoal(VALID_RELATIONSHIP_GOAL_AMY).build();
-        assertParseSuccess(parser, targetIndex.getOneBased() + RELATIONSHIP_GOAL_DESC_AMY,
-                new EditCommand(targetIndex, descriptor));
-
-        // empty prefix clears the relationship goal
-        descriptor = new EditPersonDescriptorBuilder().withoutRelationshipGoal().build();
-        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_RELATIONSHIP_GOAL,
-                new EditCommand(targetIndex, descriptor));
+        assertParseSuccess(parser, "1 {rg/short,long} <rg/unsure>", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test
@@ -266,9 +257,15 @@ public class EditCommandParserTest {
     }
 
     @Test
-    public void parse_relationshipGoalInvalidOrRepeated_failure() {
-        assertParseFailure(parser, "1" + INVALID_RELATIONSHIP_GOAL_DESC, RelationshipGoal.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + RELATIONSHIP_GOAL_DESC_AMY + RELATIONSHIP_GOAL_DESC_BOB,
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_RELATIONSHIP_GOAL));
+    public void parse_invalidRelationshipGoalCriteria_failure() {
+        // own goal outside the criteria
+        assertParseFailure(parser, "1" + RELATIONSHIP_GOAL_DESC_AMY, ParserUtil.MESSAGE_OWN_RELATIONSHIP_GOAL);
+
+        // full names are not keywords
+        assertParseFailure(parser, "1 {rg/Long-term relationship}", RelationshipGoal.MESSAGE_CONSTRAINTS);
+
+        // repeated or empty goals in a list
+        assertParseFailure(parser, "1 {rg/long,LONG}", RelationshipGoal.MESSAGE_INVALID_LIST);
+        assertParseFailure(parser, "1 {rg/long,}", RelationshipGoal.MESSAGE_INVALID_LIST);
     }
 }

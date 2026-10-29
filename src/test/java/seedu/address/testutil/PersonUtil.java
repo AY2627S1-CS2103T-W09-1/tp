@@ -13,12 +13,14 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.person.DatingAttribute;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.RelationshipGoal;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -50,7 +52,6 @@ public class PersonUtil {
         person.getTags().stream().forEach(
             s -> sb.append(PREFIX_TAG + s.tagName + " ")
         );
-        person.getRelationshipGoal().ifPresent(goal -> sb.append(PREFIX_RELATIONSHIP_GOAL + goal.toString() + " "));
         person.getReligion().ifPresent(religion -> sb.append(PREFIX_RELIGION).append(religion).append(" "));
         appendCriteria(sb, person.getDatingCriteria().getPreferences(), '{', '}');
         appendCriteria(sb, person.getDatingCriteria().getDealbreakers(), '<', '>');
@@ -77,11 +78,6 @@ public class PersonUtil {
                 tags.forEach(s -> sb.append(PREFIX_TAG).append(s.tagName).append(" "));
             }
         }
-        if (descriptor.isRelationshipGoalEdited()) {
-            sb.append(PREFIX_RELATIONSHIP_GOAL);
-            descriptor.getRelationshipGoal().ifPresent(sb::append);
-            sb.append(" ");
-        }
         if (descriptor.isReligionEdited()) {
             sb.append(PREFIX_RELIGION);
             descriptor.getReligion().ifPresent(sb::append);
@@ -96,8 +92,17 @@ public class PersonUtil {
             char openingDelimiter, char closingDelimiter) {
         builder.append(openingDelimiter);
         criteria.forEach((attribute, values) -> builder.append(getPrefix(attribute))
-                .append(String.join(", ", values)).append(" "));
+                .append(toCommandValue(attribute, values)).append(" "));
         builder.append(closingDelimiter).append(" ");
+    }
+
+    private static String toCommandValue(DatingAttribute attribute, Set<String> values) {
+        if (attribute != DatingAttribute.RELATIONSHIP_GOAL) {
+            return String.join(", ", values);
+        }
+        return values.stream()
+                .map(value -> RelationshipGoal.fromStoredValue(value).getKeyword())
+                .collect(Collectors.joining(","));
     }
 
     private static Prefix getPrefix(DatingAttribute attribute) {

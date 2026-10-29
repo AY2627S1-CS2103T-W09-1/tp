@@ -15,9 +15,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.DatingAttribute;
+import seedu.address.model.person.RelationshipGoal;
 
 /**
  * Parses the preference ({@code {...}}) and dealbreaker ({@code <...>}) environments in a command.
@@ -163,13 +165,11 @@ public final class DatingCriteriaParser {
     private static Set<String> validateAndNormalizeValues(DatingAttribute attribute, String value)
             throws ParseException {
         try {
-            // A relationship-goal display name may itself contain a comma, so first try it as one value.
+            // Relationship goals are typed as keywords, since some full goal names contain a comma
             if (attribute == DatingAttribute.RELATIONSHIP_GOAL) {
-                try {
-                    return Set.of(attribute.normalizeCriterion(value));
-                } catch (IllegalArgumentException ignored) {
-                    // It may be a comma-separated list of relationship-goal values.
-                }
+                return RelationshipGoal.parseKeywordList(value).stream()
+                        .map(RelationshipGoal::toString)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
             }
             String[] rawValues = value.split(",", -1);
             if (rawValues.length > 1 && !attribute.allowsMultipleValues()) {

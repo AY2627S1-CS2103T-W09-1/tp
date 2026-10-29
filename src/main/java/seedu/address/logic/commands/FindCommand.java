@@ -24,7 +24,7 @@ public class FindCommand extends Command {
             + "Use find g/ to list all persons with a specified gender.\n"
             + "Or search by age: find age/25 or find age/25-35 (18 to 99, inclusive).\n"
             + "Or search by own religion: find r/Jainism (one supported category, case-insensitive).\n"
-            + "Or search by relationship goal: find rg/GOAL (e.g. find rg/long).\n"
+            + "Or search by relationship goal: find rg/GOAL[,GOAL]... (e.g. find rg/long,long-open).\n"
             + "Or search by own smoking status: find s/yes or find s/no (case-insensitive).\n"
             + "Clients with unspecified smoking status are excluded from smoking searches.\n"
             + "Or find compatible clients for a person: find match/INDEX (best matches first).\n"

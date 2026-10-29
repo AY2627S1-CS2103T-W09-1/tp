@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
@@ -80,8 +79,6 @@ public class PersonCard extends UiPart<Region> {
         addAttribute("Gender", formatGender(person.getGender()));
         addAttribute("Smoking", formatSmokingStatus(person.getSmokingStatus()));
         addAttribute("Religion", person.getReligion().map(Object::toString));
-        addAttribute("Goal", person.getRelationshipGoal().map(Object::toString))
-                .setTooltip(new Tooltip("Relationship goal"));
         setCriteria(preferences, person.getDatingCriteria().getPreferences());
         setCriteria(dealbreakers, person.getDatingCriteria().getDealbreakers());
         addBadges("Tags", person.getTags().stream()
@@ -97,15 +94,14 @@ public class PersonCard extends UiPart<Region> {
     }
 
     /**
-     * Adds a row of the attributes table and returns its field label.
+     * Adds a row of the attributes table.
      */
-    private Label addAttribute(String label, Optional<String> value) {
+    private void addAttribute(String label, Optional<String> value) {
         Label fieldLabel = createLabel(label, "card-field-label");
         fieldLabel.setMinWidth(Region.USE_PREF_SIZE);
         Label valueLabel = createLabel(value.orElse(NOT_SET_LABEL),
                 value.isPresent() ? "card-field-value" : "card-field-unset");
         attributes.addRow(attributes.getRowCount(), fieldLabel, valueLabel);
-        return fieldLabel;
     }
 
     private void addBadges(String label, List<String> names, String badgeStyleClass) {

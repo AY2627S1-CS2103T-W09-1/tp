@@ -14,6 +14,8 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.testutil.PersonBuilder;
@@ -115,14 +117,26 @@ public class PersonTest {
     }
 
     @Test
-    public void relationshipGoal() {
-        // not recorded -> empty
-        assertTrue(ALICE.getRelationshipGoal().isEmpty());
+    public void constructor_withoutCriteria_hasEmptyCriteria() {
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getAge(), ALICE.getTags(), ALICE.getSmokingStatus(), ALICE.getGender(), null);
+        assertEquals(DatingCriteria.EMPTY, person.getDatingCriteria());
+        assertTrue(person.getRelationshipGoals().isEmpty());
 
-        // recorded -> present
+        // without a religion either
+        assertEquals(person, new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getAge(), ALICE.getTags(), ALICE.getSmokingStatus(), ALICE.getGender()));
+    }
+
+    @Test
+    public void relationshipGoals() {
+        // no goal preference -> empty
+        assertTrue(ALICE.getRelationshipGoals().isEmpty());
+
+        // goal preference -> the goals the client is open to
         Person aliceWithGoal = new PersonBuilder(ALICE).withRelationshipGoal(VALID_RELATIONSHIP_GOAL_BOB).build();
-        assertEquals(RelationshipGoal.fromString(VALID_RELATIONSHIP_GOAL_BOB),
-                aliceWithGoal.getRelationshipGoal().get());
+        assertEquals(Set.of(RelationshipGoal.fromStoredValue(VALID_RELATIONSHIP_GOAL_BOB)),
+                aliceWithGoal.getRelationshipGoals());
 
         // different relationship goal -> returns false
         assertFalse(ALICE.equals(aliceWithGoal));
@@ -143,8 +157,7 @@ public class PersonTest {
                 + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", smokingStatus="
                 + ALICE.getSmokingStatus() + ", age=" + ALICE.getAge()
                 + ", tags=" + ALICE.getTags() + ", gender=" + ALICE.getGender()
-                + ", religion=null"
-                + ", relationshipGoal=" + ALICE.getRelationshipGoal().orElse(null) + "}";
+                + ", religion=null}";
         assertEquals(expected, ALICE.toString());
     }
 }

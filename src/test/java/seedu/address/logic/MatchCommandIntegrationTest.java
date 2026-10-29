@@ -43,8 +43,8 @@ public class MatchCommandIntegrationTest {
         storage = new JsonAddressBookStorage(temporaryFolder.resolve("addressbook.json"));
         initializeLogic();
         logic.execute("add n/Hidden p/99999999 e/hidden@example.com a/Home age/50");
-        logic.execute("add n/Alice p/11111111 e/alice@example.com a/Home age/28 s/no rg/long"
-                + " {age/25-35} <s/yes>");
+        logic.execute("add n/Alice p/11111111 e/alice@example.com a/Home age/28 s/no"
+                + " {age/25-35 rg/long} <s/yes>");
         logic.execute("add n/Bob p/22222222 e/bob@example.com a/Home age/30 s/yes"
                 + " {r/Buddhism rg/long}");
     }
@@ -59,11 +59,12 @@ public class MatchCommandIntegrationTest {
         MatchCommandResult result = assertInstanceOf(MatchCommandResult.class, logic.execute("match 1 2"));
         assertEquals("Alice", result.getFirstName());
         assertEquals("Bob", result.getSecondName());
-        assertEquals(2, result.getAssessment().getFirstComparisons().size());
+        assertEquals(3, result.getAssessment().getFirstComparisons().size());
         String feedback = result.getFeedbackToUser();
         assertEquals("Alice <-> Bob\nResult: Incompatible"
                 + "\n\nAlice's criteria -> Bob"
                 + "\nMet - Preference: Age 25-35; Actual: 30"
+                + "\nMet - Preference: Relationship goal Long-term relationship; Actual: Long-term relationship"
                 + "\nViolated - Dealbreaker: Smoking Exclude: Yes; Actual: Yes"
                 + "\n\nBob's criteria -> Alice"
                 + "\nUnknown - Preference: Religion Buddhism; Actual: Not specified"

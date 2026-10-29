@@ -4,12 +4,14 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * An immutable collection of a client's soft partner preferences and hard dealbreakers.
@@ -42,6 +44,17 @@ public final class DatingCriteria {
         this.preferences = normalize(preferences);
         this.dealbreakers = normalize(dealbreakers);
         validateNoContradictions();
+    }
+
+    /**
+     * Returns the relationship goals the client is open to, which also describe the client to potential
+     * partners. The set is empty if no relationship goal preference is recorded.
+     */
+    public Set<RelationshipGoal> getRelationshipGoals() {
+        Set<String> goalNames = preferences.getOrDefault(DatingAttribute.RELATIONSHIP_GOAL, Set.of());
+        return goalNames.stream()
+                .map(RelationshipGoal::fromStoredValue)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(RelationshipGoal.class)));
     }
 
     /**

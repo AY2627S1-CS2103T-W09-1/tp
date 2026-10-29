@@ -78,7 +78,8 @@ public final class MatchAssessment {
             case SMOKING -> person.getSmokingStatus().equals(SmokingStatus.UNSPECIFIED)
                     ? Optional.empty() : Optional.of(person.getSmokingStatus().value);
             case RELIGION -> person.getReligion().map(Religion::toString);
-            case RELATIONSHIP_GOAL -> person.getRelationshipGoal().map(RelationshipGoal::toString);
+            case RELATIONSHIP_GOAL -> person.getRelationshipGoals().isEmpty()
+                    ? Optional.empty() : Optional.of(RelationshipGoal.formatCriterion(person.getRelationshipGoals()));
         };
     }
 
@@ -88,6 +89,10 @@ public final class MatchAssessment {
             int lower = Integer.parseInt(bounds[0]);
             int upper = bounds.length == 1 ? lower : Integer.parseInt(bounds[1]);
             return new AgeMatchesPredicate(lower, upper).test(candidate);
+        }
+        if (attribute == DatingAttribute.RELATIONSHIP_GOAL) {
+            // A candidate's goals are the goals they are open to, so any one of them can match
+            return candidate.getRelationshipGoals().contains(RelationshipGoal.fromStoredValue(criterion));
         }
         return criterion.equals(actual);
     }
