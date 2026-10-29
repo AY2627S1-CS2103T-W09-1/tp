@@ -213,7 +213,9 @@ class JsonAdaptedPerson {
         }
         RelationshipGoal goal = RelationshipGoal.fromStoredValue(relationshipGoal);
         String excludedGoals = criteria.getDealbreakers().get(DatingAttribute.RELATIONSHIP_GOAL);
-        if (excludedGoals != null && RelationshipGoal.parseStoredCriterion(excludedGoals).contains(goal)) {
+        boolean hasExclusions = excludedGoals != null;
+        boolean isExcluded = hasExclusions && RelationshipGoal.parseStoredCriterion(excludedGoals).contains(goal);
+        if (isExcluded) {
             return criteria;
         }
         Map<DatingAttribute, String> migratedPreferences = new HashMap<>(criteria.getPreferences());
