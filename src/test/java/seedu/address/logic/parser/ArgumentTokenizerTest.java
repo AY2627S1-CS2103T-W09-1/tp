@@ -3,8 +3,11 @@ package seedu.address.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+
+import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
@@ -196,6 +199,28 @@ public class ArgumentTokenizerTest {
             assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_TEXT_AFTER_QUOTE, () ->
                     ArgumentTokenizer.tokenize(argsString, nSlash, sSlash));
         }
+    }
+
+    @Test
+    public void tokenize_repeatedAndInterleavedPrefixesAroundQuotes_keepsOrder() throws Exception {
+        String argsString = " p/1 -t a \"x -t y\" p/\"2 -t z\" ^Q q -t \"b p/c\" p/3 -t";
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT, hatQ);
+        assertArgumentPresent(argMultimap, pSlash, "1", "2 -t z", "3");
+        assertArgumentPresent(argMultimap, dashT, "a \"x", "y\"", "b p/c", "");
+        assertArgumentPresent(argMultimap, hatQ, "q");
+    }
+
+    @Test
+    public void tokenize_manyPrefixes_completesQuickly() {
+        StringBuilder argsString = new StringBuilder(" n/Amy");
+        for (int i = 0; i < 20000; i++) {
+            argsString.append(" -t t").append(i);
+        }
+        ArgumentMultimap argMultimap = assertTimeoutPreemptively(Duration.ofSeconds(3), () ->
+                ArgumentTokenizer.tokenize(argsString.toString(), nSlash, sSlash, aSlash, pSlash, dashT, hatQ));
+        assertEquals(20000, argMultimap.getAllValues(dashT).size());
+        assertEquals("t19999", argMultimap.getValue(dashT).get());
+        assertArgumentPresent(argMultimap, nSlash, "Amy");
     }
 
     @Test

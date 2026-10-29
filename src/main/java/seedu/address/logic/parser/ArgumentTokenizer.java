@@ -51,8 +51,13 @@ public class ArgumentTokenizer {
     private static List<PrefixPosition> findAllPrefixPositions(String argsString, Prefix... prefixes)
             throws ParseException {
         List<PrefixPosition> positions = new ArrayList<>();
+        // Cache each prefix's next occurrence so the string is scanned once per prefix, not once per value.
+        int[] nextOccurrences = new int[prefixes.length];
+        for (int i = 0; i < prefixes.length; i++) {
+            nextOccurrences[i] = findPrefixPosition(argsString, prefixes[i].getPrefix(), 0);
+        }
         int searchFrom = 0;
-        PrefixPosition next = findNextPrefixPosition(argsString, searchFrom, prefixes);
+        PrefixPosition next = findNextPrefixPosition(argsString, searchFrom, prefixes, nextOccurrences);
         while (next != null) {
             positions.add(next);
             int valueStart = skipWhitespace(argsString, next.getValueStartPosition());
@@ -66,7 +71,7 @@ public class ArgumentTokenizer {
             } else {
                 searchFrom = next.getStartPosition();
             }
-            next = findNextPrefixPosition(argsString, searchFrom, prefixes);
+            next = findNextPrefixPosition(argsString, searchFrom, prefixes, nextOccurrences);
         }
         return positions;
     }
@@ -74,11 +79,19 @@ public class ArgumentTokenizer {
     /**
      * Returns the earliest valid occurrence of any of {@code prefixes} from index {@code fromIndex},
      * preferring the longest prefix when several start at the same position, or null if there is none.
+     * {@code nextOccurrences} caches each prefix's next occurrence and is updated only when it falls before
+     * {@code fromIndex}; {@code fromIndex} must not decrease between calls.
      */
-    private static PrefixPosition findNextPrefixPosition(String argsString, int fromIndex, Prefix... prefixes) {
+    private static PrefixPosition findNextPrefixPosition(String argsString, int fromIndex, Prefix[] prefixes,
+            int[] nextOccurrences) {
         PrefixPosition earliest = null;
-        for (Prefix prefix : prefixes) {
-            int position = findPrefixPosition(argsString, prefix.getPrefix(), fromIndex);
+        for (int i = 0; i < prefixes.length; i++) {
+            Prefix prefix = prefixes[i];
+            // An occurrence is valid only if its preceding space is at or after fromIndex.
+            if (nextOccurrences[i] != -1 && nextOccurrences[i] - 1 < fromIndex) {
+                nextOccurrences[i] = findPrefixPosition(argsString, prefix.getPrefix(), fromIndex);
+            }
+            int position = nextOccurrences[i];
             if (position == -1) {
                 continue;
             }
