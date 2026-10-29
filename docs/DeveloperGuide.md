@@ -108,7 +108,7 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
-`MatchCommand` compares two displayed clients and returns a `MatchCommandResult`, a subclass of
+`MatchCommand` compares two clients, given by displayed index or by name, and returns a `MatchCommandResult`, a subclass of
 `CommandResult` carrying structured match details for the UI. `FindMatchCommand`, created by
 `FindCommandParser` for `find match/INDEX`, filters and ranks candidates and returns an ordinary
 `CommandResult`. The diagram shows these separately; `XYZCommand` stands for the other concrete commands.
@@ -388,8 +388,19 @@ Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matchi
 
 ### Pairwise matching
 
-`MatchCommandParser` accepts exactly two distinct positive indexes using `ParserUtil.parseIndex`.
-`MatchCommand` resolves them against `Model.getFilteredPersonList()` and rejects out-of-range indexes.
+`MatchCommandParser` accepts exactly two clients. Preamble tokens are parsed as indexes with
+`ParserUtil.parseIndex` and `n/` values as names with `ParserUtil.parseName`, so indexes come before names.
+Each becomes a `ClientReference`, a sealed interface whose `resolve(Model)` returns the client:
+
+* `ClientReference.ByIndex` looks the index up in `Model.getFilteredPersonList()` and rejects out-of-range indexes.
+* `ClientReference.ByName` searches the whole address book, so the matchmaker need not filter the list first.
+  It returns the client with exactly that `Name` if there is one. Otherwise it accepts a single client whose name
+  differs only in letter case and spacing, and rejects a name with no such client or with several.
+
+The parser rejects two identical references. `MatchCommand` also rejects two references that resolve to the same
+client, such as `match 1 n/Alex Yeoh` when Alex Yeoh is displayed first. Records keep the references comparable,
+so `MatchCommand#equals` compares them directly.
+
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes, preserving unknown
 gender, smoking status, religion, and relationship goal. Age uses the existing inclusive `AgeMatchesPredicate`;
 other attributes compare canonical values. Gender criteria accept a single `g/m`, `g/w`, or `g/nb` value
@@ -568,7 +579,7 @@ not a claim that every possible enhancement or input combination is supported.
 | `* * *` | matchmaker | add and update a client's contact details | keep an accurate way to reach the client | `add`, `edit` |
 | `* * *` | matchmaker | record age, gender, smoking habit, religion, relationship goal, preferences and dealbreakers | retain the information needed to assess candidates | Own fields and `{...}` / `<...>` criteria in `add` and `edit` |
 | `* * *` | matchmaker | find clients by one recorded characteristic at a time | identify candidates without scanning every record | `find n/`, `age/`, `g/`, `s/`, `r/` or `rg/` |
-| `* * *` | matchmaker | compare two clients against each other's preferences and dealbreakers | understand conflicts and unknown information before an introduction | `match INDEX_A INDEX_B` |
+| `* * *` | matchmaker | compare two clients against each other's preferences and dealbreakers | understand conflicts and unknown information before an introduction | `match INDEX_A INDEX_B` or `match n/NAME_A n/NAME_B` |
 | `* * *` | matchmaker | attach labels to clients | categorise client records | Repeated `t/` fields in `add` and replacement tags in `edit` |
 | `* * *` | matchmaker | create named groups and manage their membership | organise different sets of clients | `grp NAME add/remove ...` and `show NAME` |
 | `* *` | matchmaker | rank candidates for a selected client using saved criteria | prioritise possible introductions without re-entering every criterion | `find match/INDEX`; unknown information remains visible |
@@ -632,7 +643,7 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
 
 **MSS**
 
-1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
+1. The matchmaker requests a match of two different clients, each given by displayed index or by name.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
 3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
 4. The displayed list and stored client records remain unchanged.
@@ -643,6 +654,10 @@ A missing client attribute does not satisfy a filter criterion. Separate client 
 
 * 1a. An index is invalid, missing, repeated, or outside the displayed list.
     * 1a1. CupidMaxxing shows an error in the command-result area and leaves client records and the list unchanged.
+
+      Use case ends.
+* 1b. A name matches no client, or matches several clients only when letter case and spacing are ignored.
+    * 1b1. CupidMaxxing shows an error asking for a known name or the clients' indexes, and leaves records and the list unchanged.
 
       Use case ends.
 * 2a. At least one dealbreaker is violated.
@@ -1019,6 +1034,26 @@ Manual checks (use a separate test data set):
    the results should remain the same. With no clients of the searched status, expect zero matches.
 5. After `find s/no`, run `edit 1 s/yes` or `delete 1` on disposable test data.
    Confirm that it targets the first displayed client, not the first client in the full book.
+
+### Matching two clients
+
+1. Matching by index and by name
+   1. Prerequisites: start with the sample data, so `Alex Yeoh` and `Bernice Yu` are the first two clients.
+   1. Test case: `match 1 2`<br>
+      Expected: the match result replaces the list, comparing Alex Yeoh and Bernice Yu in both directions.
+   1. Test case: `match n/Alex Yeoh n/Bernice Yu`, then `match 2 n/alex   yeoh`<br>
+      Expected: the first gives the same result as `match 1 2`. The second gives it with the clients swapped.
+   1. Test case: `find n/Alex`, then `match 1 n/Bernice Yu`<br>
+      Expected: Bernice Yu is found although she is not displayed. After the next command the list still shows
+      only Alex Yeoh.
+
+1. Rejected references
+   1. Test case: `match n/Nobody 1`<br>
+      Expected: "No client is named Nobody." No data changes.
+   1. Test case: `match 1 n/Alex Yeoh` while Alex Yeoh is first in the list<br>
+      Expected: the same-client error.
+   1. Test case: `match n/Alex Yeoh`, `match 1 2 n/Alex Yeoh`, or `match n/ n/Alex Yeoh`<br>
+      Expected: the usage message for the first two, and the name constraints for the last.
 
 ### Saving data
 
