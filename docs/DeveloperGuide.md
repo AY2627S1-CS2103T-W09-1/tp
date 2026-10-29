@@ -173,6 +173,19 @@ This section describes some noteworthy details on how certain features are imple
 
 #### Recording profile attributes
 
+##### Recording age
+
+`age/` records a client's current age and is required by every `add` command. `edit` accepts `age/`
+to replace that value. The profile field accepts one exact age only; an age range is valid only inside a
+preference or dealbreaker environment.
+
+###### Internal representation
+
+`Person` stores age as an immutable `Age` value with an integer between 18 and 99, inclusive.
+`ParserUtil.parseAge` trims the supplied value, requires digits only, and constructs `Age` only after
+that validation. In contrast, `DatingAttribute.AGE` normalizes a criterion such as `age/25 - 30` to
+the inclusive range `25-30` for preference/dealbreaker comparison.
+
 ##### Recording gender
 
 ###### Internal representation
@@ -284,7 +297,7 @@ comma-separated list, because some full goal names contain commas.
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
 
-##### Other values
+##### Mandatory values for `add`
 
 Within every `add` command, the user must supply exactly one `n/`, `a/`, `e/`, `age/`, and `p/` value. `AddCommandParser`
 rejects a command if any of these prefixes is absent, if it has unprefixed text, or if a required prefix
@@ -487,45 +500,6 @@ Automated tests cover value validation/immutability, atomic failures, filtered a
 matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
 persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
 
-### Extending the application
-
-#### Extending matching parameters
-
-To add a dating attribute, introduce a `DatingAttribute` entry and a strongly typed value object (or enum)
-that owns parsing, normalisation, equality and its user-visible constraint. Add the outer profile prefix and
-criteria-block prefix to the parser, then carry the value through `Person`, `EditPersonDescriptor`,
-`DatingCriteria`, `JsonAdaptedPerson`, the client card, and any relevant `find` predicate. Finally, teach
-`MatchAssessment` how to evaluate the attribute as a preference and as a dealbreaker. Do not use a raw
-string comparison for a new attribute: matching, searching, command validation and JSON loading must share
-the same normalised representation.
-
-#### Required validation, storage and test updates
-
-For every new attribute, add parser tests for valid, blank, repeated and malformed prefixes; model tests
-for equality and contradiction rules; command tests for add/edit/find/match; storage round-trip and malformed
-JSON tests; and an integration test that confirms the displayed index is honoured after filtering or sorting.
-Update the User Guide parameter list and both criteria sections at the same time. This keeps the parser,
-storage schema, matching semantics and public documentation in lockstep.
-
-### Reliability
-
-#### Application data sandbox
-
-`AppPaths` derives the packaged application's home folder from its JAR code source, not the working directory.
-`MainApp` resolves preferences and client data under this folder; `LogsCenter` confines rotating logs there and
-escapes log-pattern characters. `FileUtil` and `JsonUtil` validate packaged data paths before reading or writing,
-rejecting traversal and existing symbolic links that lead outside the home folder. Unsafe log destinations fall
-back to console logging rather than another directory.
-
-`Main` configures JavaFX's native-library cache and temporary-file directory inside that same home before
-starting JavaFX. These settings are JVM-process properties, not persistent OS configuration changes. The private
-`.javafx/` and `.tmp/` runtime folders must be ordinary directories: all symbolic links at either root or any
-descendant are rejected, including inward links that could hide outward-linked children in their targets. This
-stricter rule applies only to these runtime folders; normal in-home data and preferences links retain the existing
-path-validation behavior. An unsafe or unwritable runtime layout aborts startup before JavaFX starts, without
-falling back outside the sandbox or automatically deleting or rewriting existing caches or client data.
-Class-directory runs have no JAR home and retain working-directory behavior for development and JUnit fixtures;
-verify the sandbox against the packaged JAR.
 
 #### Error handling, validation and recovery
 
