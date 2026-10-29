@@ -175,6 +175,8 @@ This section describes some noteworthy details on how certain features are imple
 
 ##### Client gender
 
+###### Internal representation
+
 `Person` stores a `Gender` enum (`MAN`, `WOMAN`, `NON_BINARY`, or `UNSPECIFIED`). Its command and JSON values are `m`, `w`, `nb`, and the empty string respectively. `Gender.parseValue` is the shared validation and normalization method; `ParserUtil.parseGender` translates invalid input into the existing `ParseException` flow. Gender is included in full person equality, but does not change the name-based duplicate-client check.
 
 * `AddCommandParser` accepts optional `g/`; omitted or empty values become `UNSPECIFIED`.
@@ -190,6 +192,9 @@ Tests cover gender value validation, parser rules, full command execution, filte
 ##### Recording smoking status
 
 The optional `s/` parameter in `add` and `edit` records a client's own smoking habit.
+
+###### Internal representation
+
 `SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
 not a non-smoker. The parsers reject empty, invalid, and repeated `s/` parameters.
 
@@ -205,6 +210,42 @@ Clearing a recorded smoking status is not supported.
 
 #### Recording preference and dealbreaker attributes
 
+`AddCommandParser` and `EditCommandParser` use `DatingCriteriaParser` to extract at most one
+non-nested `{...}` preference environment and one non-nested `<...>` dealbreaker environment before
+tokenizing the remaining outer arguments as the client's own fields. For example, `{r/Buddhism}`
+records a soft partner preference for Buddhism, while `<r/Islam>` records Islam as an excluded partner
+religion. Exclusion is not a requirement to have that religion. These commands record criteria;
+[pairwise matching](#pairwise-matching) evaluates them.
+
+`DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an explicitly empty one.
+It returns the criteria to update and the attributes to remove for each supplied environment.
+`EditPersonDescriptor` carries these optional bucket updates; `EditCommand` preserves an omitted bucket
+and merges a non-empty update by attribute. For example, `{r/Buddhism}` changes the preferred religion
+while preserving age, smoking and relationship-goal preferences. `{}` clears all preferences and `<>`
+clears all exclusions/dealbreakers, without changing the own religion or the other bucket. Unrelated
+person fields are preserved unless separately supplied in the edit.
+
+`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete outer `rp/`, `rr/` and
+`rx/` prefixes, including blank values; `DatingCriteriaParser` also rejects them inside an environment.
+This prevents a legacy criteria command from silently becoming part of another field.
+
+##### Internal representation
+
+`Person` holds an immutable `DatingCriteria` with separate preference and dealbreaker maps indexed by
+`DatingAttribute`. The resulting criteria must not prefer and exclude the same normalized gender,
+smoking status, religion, or relationship goal. Preferred and excluded age ranges must not overlap.
+These checks also apply when an edit updates only one bucket and retains the other. Age ranges accept
+spaces around the hyphen, such as `age/25 - 30`. A failed add or edit leaves stored records unchanged.
+
+`JsonAdaptedPerson` persists criteria as the `preferences` and `dealbreakers` maps. Each map uses the
+stable `DatingAttribute` storage key and a canonical value; for example,
+`"preferences": {"religion": "Buddhism"}` and `"dealbreakers": {"religion": "Islam"}`.
+`DatingCriteria.fromStorage` restores these maps; older valid records without them load with empty
+criteria. Invalid criteria, including null map values and normalized preference/dealbreaker conflicts,
+are reported through the existing `IllegalValueException` invalid-data path.
+
+> **Class diagram:** To be uploaded here.
+
 ##### Religion attributes
 
 `Religion` accepts only the categories listed in the User Guide. It strips leading and trailing
@@ -214,14 +255,6 @@ Each valid input is stored and displayed using the category's canonical spelling
 and an `Other` category are not accepted. A finite list makes values directly comparable for
 search and matching without inventing a meaning for arbitrary free text.
 
-`AddCommandParser` and `EditCommandParser` first use the shared `DatingCriteriaParser`
-to extract at most one non-nested `{...}` preference environment and one non-nested
-`<...>` dealbreaker environment. They tokenize the remaining outer arguments for the
-client's own fields. Thus outer `r/` records own religion, `{r/Buddhism}` records a soft
-partner preference for Buddhism, and `<r/Islam>` records Islam as an excluded partner
-religion: the partner **must not have** it. Exclusion is not a requirement to have that
-religion. These commands record criteria; [pairwise matching](#pairwise-matching) evaluates them.
-
 The own religion is optional in `Person`; absent means **unknown**, not the explicit
 `No religion` category. `add` rejects a blank outer `r/`; `edit` supports clearing only
 the own field with an empty outer `r/`. Omitting it preserves the own religion. One
@@ -229,54 +262,14 @@ the own field with an empty outer `r/`. Omitting it preserves the own religion. 
 values inside environments, duplicate prefixes within an environment, repeated
 environments and nested or unbalanced delimiters are rejected.
 
-#### Internal representation
+###### Internal representation
 
-`DatingAttribute.RELIGION` normalizes criteria using the same `Religion` value type as
-the own field. `Person` holds an immutable `DatingCriteria` with separate preference
-and dealbreaker maps indexed by `DatingAttribute`. The resulting criteria must not
-prefer and exclude the same normalized gender, smoking status, religion, or relationship
-goal. Preferred and excluded age ranges must not overlap. These checks also apply when
-an edit updates only one bucket and retains the other. Age ranges accept spaces around
-the hyphen, such as `age/25 - 30`. The own religion is independent: it may equal or
-differ from either partner criterion. A failed add or edit leaves stored records unchanged.
-
-The class diagram below focuses on the religion-related model. Unrelated `Person`
-members and the other `DatingAttribute` enum values are omitted.
-
-<img src="images/ReligionCriteriaClassDiagram.png" width="450" alt="Religion model: a Person has an optional own Religion and separate DatingCriteria maps keyed by DatingAttribute." />
-
-The `0..1` multiplicity represents an unknown or recorded own religion, while
-`DatingCriteria` is always present, even when both maps are empty. Religion criteria
-are canonical strings in those maps, not references to the client's own `Religion`.
-The dashed dependencies show the map key type and the shared religion validation;
-they do not represent additional stored associations.
-
-`DatingCriteriaParser.ParsedCriteria` distinguishes an omitted environment from an
-explicitly empty one. `EditPersonDescriptor` carries these optional bucket updates;
-`EditCommand` preserves an omitted bucket and merges a non-empty update by attribute.
-For example, `{r/Buddhism}` changes the preferred religion while preserving age, smoking
-and relationship-goal preferences. `{}` clears all preferences and `<>`
-clears all exclusions/dealbreakers, without changing the own religion or the other bucket.
-Unrelated person fields are preserved unless separately supplied in the edit.
-
-`ParserUtil.rejectRemovedReligionCriteria` explicitly rejects the obsolete outer
-`rp/`, `rr/` and `rx/` prefixes, including blank values; the shared environment parser
-also rejects them inside environments. This prevents a legacy criteria command from
-silently becoming part of another field.
-
-`JsonAdaptedPerson` saves the canonical own-religion name and treats a missing or null
-own-religion property as unknown. It persists criteria via `DatingCriteria` as the
-`preferences` and `dealbreakers` maps, using the key `religion` and a canonical category
-string, for example `"preferences": {"religion": "Buddhism"}` and
-`"dealbreakers": {"religion": "Islam"}`. `DatingCriteria.fromStorage` restores these
-maps; older valid records without them load with empty criteria. Invalid religion
-criteria, including null map values and a normalized preference/exclusion conflict,
-are reported through the existing `IllegalValueException` invalid-data path rather
-than an unchecked crash. The existing unknown-property handling ignores obsolete
-`preferredReligion`, `requiredReligion` and `excludedReligions` properties; they are
-omitted on the next save, not migrated into the new maps. Valid own religion and other
-attributes survive this transition. All persistence continues through the existing
-JAR-home-confined storage; religion criteria introduce no new files or OS configuration.
+`Person` represents a recorded own religion as an optional `Religion`; `DatingAttribute.RELIGION`
+uses the same value type to normalize partner criteria. The own religion is independent of either
+partner-criteria map and may equal or differ from its values. `JsonAdaptedPerson` saves the canonical
+own-religion name and treats a missing or null property as unknown. The existing unknown-property
+handling ignores obsolete `preferredReligion`, `requiredReligion` and `excludedReligions` properties;
+they are omitted on the next save rather than migrated into the new maps.
 
 `PersonCard` shows the client's own religion and recorded partner criteria. `find r/RELIGION` compares only that own
 field, not either partner-criteria map. Criteria-environment searching is not supported. Use `match` for
@@ -285,6 +278,9 @@ compatibility evaluation.
 ##### Recording relationship goals
 
 The optional `rg/` parameter in `add` and `edit` records a client's own relationship goal.
+
+###### Internal representation
+
 `RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge.
 Each enum value holds its short keyword (for example, `long-open`) and its full name, so a goal can
 be entered either way; keywords exist because fast typing is a core goal of the product.
