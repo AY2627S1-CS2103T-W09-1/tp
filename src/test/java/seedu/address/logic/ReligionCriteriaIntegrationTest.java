@@ -7,11 +7,14 @@ import static seedu.address.testutil.Assert.assertThrows;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.FindCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -50,9 +53,9 @@ public class ReligionCriteriaIntegrationTest {
         logic.execute(ADD_CLIENT + " {r/ bAhA'i   FAITH } <r/ISLAM>");
         Person person = first();
         assertEquals("Jainism", person.getReligion().orElseThrow().toString());
-        assertEquals(Map.of(DatingAttribute.RELIGION, "Baha'i Faith"),
+        assertEquals(Map.of(DatingAttribute.RELIGION, Set.of("Baha'i Faith")),
                 person.getDatingCriteria().getPreferences());
-        assertEquals(Map.of(DatingAttribute.RELIGION, "Islam"), person.getDatingCriteria().getDealbreakers());
+        assertEquals(Map.of(DatingAttribute.RELIGION, Set.of("Islam")), person.getDatingCriteria().getDealbreakers());
         assertEquals("25", person.getAge().toString());
         assertEquals("no", person.getSmokingStatus().toString());
         assertEquals("Non-binary", person.getGender().toString());
@@ -64,7 +67,7 @@ public class ReligionCriteriaIntegrationTest {
     public void add_ownReligionAlsoExcluded_doesNotConflateClientWithPartner() throws Exception {
         logic.execute(ADD_CLIENT + " {r/Buddhism} <r/Jainism>");
         assertEquals("Jainism", first().getReligion().orElseThrow().toString());
-        assertEquals("Jainism", first().getDatingCriteria().getDealbreakers().get(DatingAttribute.RELIGION));
+        assertEquals(Set.of("Jainism"), first().getDatingCriteria().getDealbreakers().get(DatingAttribute.RELIGION));
     }
 
     @Test
@@ -89,16 +92,19 @@ public class ReligionCriteriaIntegrationTest {
         logic.execute(ADD_CLIENT + " {r/Buddhism age/25-35} <r/Islam s/yes>");
         Person original = first();
         logic.execute("edit 1 {r/Jainism}");
-        assertEquals(Map.of(DatingAttribute.RELIGION, "Jainism", DatingAttribute.AGE, "25-35"),
+        assertEquals(Map.of(DatingAttribute.RELIGION, Set.of("Buddhism", "Jainism"),
+                DatingAttribute.AGE, Set.of("25-35")),
                 first().getDatingCriteria().getPreferences());
         assertEquals(original.getDatingCriteria().getDealbreakers(), first().getDatingCriteria().getDealbreakers());
         assertEquals(original.getReligion(), first().getReligion());
         logic.execute("edit 1 <r/No religion>");
-        assertEquals(Map.of(DatingAttribute.RELIGION, "No religion", DatingAttribute.SMOKING, "yes"),
+        assertEquals(Map.of(DatingAttribute.RELIGION, Set.of("Islam", "No religion"),
+                DatingAttribute.SMOKING, Set.of("yes")),
                 first().getDatingCriteria().getDealbreakers());
         logic.execute("edit 1 {}");
         assertTrue(first().getDatingCriteria().getPreferences().isEmpty());
-        assertEquals(Map.of(DatingAttribute.RELIGION, "No religion", DatingAttribute.SMOKING, "yes"),
+        assertEquals(Map.of(DatingAttribute.RELIGION, Set.of("Islam", "No religion"),
+                DatingAttribute.SMOKING, Set.of("yes")),
                 first().getDatingCriteria().getDealbreakers());
         logic.execute("edit 1 <>");
         assertEquals(DatingCriteria.EMPTY, first().getDatingCriteria());

@@ -5,8 +5,11 @@ import static java.util.Objects.requireNonNull;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * An immutable collection of a client's soft partner preferences and hard dealbreakers.
@@ -26,8 +29,8 @@ public final class DatingCriteria {
 
     public static final DatingCriteria EMPTY = new DatingCriteria(Map.of(), Map.of());
 
-    private final Map<DatingAttribute, String> preferences;
-    private final Map<DatingAttribute, String> dealbreakers;
+    private final Map<DatingAttribute, Set<String>> preferences;
+    private final Map<DatingAttribute, Set<String>> dealbreakers;
 
     /**
      * Creates criteria after validating and canonicalizing all supplied values.
@@ -35,7 +38,7 @@ public final class DatingCriteria {
      *
      * @throws IllegalArgumentException If a preference contradicts a dealbreaker.
      */
-    public DatingCriteria(Map<DatingAttribute, String> preferences, Map<DatingAttribute, String> dealbreakers) {
+    public DatingCriteria(Map<DatingAttribute, ?> preferences, Map<DatingAttribute, ?> dealbreakers) {
         this.preferences = normalize(preferences);
         this.dealbreakers = normalize(dealbreakers);
         validateNoContradictions();
@@ -44,14 +47,14 @@ public final class DatingCriteria {
     /**
      * Returns the preference criteria indexed by their target attribute.
      */
-    public Map<DatingAttribute, String> getPreferences() {
+    public Map<DatingAttribute, Set<String>> getPreferences() {
         return preferences;
     }
 
     /**
      * Returns the excluded partner values indexed by their target attribute.
      */
-    public Map<DatingAttribute, String> getDealbreakers() {
+    public Map<DatingAttribute, Set<String>> getDealbreakers() {
         return dealbreakers;
     }
 
@@ -65,14 +68,14 @@ public final class DatingCriteria {
     /**
      * Converts criteria to stable JSON-ready keys and values.
      */
-    public Map<String, String> getPreferencesForStorage() {
+    public Map<String, List<String>> getPreferencesForStorage() {
         return toStorageMap(preferences);
     }
 
     /**
      * Converts dealbreakers to stable JSON-ready keys and values.
      */
-    public Map<String, String> getDealbreakersForStorage() {
+    public Map<String, List<String>> getDealbreakersForStorage() {
         return toStorageMap(dealbreakers);
     }
 
@@ -81,17 +84,18 @@ public final class DatingCriteria {
      *
      * @throws IllegalArgumentException If stored criteria are invalid or contradictory.
      */
-    public static DatingCriteria fromStorage(Map<String, String> preferences,
-            Map<String, String> dealbreakers) {
+    public static DatingCriteria fromStorage(Map<String, ?> preferences,
+            Map<String, ?> dealbreakers) {
         return new DatingCriteria(fromStorageMap(preferences), fromStorageMap(dealbreakers));
     }
 
-    private static Map<DatingAttribute, String> normalize(Map<DatingAttribute, String> criteria) {
+    private static Map<DatingAttribute, Set<String>> normalize(Map<DatingAttribute, ?> criteria) {
         requireNonNull(criteria);
-        Map<DatingAttribute, String> normalized = new EnumMap<>(DatingAttribute.class);
-        for (Map.Entry<DatingAttribute, String> entry : criteria.entrySet()) {
+        Map<DatingAttribute, Set<String>> normalized = new EnumMap<>(DatingAttribute.class);
+        for (Map.Entry<DatingAttribute, ?> entry : criteria.entrySet()) {
             DatingAttribute attribute = requireNonNull(entry.getKey());
-            normalized.put(attribute, attribute.normalizeCriterion(requireNonNull(entry.getValue())));
+            Set<String> values = normalizeValues(attribute, entry.getValue());
+            normalized.put(attribute, values);
         }
         return Collections.unmodifiableMap(normalized);
     }
@@ -145,12 +149,12 @@ public final class DatingCriteria {
         return storage;
     }
 
-    private static Map<DatingAttribute, String> fromStorageMap(Map<String, String> criteria) {
+    private static Map<DatingAttribute, Object> fromStorageMap(Map<String, ?> criteria) {
         if (criteria == null) {
             return Map.of();
         }
-        Map<DatingAttribute, String> converted = new EnumMap<>(DatingAttribute.class);
-        for (Map.Entry<String, String> entry : criteria.entrySet()) {
+        Map<DatingAttribute, Object> converted = new EnumMap<>(DatingAttribute.class);
+        for (Map.Entry<String, ?> entry : criteria.entrySet()) {
             if (entry.getValue() == null) {
                 throw new IllegalArgumentException(DatingAttribute.MESSAGE_EMPTY_VALUE);
             }
@@ -160,6 +164,25 @@ public final class DatingCriteria {
             }
         }
         return converted;
+    }
+
+    private static Set<String> normalizeValues(DatingAttribute attribute, Object rawValues) {
+        requireNonNull(rawValues);
+        Iterable<?> values = rawValues instanceof Iterable<?> iterable ? iterable : List.of(rawValues);
+        Set<String> normalized = new LinkedHashSet<>();
+        for (Object rawValue : values) {
+            if (!(rawValue instanceof String value)) {
+                throw new IllegalArgumentException(DatingAttribute.MESSAGE_EMPTY_VALUE);
+            }
+            normalized.add(attribute.normalizeCriterion(value));
+        }
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException(DatingAttribute.MESSAGE_EMPTY_VALUE);
+        }
+        if (!attribute.allowsMultipleValues() && normalized.size() > 1) {
+            throw new IllegalArgumentException(attribute.getDisplayName() + " may have only one value.");
+        }
+        return Collections.unmodifiableSet(normalized);
     }
 
     @Override

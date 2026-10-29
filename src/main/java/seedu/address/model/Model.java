@@ -41,6 +41,12 @@ public interface Model {
     ReadOnlyAddressBook getAddressBook();
 
     /**
+     * Captures client data, groups and the current display state.
+     * Returns an action that restores them without replacing the observable lists used by the UI.
+     */
+    Runnable createRestorePoint();
+
+    /**
      * Returns true if a person with the same identity as {@code person} exists in the address book.
      */
     boolean hasPerson(Person person);

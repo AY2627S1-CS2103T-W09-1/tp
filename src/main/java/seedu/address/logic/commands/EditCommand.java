@@ -13,14 +13,17 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
@@ -49,9 +52,11 @@ public class EditCommand extends Command {
 
     public static final String COMMAND_WORD = "edit";
 
+    public static final String MESSAGE_DUPLICATE_CRITERIA = "Attribute already added for criteria: ";
+
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the person identified "
             + "by the index number used in the displayed person list. "
-            + "Existing values will be overwritten by the input values.\n"
+            + "Ordinary fields are overwritten; partner gender, religion and relationship-goal values are added.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + "[" + PREFIX_NAME + "NAME] "
             + "[" + PREFIX_PHONE + "PHONE] "
@@ -107,12 +112,13 @@ public class EditCommand extends Command {
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
-        Person editedPerson;
+        EditOutcome editOutcome;
         try {
-            editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+            editOutcome = createEditedPerson(personToEdit, editPersonDescriptor);
         } catch (IllegalArgumentException exception) {
             throw new CommandException(exception.getMessage());
         }
+        Person editedPerson = editOutcome.person();
 
         if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
@@ -120,14 +126,18 @@ public class EditCommand extends Command {
 
         model.setPerson(personToEdit, editedPerson);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
+        String feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        if (!editOutcome.duplicates().isEmpty()) {
+            feedback += "\n" + MESSAGE_DUPLICATE_CRITERIA + String.join(", ", editOutcome.duplicates());
+        }
+        return new CommandResult(feedback);
     }
 
     /**
      * Creates and returns a {@code Person} with the details of {@code personToEdit}
      * edited with {@code editPersonDescriptor}.
      */
-    private static Person createEditedPerson(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {
+    private static EditOutcome createEditedPerson(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {
         assert personToEdit != null;
 
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
@@ -153,8 +163,12 @@ public class EditCommand extends Command {
         Religion updatedReligion = editPersonDescriptor.isReligionEdited()
                 ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
 
-        return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge, updatedTags,
+        Person editedPerson = new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedAge,
+                updatedTags,
                 updatedSmokingStatus, updatedGender, updatedReligion, updatedRelationshipGoal, updatedDatingCriteria);
+        List<String> duplicates = new ArrayList<>(preferencesResult.duplicates());
+        duplicates.addAll(dealbreakersResult.duplicates());
+        return new EditOutcome(editedPerson, List.copyOf(duplicates));
     }
 
     /**
@@ -172,6 +186,14 @@ public class EditCommand extends Command {
         attributesToRemove.forEach(mergedCriteria::remove);
         return mergedCriteria;
     }
+
+    private static String formatCriterion(DatingAttribute attribute, Set<String> values) {
+        return attribute.getDisplayName() + " = " + values.stream().collect(Collectors.joining(", "));
+    }
+
+    private record MergeResult(Map<DatingAttribute, Set<String>> criteria, List<String> duplicates) {}
+
+    private record EditOutcome(Person person, List<String> duplicates) {}
 
     @Override
     public boolean equals(Object other) {
@@ -393,7 +415,7 @@ public class EditCommand extends Command {
         }
 
         /** Returns preferences to add or update when the preference environment was supplied. */
-        public Optional<Map<DatingAttribute, String>> getPreferences() {
+        public Optional<Map<DatingAttribute, Set<String>>> getPreferences() {
             return Optional.ofNullable(preferences);
         }
 
@@ -422,7 +444,7 @@ public class EditCommand extends Command {
         }
 
         /** Returns dealbreakers to add or update when the dealbreaker environment was supplied. */
-        public Optional<Map<DatingAttribute, String>> getDealbreakers() {
+        public Optional<Map<DatingAttribute, Set<String>>> getDealbreakers() {
             return Optional.ofNullable(dealbreakers);
         }
 

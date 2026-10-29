@@ -18,6 +18,8 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-W09-1/tp/releases).
 
 1. Copy the file to the folder you want to use as the _home folder_ for CupidMaxxing.
+   Use a writable location with no folder name ending in `!` anywhere in the JAR's path
+   (for example, use `Cupid` rather than `Cupid!`). See [Known issues](#known-issues) for the workaround.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
@@ -58,6 +60,10 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
+* To use text that looks like a prefix inside a value, such as `s/o` in a name, put the whole value in double quotes.<br>
+  For example, `n/"Ravi s/o Kumar"` records the name `Ravi s/o Kumar`; the quotes are not saved. The closing `"` must be
+  followed by a space or the end of the command. Quotes do not allow `{`, `}`, `<` or `>` inside a value.
+
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
@@ -87,9 +93,10 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GEND
 The optional `s/SMOKING` field records the client's **own smoking habit**:
 
 * Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
-* Omit the field if the status is unknown. The person card displays `Smoking: Not specified`.
-* A supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records.
-* Smoking status is saved between sessions. Older records without this field remain usable and display `Not specified`.
+* Omit the field if the status is unknown. The client card shows Smoking as *not set* under Attributes.
+* On `add`, a supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records. On `edit`, an empty outer `s/` clears the status instead.
+* An unquoted ` s/` always starts the smoking status. For example, `n/Ravi s/o Kumar` is read as the name `Ravi` followed by the invalid smoking status `o Kumar`, and is rejected. Write `n/"Ravi s/o Kumar"` instead. Names may contain letters, digits, spaces and `/`, so `n/Siti d/o Ahmad` works without quotes because `d/` is not a prefix.
+* Smoking status is saved between sessions. Older records without this field remain usable and show *not set*.
 * This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 <div markdown="span" class="alert alert-primary">:bulb: **Tip:**
@@ -132,7 +139,8 @@ Use one of these 21 categories: `Christianity`, `Islam`, `Hinduism`, `Buddhism`,
 * Own religion is independent of partner criteria. A normalized religion cannot be
   both preferred and excluded; this is checked against the **resulting record**, including
   criteria retained from a previous command.
-* A non-empty edit environment updates only supplied entries; other criteria remain.
+* A non-empty edit environment adds supplied gender, religion and relationship-goal values; other criteria remain.
+  Values already recorded are left unchanged and reported as a warning. Age and smoking remain single-valued.
   All values persist across restarts.
 
 Example: `add n/Religion Demo p/91234567 e/religion@example.com a/Test Lane age/25 r/Jainism {r/Buddhism} <r/Islam>`
@@ -143,7 +151,7 @@ records own Jainism, preferred Buddhism and excluded Islam; contact details and 
 | `add ... r/` or `find r/` | Supply a listed category; omit `r/` on `add` if unknown |
 | `{r/}` or `<r/>` | Supply a category; use `{}` or `<>` only when clearing the entire corresponding bucket on `edit` |
 | `{r/Islam} <r/islam>` | Choose criteria that do not prefer and exclude the same religion |
-| Repeated `r/`, a list, or `r/Other` | Supply one listed category in each scope |
+| Repeated `r/` or `r/Other` | Supply one listed category in each scope; use a comma-separated list only inside a criteria block |
 | Legacy `rp/`, `rr/`, or `rx/`, including empty values | Use the current scope syntax in the table above |
 
 Rejected commands leave the stored records unchanged. See [Finding clients](#finding-clients-find)
@@ -165,9 +173,9 @@ Keyword | Relationship goal
 `unsure` | Figuring out my goals
 
 * Keywords and goal names are matched without regard to letter case or repeated spaces: for example, `rg/LONG` and `rg/long-term   RELATIONSHIP` are both saved as `Long-term relationship`.
-* Omit the field if the goal is not known. The client card then displays `Relationship goal: Not specified`. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
+* Omit the field if the goal is not known. The client card then shows Goal as *not set* under Attributes. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
 * A supplied outer `rg/` may appear only once per command. Each preference or dealbreaker block may also contain one separate relationship-goal criterion. Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
-* The relationship goal is saved between sessions. Older records without this field remain usable and display `Not specified`.
+* The relationship goal is saved between sessions. Older records without this field remain usable and show *not set*.
 * This field records the client's own goal. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
 ### Listing all clients: `list`
@@ -191,11 +199,11 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * If supplied, `AGE` must be an integer from 18 to 99 (inclusive).
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
-* Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
+* Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status, and an empty `s/` clears it to *not set*.
 * For own religion, partner religion and clearing rules, use the [religion reference table](#religion-fields).
   Own religion and omitted criteria remain unchanged unless explicitly edited; conflicting preferred/excluded
   religions reject the whole edit.
-* **A non-empty environment adds or updates only the supplied criteria.** For example, `{r/Buddhism}` changes the preferred religion while preserving existing age, gender, smoking and relationship-goal preferences. The same rule applies to exclusions/dealbreakers in `<...>`.
+* **A non-empty environment adds only new gender, religion and relationship-goal values.** For example, if Buddhism is already preferred, `edit 1 {r/Buddhism, Jainism}` keeps Buddhism, adds Jainism, and warns that Buddhism already exists. The same rule applies to exclusions/dealbreakers in `<...>`. Age and smoking remain single-valued and are replaced by a new value.
 * Omit an environment to preserve its entire bucket. Use `{}` to clear all preferences, or `<>` to clear all exclusions/dealbreakers. These do not clear the client's own religion. `{r/}` and `<r/>` are invalid, not clearing commands. A rejected edit leaves the whole record unchanged.
 * The removed `rp/`, `rr/`, and `rx/` prefixes are rejected, including empty values.
 * Use `rg/RELATIONSHIP_GOAL` to update the relationship goal. Omitting `rg/` preserves the existing goal, and `rg/` with no value clears it.
@@ -212,6 +220,7 @@ Examples:
 *  `edit 1 <>` Clears all exclusions/dealbreakers, preserving preferences and own religion.
 *  `edit 3 rg/short-open` Records the 3rd displayed client as looking for a short-term relationship, open to long, preserving their other details.
 *  `edit 3 rg/` Clears the 3rd displayed client's relationship goal.
+*  `edit 2 s/` Clears the 2nd displayed client's smoking status.
 * `edit 1 g/nb` changes the first displayed client's gender to non-binary.
 * `edit 1 g/` clears that client's gender.
 
@@ -257,13 +266,20 @@ Use `list` to show every client again; searching does not modify the stored reco
 
 Assesses two clients against each other's saved preferences and dealbreakers.
 
-Format: `match INDEX_A INDEX_B`
+Format: `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`
 
-* Use two different positive indexes from the **currently displayed list**, including after `find`.
-* Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
-* The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
-  and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
-  and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
+* Give exactly two different clients. Each is either a positive index from the **currently displayed list**
+  (including after `find`) or `n/` followed by the client's name. Indexes come before names.
+* A name is looked up among **all** clients, so you do not need to `find` a client first. An exact name is used
+  if one exists; otherwise the name may differ in letter case and spacing, e.g. `n/alex   yeoh` finds `Alex Yeoh`.
+* Invalid, repeated, or out-of-range indexes display an error. So does a name no client has, or a name that matches
+  several clients only when letter case and spacing are ignored; use their indexes instead.
+* The result replaces the client list until your next command. An **Overall result** box names both clients and shows
+  the outcome in color (green for compatible, red for incompatible, amber for insufficient information) with a
+  one-line reason.
+* Below it, each client's criteria are checked against the other client in a table with three columns: the
+  requirement (for example, `dealbreaker — excludes smoking: yes`), the other client's value, and the assessment
+  (**Met**, **Unmet**, **Violated**, or **Unknown**).
 * The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
 
 Set partner criteria with `add` or `edit`: `{...}` contains preferences and `<...>` contains **excluded values**.
@@ -276,7 +292,8 @@ Gender accepts one value: `g/m`, `g/w`, or `g/nb`, ignoring case. Gender lists a
 An empty value in a preference or dealbreaker block, such as `{g/}`, removes that criterion.
 Other criteria use the same values as the client's own fields and compare exact normalized categories.
 Different relationship-goal categories are not treated as equivalent.
-When editing, a non-empty block adds or updates only its supplied criteria; other criteria are preserved.
+When editing, a non-empty block adds new multi-valued criteria without removing existing ones; already recorded
+values generate a warning. Other criteria are preserved.
 Use `{}` to clear preferences or `<>` to clear dealbreakers.
 
 Overall results, in priority order:
@@ -290,12 +307,16 @@ Overall results, in priority order:
 Missing gender, smoking status, religion, or relationship goal is unknown, not a match or a violation.
 An omitted criterion adds no constraint. `No religion` and `unsure` are explicit values, not missing information.
 
-Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
+Examples:
+* `list` followed by `match 1 3` assesses the first and third clients without changing their records.
+* `match n/Alex Yeoh n/Bernice Yu` assesses those two clients, whether or not they are displayed.
+* `match 2 n/Bernice Yu` assesses the second displayed client and Bernice Yu.
 
 ### Organising clients into groups: `grp` and `show`
 
 Keep named collections of clients, such as event invitations or a shortlist. A client can belong to
-several groups. Membership is shown as a separate `Group: NAME` badge; ordinary `t/` tags are unchanged.
+several groups. Membership is shown as a chip after **Groups** at the bottom of the client card, separate from the
+chips for ordinary `t/` tags.
 
 Action | Format | Example
 -------|--------|--------
@@ -308,7 +329,7 @@ Show a group's members | `show NAME` | `show VIP`
 
 * A name has 1–30 ASCII letters (`A`–`Z`, `a`–`z`), digits, hyphens or underscores, and starts with a letter or digit.
   Spaces and prefixes such as `/` or `g/` are not accepted. Names are case-insensitive: `VIP` and `vip` identify
-  the same group. The spelling used when the group was created is retained on badges and in feedback.
+  the same group. The spelling used when the group was created is retained on the card and in feedback.
 * Every index refers to the **currently displayed list**, including after `find` or `show`. Use positive integers
   separated by spaces, not commas. A repeated, invalid or out-of-range index rejects the entire command.
 * Commands and operation words are lowercase (`grp`, `add`, `remove`, `matches`, `show`).
@@ -332,6 +353,11 @@ Show a group's members | `show NAME` | `show VIP`
 Example: With at least three clients displayed, run `grp VIP add 1 3`, then `show VIP`.
 The two members now have displayed indexes 1 and 2. `grp VIP remove 2` removes the second displayed member
 from VIP, leaving their client record intact. `list` shows all clients again.
+
+For example, with Amy Tan, Ben Lim, Chris Ong and Dana Koh listed in that order, `grp Shortlist add 2 3` and
+`grp VIP add 2` followed by `show Shortlist` display only Ben and Chris. Ben's card shows both of his groups:
+
+![Group members shown with Groups chips on each card](images/ug/groupShow.png)
 
 **Creating a matching shortlist**
 
@@ -382,6 +408,11 @@ which do not change client records. These two commands remain available if the c
 be saved. You do not need to save manually. Gender is saved with each client; valid existing records
 without a gender load as unspecified. The existing required-age rule still applies.
 
+If a command reports that saving failed, the app restores the client records, groups and displayed
+list to their state before that command. Resolve the reported storage problem before retrying the
+retained command; its displayed indexes still refer to the original clients. `help` and `exit` remain
+available without attempting another client-data save.
+
 Groups and memberships are saved in the same file as the clients and restored when the app restarts.
 Older valid files without a `groups` field load with no groups.
 
@@ -419,9 +450,9 @@ invalid names and malformed entries reject the data file. Back up the file and c
 
 Records with valid required fields but no own-religion property load with unknown
 own religion, not `No religion`. Partner criteria are saved in the `preferences` and
-`dealbreakers` maps: for example, `"preferences": {"religion": "Buddhism"}` and
-`"dealbreakers": {"religion": "Islam"}`. The latter records an exclusion, not a requirement
-to have Islam. Older valid records without these maps load with empty partner criteria.
+`dealbreakers` maps: for example, `"preferences": {"religion": ["Buddhism", "Jainism"]}` and
+`"dealbreakers": {"religion": ["Islam"]}`. The latter records an exclusion, not a requirement
+to have Islam. Older single-string values remain valid, and records without these maps load with empty partner criteria.
 Invalid religion values (including a null religion entry inside a criteria map), or the
 same normalized religion in both maps, reject the file through the existing invalid-data
 handling. A missing or null own-religion property still means unknown.
@@ -453,6 +484,13 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+3. **A folder name ending in `!` in the JAR's path can prevent startup.** This was reproduced on macOS;
+   Windows/Linux behaviour has not been verified. JavaFX may report `Error initializing QuantumRenderer`
+   or `No toolkit found` instead of opening the window. Close any running instance, then rename the
+   affected folder (for example, `Cupid!` to `Cupid`) or move the whole home folder to a writable path
+   with no folder name ending in `!`. Keep the JAR, `data` folder and `preferences.json` together so your
+   records and settings move with the app, then launch it again. Changing only the terminal's working
+   folder or quoting the JAR path does not resolve this resource-loading problem.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -471,6 +509,6 @@ Action | Format, Examples
 **Group members** | `grp NAME add INDEX [MORE_INDEXES]` or `grp NAME remove INDEX [MORE_INDEXES]`<br> e.g., `grp VIP add 1 3`, `grp VIP remove 2`
 **Group matches** | `grp NAME matches INDEX`<br> e.g., `grp Candidates matches 1`
 **Show group** | `show NAME`<br> e.g., `show VIP`
-**Match** | `match INDEX_A INDEX_B`<br> e.g., `match 1 3`
+**Match** | `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`<br> e.g., `match 1 3`, `match n/Alex Yeoh n/Bernice Yu`
 **Help** | `help`
 **Exit** | `exit`

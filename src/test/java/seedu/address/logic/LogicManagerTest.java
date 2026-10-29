@@ -252,30 +252,110 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_failedSaveThenControls_preserveUnsavedState() throws Exception {
+    public void execute_failedSaveThenControls_preserveOriginalState() throws Exception {
         model.addPerson(AMY);
         model.addPerson(BOB);
         logic.execute("grp VIP add 1");
         logic.execute("show VIP");
         Path dataFile = temporaryFolder.resolve("addressBook.json");
         byte[] originalFile = Files.readAllBytes(dataFile);
+        AddressBook original = new AddressBook(model.getAddressBook());
+        List<Person> displayed = List.copyOf(model.getFilteredPersonList());
         int[] saveAttempts = {0};
         Logic unavailableStorageLogic = createLogicWithFailingStorage(DUMMY_IO_EXCEPTION, saveAttempts);
 
         String editCommand = "edit 1 p/82345678";
         String expectedMessage = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage());
         assertThrows(CommandException.class, expectedMessage, () -> unavailableStorageLogic.execute(editCommand));
-        AddressBook unsaved = new AddressBook(model.getAddressBook());
-        List<Person> displayed = List.copyOf(model.getFilteredPersonList());
 
-        // A failed save must not make later control actions retry saving or alter the unsaved state.
+        // Control actions must not retry saving or reapply the rejected edit.
         assertEquals(new CommandResult(HelpCommand.SHOWING_HELP_MESSAGE, true, false),
                 unavailableStorageLogic.execute("help"));
         assertEquals(new CommandResult(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, false, true),
                 unavailableStorageLogic.execute("exit"));
         assertEquals(1, saveAttempts[0]);
-        assertEquals(unsaved, model.getAddressBook());
+        assertEquals(original, model.getAddressBook());
         assertEquals(displayed, model.getFilteredPersonList());
+        assertArrayEquals(originalFile, Files.readAllBytes(dataFile));
+    }
+
+    @Test
+    public void execute_failedDeleteRetry_deletesOnlyOriginalTarget() throws Exception {
+        model.addPerson(AMY);
+        model.addPerson(BOB);
+        logic.execute("grp VIP add 1 2");
+        logic.execute("show VIP");
+        for (IOException failure : List.of(DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION)) {
+            assertSaveFailurePreservesState("delete 1", failure);
+        }
+
+        // Retrying the retained command after storage recovers must still target Amy, not Bob.
+        logic.execute("delete 1");
+        assertEquals(List.of(BOB), model.getAddressBook().getPersonList());
+        assertEquals(List.of(BOB), model.getFilteredPersonList());
+        assertEquals(List.of(BOB), model.getAddressBook().getGroupList().getFirst().getMembers());
+        assertEquals(model.getAddressBook(), new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"))
+                .readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_failedMutations_restoreDataAndLiveGroupView() throws Exception {
+        model.addPerson(AMY);
+        model.addPerson(BOB);
+        logic.execute("grp VIP add 1");
+        logic.execute("show VIP");
+        List<String> commands = List.of(
+                "add n/Gamma p/81234569 e/gamma@example.com a/Test Road age/30",
+                "edit 1 n/Changed p/82345678", "grp VIP remove 1", "grp New add 1", "clear", "delete 1",
+                "list", "find n/Benson");
+        for (IOException failure : List.of(DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION)) {
+            for (String command : commands) {
+                assertSaveFailurePreservesState(command, failure);
+            }
+        }
+
+        // Restoring just the displayed members is insufficient: the group view must remain live.
+        model.setGroups(List.of(new ClientGroup(new GroupName("VIP"), List.of(AMY, BOB))));
+        assertEquals(List.of(AMY, BOB), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_failedCommands_restoreRankedIndexes() throws Exception {
+        model.addPerson(AMY);
+        model.addPerson(BOB);
+        model.addPerson(new PersonBuilder().withName("Gamma").build());
+        logic.execute("grp VIP add 1");
+        logic.execute("find match/1");
+        List<String> commands = List.of(
+                "add n/Delta p/81234569 e/delta@example.com a/Test Road age/30",
+                "edit 1 p/82345678", "delete 1", "clear", "list", "show VIP", "find n/Amy");
+        for (IOException failure : List.of(DUMMY_IO_EXCEPTION, DUMMY_AD_EXCEPTION)) {
+            for (String command : commands) {
+                assertSaveFailurePreservesState(command, failure);
+            }
+        }
+        Person target = model.getFilteredPersonList().getFirst();
+        logic.execute("delete 1");
+        assertFalse(model.getAddressBook().getPersonList().contains(target));
+        assertEquals(model.getAddressBook(), new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"))
+                .readAddressBook().orElseThrow());
+    }
+
+    /** Checks both data and displayed indexes, since failed input remains available for a retry. */
+    private void assertSaveFailurePreservesState(String command, IOException failure) throws Exception {
+        AddressBook original = new AddressBook(model.getAddressBook());
+        List<Person> displayed = List.copyOf(model.getFilteredPersonList());
+        var observablePersons = model.getFilteredPersonList();
+        var observableGroups = model.getAddressBook().getGroupList();
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        byte[] originalFile = Files.readAllBytes(dataFile);
+        int[] saveAttempts = {0};
+        Logic failingLogic = createLogicWithFailingStorage(failure, saveAttempts);
+        assertThrows(CommandException.class, () -> failingLogic.execute(command));
+        assertEquals(1, saveAttempts[0]);
+        assertEquals(original, model.getAddressBook());
+        assertEquals(displayed, observablePersons);
+        assertEquals(original.getGroupList(), observableGroups);
         assertArrayEquals(originalFile, Files.readAllBytes(dataFile));
     }
 
@@ -377,9 +457,6 @@ public class LogicManagerTest {
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + ADDRESS_DESC_AMY + AGE_DESC_AMY;
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
-        ModelManager expectedModel = new ModelManager();
-        expectedModel.addPerson(expectedPerson);
-        assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+        assertCommandFailure(addCommand, CommandException.class, expectedMessage, new ModelManager());
     }
 }

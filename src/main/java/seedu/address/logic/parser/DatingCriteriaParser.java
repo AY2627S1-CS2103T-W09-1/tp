@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -157,9 +158,26 @@ public final class DatingCriteriaParser {
             PREFIX_RELATIONSHIP_GOAL};
     }
 
-    private static String validateAndNormalize(Prefix prefix, String value) throws ParseException {
+    private static Set<String> validateAndNormalizeValues(DatingAttribute attribute, String value)
+            throws ParseException {
         try {
-            return toDatingAttribute(prefix).normalizeCriterion(value);
+            // A relationship-goal display name may itself contain a comma, so first try it as one value.
+            if (attribute == DatingAttribute.RELATIONSHIP_GOAL) {
+                try {
+                    return Set.of(attribute.normalizeCriterion(value));
+                } catch (IllegalArgumentException ignored) {
+                    // It may be a comma-separated list of relationship-goal values.
+                }
+            }
+            String[] rawValues = value.split(",", -1);
+            if (rawValues.length > 1 && !attribute.allowsMultipleValues()) {
+                throw new IllegalArgumentException(attribute.getDisplayName() + " may have only one value.");
+            }
+            Set<String> values = new LinkedHashSet<>();
+            for (String rawValue : rawValues) {
+                values.add(attribute.normalizeCriterion(rawValue));
+            }
+            return Collections.unmodifiableSet(new LinkedHashSet<>(values));
         } catch (IllegalArgumentException exception) {
             throw new ParseException(exception.getMessage(), exception);
         }
