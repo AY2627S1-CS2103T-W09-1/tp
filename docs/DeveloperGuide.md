@@ -169,18 +169,6 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Prefixed name search
-
-`FindCommandParser` tokenizes `n/` together with the other search prefixes (`age/`, `g/`, `r/`, `rg/`, `s/` and
-`match/`) and counts how many are present. Exactly one prefix and an empty preamble are required, so `find Alice`,
-`find Alice g/m` and `find n/Alice age/25` are all rejected with the usage message. This replaces AB3's bare-keyword
-form and removes the special case that previously treated any unprefixed text as a name search.
-
-`parseNameSearch` trims the `n/` value, rejects a blank value with a specific message, and rejects values containing
-`/` so that a mistyped prefix (e.g. `n/Alice x/1`) is never searched for as a name. The remaining text is split on
-whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
-any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
-
 ### Recording Dating Data
 
 #### Recording profile attributes
@@ -325,6 +313,18 @@ so clients with an unknown goal are never returned. A single goal is accepted ra
 comma-separated list, because some full goal names contain commas.
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
+
+### Prefixed name search
+
+`FindCommandParser` tokenizes `n/` together with the other search prefixes (`age/`, `g/`, `r/`, `rg/`, `s/` and
+`match/`) and counts how many are present. Exactly one prefix and an empty preamble are required, so `find Alice`,
+`find Alice g/m` and `find n/Alice age/25` are all rejected with the usage message. This replaces AB3's bare-keyword
+form and removes the special case that previously treated any unprefixed text as a name search.
+
+`parseNameSearch` trims the `n/` value, rejects a blank value with a specific message, and rejects values containing
+`/` so that a mistyped prefix (e.g. `n/Alice x/1`) is never searched for as a name. The remaining text is split on
+whitespace into a `NameContainsKeywordsPredicate`, so matching is unchanged: whole-word, case-insensitive, and
+any keyword may match. A repeated `n/` is reported through the shared duplicate-prefix message.
 
 ### Maintaining preferences and dealbreakers
 
