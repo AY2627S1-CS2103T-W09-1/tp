@@ -18,6 +18,8 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-W09-1/tp/releases).
 
 1. Copy the file to the folder you want to use as the _home folder_ for CupidMaxxing.
+   Use a writable location with no folder name ending in `!` anywhere in the JAR's path
+   (for example, use `Cupid` rather than `Cupid!`). See [Known issues](#known-issues) for the workaround.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
@@ -385,6 +387,11 @@ which do not change client records. These two commands remain available if the c
 be saved. You do not need to save manually. Gender is saved with each client; valid existing records
 without a gender load as unspecified. The existing required-age rule still applies.
 
+If a command reports that saving failed, the app restores the client records, groups and displayed
+list to their state before that command. Resolve the reported storage problem before retrying the
+retained command; its displayed indexes still refer to the original clients. `help` and `exit` remain
+available without attempting another client-data save.
+
 Groups and memberships are saved in the same file as the clients and restored when the app restarts.
 Older valid files without a `groups` field load with no groups.
 
@@ -456,6 +463,13 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+3. **A folder name ending in `!` in the JAR's path can prevent startup.** This was reproduced on macOS;
+   Windows/Linux behaviour has not been verified. JavaFX may report `Error initializing QuantumRenderer`
+   or `No toolkit found` instead of opening the window. Close any running instance, then rename the
+   affected folder (for example, `Cupid!` to `Cupid`) or move the whole home folder to a writable path
+   with no folder name ending in `!`. Keep the JAR, `data` folder and `preferences.json` together so your
+   records and settings move with the app, then launch it again. Changing only the terminal's working
+   folder or quoting the JAR path does not resolve this resource-loading problem.
 
 --------------------------------------------------------------------------------------------------------------------
 
