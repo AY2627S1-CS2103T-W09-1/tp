@@ -248,7 +248,11 @@ Tests cover gender value validation, parser rules, full command execution, filte
 
 The optional `s/` parameter in `add` and `edit` records a client's own smoking habit.
 `SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
-not a non-smoker. The parsers reject empty, invalid, and repeated `s/` parameters.
+not a non-smoker. The parsers reject invalid and repeated `s/` parameters, and empty ones in `add` and `find`.
+`EditCommandParser` maps an empty `s/` to `SmokingStatus.UNSPECIFIED`, clearing the status the same way an empty
+`g/` or `r/` clears gender or religion. Because `ArgumentTokenizer` treats every ` s/` as a prefix, text such as
+`s/o` inside a name is read as a smoking value. `ParserUtil.MESSAGE_INVALID_SMOKING_STATUS` names this cause for
+command input, while storage keeps the shorter `SmokingStatus.MESSAGE_CONSTRAINTS`.
 
 `Person` includes smoking status in full equality and hashing, while its existing name-based identity rule is unchanged.
 `EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
@@ -259,7 +263,7 @@ The person card and command feedback display the status. Missing information is 
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
-Clearing a recorded smoking status is not supported.
+
 ### Application data sandbox
 
 `AppPaths` derives the packaged application's home folder from its JAR code source,

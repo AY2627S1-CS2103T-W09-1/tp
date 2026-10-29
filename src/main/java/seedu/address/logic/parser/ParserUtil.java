@@ -30,6 +30,8 @@ public class ParserUtil {
             "Partner religion prefixes (rp/, rr/, rx/) are no longer supported. "
             + "Use outer r/ for the client's own religion, {r/RELIGION} for a partner preference, "
             + "or <r/RELIGION> for an excluded partner religion (must not have).";
+    public static final String MESSAGE_INVALID_SMOKING_STATUS = SmokingStatus.MESSAGE_CONSTRAINTS
+            + " s/ always starts the smoking status, so other fields cannot contain \" s/\" (e.g. s/o in a name).";
 
     /**
      * Rejects removed partner-criteria prefixes before they can become part of another field's value.
@@ -49,7 +51,7 @@ public class ParserUtil {
 
     /**
      * Parses a smoking status, ignoring surrounding whitespace and case.
-     * Rejects empty input: an explicitly supplied {@code s/} must have a value.
+     * Rejects empty input; {@code edit} treats an empty {@code s/} as a clear before calling this.
      *
      * @throws ParseException if the status is neither yes nor no.
      */
@@ -57,7 +59,7 @@ public class ParserUtil {
         requireNonNull(status);
         String trimmedStatus = status.trim();
         if (trimmedStatus.isEmpty() || !SmokingStatus.isValidSmokingStatus(trimmedStatus)) {
-            throw new ParseException(SmokingStatus.MESSAGE_CONSTRAINTS);
+            throw new ParseException(MESSAGE_INVALID_SMOKING_STATUS);
         }
         return new SmokingStatus(trimmedStatus);
     }

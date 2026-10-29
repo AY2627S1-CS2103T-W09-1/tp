@@ -198,7 +198,7 @@ public class FindCommandParserTest {
     public void parse_blankOrInvalidSmoking_throwsParseException() {
         for (String value : new String[] {"", "   ", "unknown", "sometimes", "true", "0", "y", "n",
             "yes,no", "yes no", "y es", "yeſ", "yes Alice", "yes x/no", "yes\ts/no"}) {
-            assertParseFailure(parser, "s/" + value, SmokingStatus.MESSAGE_CONSTRAINTS);
+            assertParseFailure(parser, "s/" + value, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
         }
     }
 
@@ -226,8 +226,8 @@ public class FindCommandParserTest {
         for (String args : new String[] {"S/yes", "s /yes", "smoking/yes", "{s/yes}", "<s/no>"}) {
             assertParseFailure(parser, args, message);
         }
-        assertParseFailure(parser, "s/yes {s/no}", SmokingStatus.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "s/no <s/yes>", SmokingStatus.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "s/yes {s/no}", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
+        assertParseFailure(parser, "s/no <s/yes>", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
     }
 
     @Test

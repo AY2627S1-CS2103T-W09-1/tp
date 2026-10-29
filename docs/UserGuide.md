@@ -88,7 +88,8 @@ The optional `s/SMOKING` field records the client's **own smoking habit**:
 
 * Use `s/yes` for a smoker or `s/no` for a non-smoker. Values are case-insensitive; `s/YES` is accepted.
 * Omit the field if the status is unknown. The client card shows Smoking as *not set* under Attributes.
-* A supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records.
+* On `add`, a supplied outer `s/` must have a value, and may appear only once per command. Each preference or dealbreaker block may also contain one separate smoking criterion. Blank, invalid, or repeated values within the same scope reject the command without changing any records. On `edit`, an empty outer `s/` clears the status instead.
+* `s/` always starts the smoking status, so no other field can contain ` s/`. For example, `n/Ravi s/o Kumar` is read as a name `Ravi` followed by the invalid smoking status `o Kumar`, and is rejected. Names may only contain letters, digits and spaces, so write such names without the `/` (e.g. `n/Ravi so Kumar`).
 * Smoking status is saved between sessions. Older records without this field remain usable and show *not set*.
 * This field records the client's own habit. See [Matching two clients](#matching-two-clients-match) for partner criteria.
 
@@ -191,7 +192,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * If supplied, `AGE` must be an integer from 18 to 99 (inclusive).
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
-* Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
+* Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status, and an empty `s/` clears it to *not set*.
 * For own religion, partner religion and clearing rules, use the [religion reference table](#religion-fields).
   Own religion and omitted criteria remain unchanged unless explicitly edited; conflicting preferred/excluded
   religions reject the whole edit.
@@ -212,6 +213,7 @@ Examples:
 *  `edit 1 <>` Clears all exclusions/dealbreakers, preserving preferences and own religion.
 *  `edit 3 rg/short-open` Records the 3rd displayed client as looking for a short-term relationship, open to long, preserving their other details.
 *  `edit 3 rg/` Clears the 3rd displayed client's relationship goal.
+*  `edit 2 s/` Clears the 2nd displayed client's smoking status.
 * `edit 1 g/nb` changes the first displayed client's gender to non-binary.
 * `edit 1 g/` clears that client's gender.
 
