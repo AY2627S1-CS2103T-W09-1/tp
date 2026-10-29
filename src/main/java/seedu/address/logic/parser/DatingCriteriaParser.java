@@ -7,6 +7,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_RELATIONSHIP_GOAL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_RELIGION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SMOKING;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -50,8 +51,8 @@ public final class DatingCriteriaParser {
         Environment currentEnvironment = Environment.OUTSIDE;
         boolean preferencesSupplied = false;
         boolean dealbreakersSupplied = false;
-        Map<DatingAttribute, String> preferences = Map.of();
-        Map<DatingAttribute, String> dealbreakers = Map.of();
+        Map<DatingAttribute, Set<String>> preferences = Map.of();
+        Map<DatingAttribute, Set<String>> dealbreakers = Map.of();
         Set<DatingAttribute> preferencesToRemove = Set.of();
         Set<DatingAttribute> dealbreakersToRemove = Set.of();
 
@@ -128,7 +129,7 @@ public final class DatingCriteriaParser {
         }
         arguments.verifyNoDuplicatePrefixesFor(supportedPrefixes());
 
-        Map<DatingAttribute, String> criteria = new LinkedHashMap<>();
+        Map<DatingAttribute, Set<String>> criteria = new LinkedHashMap<>();
         Set<DatingAttribute> attributesToRemove = EnumSet.noneOf(DatingAttribute.class);
         for (Prefix prefix : supportedPrefixes()) {
             if (arguments.getValue(prefix).isPresent()) {
@@ -136,7 +137,8 @@ public final class DatingCriteriaParser {
                 if (value.isEmpty()) {
                     attributesToRemove.add(toDatingAttribute(prefix));
                 } else {
-                    criteria.put(toDatingAttribute(prefix), validateAndNormalize(prefix, value));
+                    DatingAttribute attribute = toDatingAttribute(prefix);
+                    criteria.put(attribute, validateAndNormalizeValues(attribute, value));
                 }
             }
         }
@@ -206,23 +208,30 @@ public final class DatingCriteriaParser {
     }
 
     /** Criteria values to update and attributes to remove from a supplied environment. */
-    private record ParsedEnvironment(Map<DatingAttribute, String> criteria,
+    private record ParsedEnvironment(Map<DatingAttribute, Set<String>> criteria,
             Set<DatingAttribute> attributesToRemove) {}
 
     /**
      * Parsed environments together with the ordinary command arguments.
      */
-    public record ParsedCriteria(String outsideArguments, Map<DatingAttribute, String> preferences,
-            Map<DatingAttribute, String> dealbreakers, Set<DatingAttribute> preferencesToRemove,
+    public record ParsedCriteria(String outsideArguments, Map<DatingAttribute, Set<String>> preferences,
+            Map<DatingAttribute, Set<String>> dealbreakers, Set<DatingAttribute> preferencesToRemove,
             Set<DatingAttribute> dealbreakersToRemove, boolean preferencesSupplied,
             boolean dealbreakersSupplied) {
         /** Makes defensive copies of the parsed preference and dealbreaker maps. */
         public ParsedCriteria {
             requireNonNull(outsideArguments);
-            preferences = Map.copyOf(preferences);
-            dealbreakers = Map.copyOf(dealbreakers);
+            preferences = copyCriteria(preferences);
+            dealbreakers = copyCriteria(dealbreakers);
             preferencesToRemove = Set.copyOf(preferencesToRemove);
             dealbreakersToRemove = Set.copyOf(dealbreakersToRemove);
+        }
+
+        private static Map<DatingAttribute, Set<String>> copyCriteria(Map<DatingAttribute, Set<String>> criteria) {
+            Map<DatingAttribute, Set<String>> copied = new LinkedHashMap<>();
+            criteria.forEach((attribute, values) -> copied.put(attribute,
+                    Collections.unmodifiableSet(new LinkedHashSet<>(values))));
+            return Map.copyOf(copied);
         }
     }
 }

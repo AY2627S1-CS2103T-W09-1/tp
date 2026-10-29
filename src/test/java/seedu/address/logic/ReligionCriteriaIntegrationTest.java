@@ -151,8 +151,8 @@ public class ReligionCriteriaIntegrationTest {
                 + " <g/w s/yes age/30 r/Islam rg/short>");
         logic.execute("edit 1 {g/ age/ r/ rg/} <g/ age/ r/ rg/>");
 
-        assertEquals(Map.of(DatingAttribute.SMOKING, "no"), first().getDatingCriteria().getPreferences());
-        assertEquals(Map.of(DatingAttribute.SMOKING, "yes"), first().getDatingCriteria().getDealbreakers());
+        assertEquals(Map.of(DatingAttribute.SMOKING, Set.of("no")), first().getDatingCriteria().getPreferences());
+        assertEquals(Map.of(DatingAttribute.SMOKING, Set.of("yes")), first().getDatingCriteria().getDealbreakers());
     }
 
     @Test
@@ -160,6 +160,44 @@ public class ReligionCriteriaIntegrationTest {
         logic.execute(ADD_CLIENT + " {g/ s/ age/ r/ rg/} <g/ s/ age/ r/ rg/>");
 
         assertEquals(DatingCriteria.EMPTY, first().getDatingCriteria());
+    }
+
+    @Test
+    public void criteria_multipleValues_recordsAllSupportedValues() throws Exception {
+        logic.execute(ADD_CLIENT + " {g/m, w r/Buddhism, Jainism rg/long, short age/25-35 s/no}"
+                + " <g/nb r/Islam, Hinduism rg/life, unsure>");
+
+        assertEquals(Map.of(
+                DatingAttribute.GENDER, Set.of("m", "w"),
+                DatingAttribute.RELIGION, Set.of("Buddhism", "Jainism"),
+                DatingAttribute.RELATIONSHIP_GOAL, Set.of("Long-term relationship", "Short-term fun"),
+                DatingAttribute.AGE, Set.of("25-35"),
+                DatingAttribute.SMOKING, Set.of("no")), first().getDatingCriteria().getPreferences());
+        assertEquals(Map.of(
+                DatingAttribute.GENDER, Set.of("nb"),
+                DatingAttribute.RELIGION, Set.of("Islam", "Hinduism"),
+                DatingAttribute.RELATIONSHIP_GOAL, Set.of("Life partner", "Figuring out my goals")),
+                first().getDatingCriteria().getDealbreakers());
+    }
+
+    @Test
+    public void edit_criteriaMultipleValues_addsOnlyNewValuesAndWarnsForExistingValues() throws Exception {
+        logic.execute(ADD_CLIENT + " {g/m r/Buddhism}");
+
+        CommandResult result = logic.execute("edit 1 {g/m, w r/Buddhism, Jainism}");
+
+        assertEquals(Set.of("m", "w"), first().getDatingCriteria().getPreferences().get(DatingAttribute.GENDER));
+        assertEquals(Set.of("Buddhism", "Jainism"),
+                first().getDatingCriteria().getPreferences().get(DatingAttribute.RELIGION));
+        assertTrue(result.getFeedbackToUser().contains(EditCommand.MESSAGE_DUPLICATE_CRITERIA));
+        assertTrue(result.getFeedbackToUser().contains("Gender = m"));
+        assertTrue(result.getFeedbackToUser().contains("Religion = Buddhism"));
+    }
+
+    @Test
+    public void criteria_singleValueAttributes_rejectCommaSeparatedValues() {
+        assertThrows(ParseException.class, () -> logic.execute(ADD_CLIENT + " {s/yes, no}"));
+        assertThrows(ParseException.class, () -> logic.execute(ADD_CLIENT + " <age/25, 30>"));
     }
 
     @Test

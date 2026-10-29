@@ -103,16 +103,20 @@ public final class DatingCriteria {
     /** Rejects criteria that would both prefer and exclude the same potential partner. */
     private void validateNoContradictions() {
         for (DatingAttribute attribute : DatingAttribute.values()) {
-            String preference = preferences.get(attribute);
-            String dealbreaker = dealbreakers.get(attribute);
-            if (preference == null || dealbreaker == null) {
+            Set<String> preferenceValues = preferences.get(attribute);
+            Set<String> dealbreakerValues = dealbreakers.get(attribute);
+            if (preferenceValues == null || dealbreakerValues == null) {
                 continue;
             }
-            if (attribute == DatingAttribute.AGE && rangesOverlap(preference, dealbreaker)) {
-                throw new IllegalArgumentException(MESSAGE_OVERLAPPING_AGE_RANGES);
-            }
-            if (preference.equals(dealbreaker)) {
-                throw new IllegalArgumentException(getContradictionMessage(attribute));
+            for (String preference : preferenceValues) {
+                for (String dealbreaker : dealbreakerValues) {
+                    if (attribute == DatingAttribute.AGE && rangesOverlap(preference, dealbreaker)) {
+                        throw new IllegalArgumentException(MESSAGE_OVERLAPPING_AGE_RANGES);
+                    }
+                    if (preference.equals(dealbreaker)) {
+                        throw new IllegalArgumentException(getContradictionMessage(attribute));
+                    }
+                }
             }
         }
     }
@@ -143,9 +147,9 @@ public final class DatingCriteria {
         return new int[] {lowerBound, upperBound};
     }
 
-    private static Map<String, String> toStorageMap(Map<DatingAttribute, String> criteria) {
-        Map<String, String> storage = new LinkedHashMap<>();
-        criteria.forEach((attribute, value) -> storage.put(attribute.getStorageKey(), value));
+    private static Map<String, List<String>> toStorageMap(Map<DatingAttribute, Set<String>> criteria) {
+        Map<String, List<String>> storage = new LinkedHashMap<>();
+        criteria.forEach((attribute, values) -> storage.put(attribute.getStorageKey(), List.copyOf(values)));
         return storage;
     }
 

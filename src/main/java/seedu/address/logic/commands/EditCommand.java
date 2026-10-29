@@ -152,13 +152,14 @@ public class EditCommand extends Command {
         RelationshipGoal updatedRelationshipGoal = editPersonDescriptor.isRelationshipGoalEdited()
                 ? editPersonDescriptor.getRelationshipGoal().orElse(null)
                 : personToEdit.getRelationshipGoal().orElse(null);
-        Map<DatingAttribute, String> updatedPreferences = mergeCriteria(
+        MergeResult preferencesResult = mergeCriteria(
                 personToEdit.getDatingCriteria().getPreferences(), editPersonDescriptor.getPreferences(),
                 editPersonDescriptor.getPreferencesToRemove(), editPersonDescriptor.shouldClearPreferences());
-        Map<DatingAttribute, String> updatedDealbreakers = mergeCriteria(
+        MergeResult dealbreakersResult = mergeCriteria(
                 personToEdit.getDatingCriteria().getDealbreakers(), editPersonDescriptor.getDealbreakers(),
                 editPersonDescriptor.getDealbreakersToRemove(), editPersonDescriptor.shouldClearDealbreakers());
-        DatingCriteria updatedDatingCriteria = new DatingCriteria(updatedPreferences, updatedDealbreakers);
+        DatingCriteria updatedDatingCriteria = new DatingCriteria(preferencesResult.criteria(),
+                dealbreakersResult.criteria());
 
         Religion updatedReligion = editPersonDescriptor.isReligionEdited()
                 ? editPersonDescriptor.getReligion().orElse(null) : personToEdit.getReligion().orElse(null);
@@ -175,16 +176,32 @@ public class EditCommand extends Command {
      * Applies supplied criteria to the existing criteria and removes attributes with empty values.
      * An explicitly empty environment clears all criteria of that type.
      */
-    private static Map<DatingAttribute, String> mergeCriteria(Map<DatingAttribute, String> existingCriteria,
-            Optional<Map<DatingAttribute, String>> editedCriteria, Set<DatingAttribute> attributesToRemove,
+    private static MergeResult mergeCriteria(Map<DatingAttribute, Set<String>> existingCriteria,
+            Optional<Map<DatingAttribute, Set<String>>> editedCriteria, Set<DatingAttribute> attributesToRemove,
             boolean shouldClearCriteria) {
         if (shouldClearCriteria) {
-            return Map.of();
+            return new MergeResult(Map.of(), List.of());
         }
-        Map<DatingAttribute, String> mergedCriteria = new HashMap<>(existingCriteria);
-        editedCriteria.ifPresent(mergedCriteria::putAll);
+        Map<DatingAttribute, Set<String>> mergedCriteria = new HashMap<>();
+        existingCriteria.forEach((attribute, values) -> mergedCriteria.put(attribute, new LinkedHashSet<>(values)));
+        List<String> duplicates = new ArrayList<>();
+        editedCriteria.ifPresent(criteria -> criteria.forEach((attribute, newValues) -> {
+            Set<String> existingValues = mergedCriteria.get(attribute);
+            if (!attribute.allowsMultipleValues()) {
+                if (newValues.equals(existingValues)) {
+                    duplicates.add(formatCriterion(attribute, newValues));
+                } else {
+                    mergedCriteria.put(attribute, new LinkedHashSet<>(newValues));
+                }
+                return;
+            }
+            Set<String> values = mergedCriteria.computeIfAbsent(attribute, ignored -> new LinkedHashSet<>());
+            newValues.stream().filter(values::contains)
+                    .forEach(value -> duplicates.add(formatCriterion(attribute, Set.of(value))));
+            values.addAll(newValues);
+        }));
         attributesToRemove.forEach(mergedCriteria::remove);
-        return mergedCriteria;
+        return new MergeResult(mergedCriteria, duplicates);
     }
 
     private static String formatCriterion(DatingAttribute attribute, Set<String> values) {
@@ -237,11 +254,11 @@ public class EditCommand extends Command {
         private boolean religionEdited;
         private RelationshipGoal relationshipGoal;
         private boolean relationshipGoalEdited;
-        private Map<DatingAttribute, String> preferences;
+        private Map<DatingAttribute, Set<String>> preferences;
         private Set<DatingAttribute> preferencesToRemove = Set.of();
         private boolean clearPreferences;
         private boolean preferencesEdited;
-        private Map<DatingAttribute, String> dealbreakers;
+        private Map<DatingAttribute, Set<String>> dealbreakers;
         private Set<DatingAttribute> dealbreakersToRemove = Set.of();
         private boolean clearDealbreakers;
         private boolean dealbreakersEdited;
@@ -401,14 +418,14 @@ public class EditCommand extends Command {
         }
 
         /** Records partner preferences to add or update. */
-        public void setPreferences(Map<DatingAttribute, String> preferences) {
+        public void setPreferences(Map<DatingAttribute, ?> preferences) {
             setPreferences(preferences, Set.of());
         }
 
         /** Records partner preferences to add, update or remove. */
-        public void setPreferences(Map<DatingAttribute, String> preferences,
+        public void setPreferences(Map<DatingAttribute, ?> preferences,
                 Set<DatingAttribute> attributesToRemove) {
-            this.preferences = Map.copyOf(requireNonNull(preferences));
+            this.preferences = copyCriteria(preferences);
             preferencesToRemove = Set.copyOf(requireNonNull(attributesToRemove));
             clearPreferences = preferences.isEmpty() && attributesToRemove.isEmpty();
             preferencesEdited = true;
@@ -430,14 +447,14 @@ public class EditCommand extends Command {
         }
 
         /** Records partner dealbreakers to add or update. */
-        public void setDealbreakers(Map<DatingAttribute, String> dealbreakers) {
+        public void setDealbreakers(Map<DatingAttribute, ?> dealbreakers) {
             setDealbreakers(dealbreakers, Set.of());
         }
 
         /** Records partner dealbreakers to add, update or remove. */
-        public void setDealbreakers(Map<DatingAttribute, String> dealbreakers,
+        public void setDealbreakers(Map<DatingAttribute, ?> dealbreakers,
                 Set<DatingAttribute> attributesToRemove) {
-            this.dealbreakers = Map.copyOf(requireNonNull(dealbreakers));
+            this.dealbreakers = copyCriteria(dealbreakers);
             dealbreakersToRemove = Set.copyOf(requireNonNull(attributesToRemove));
             clearDealbreakers = dealbreakers.isEmpty() && attributesToRemove.isEmpty();
             dealbreakersEdited = true;
@@ -456,6 +473,27 @@ public class EditCommand extends Command {
         /** Returns whether the dealbreaker environment was explicitly empty. */
         public boolean shouldClearDealbreakers() {
             return clearDealbreakers;
+        }
+
+        private static Map<DatingAttribute, Set<String>> copyCriteria(Map<DatingAttribute, ?> criteria) {
+            Map<DatingAttribute, Set<String>> copied = new HashMap<>();
+            requireNonNull(criteria).forEach((attribute, rawValues) -> {
+                if (rawValues instanceof String value) {
+                    copied.put(attribute, Set.of(value));
+                } else if (rawValues instanceof Set<?> values) {
+                    Set<String> strings = new LinkedHashSet<>();
+                    for (Object value : values) {
+                        if (!(value instanceof String string)) {
+                            throw new IllegalArgumentException(DatingAttribute.MESSAGE_EMPTY_VALUE);
+                        }
+                        strings.add(string);
+                    }
+                    copied.put(attribute, Collections.unmodifiableSet(strings));
+                } else {
+                    throw new IllegalArgumentException(DatingAttribute.MESSAGE_EMPTY_VALUE);
+                }
+            });
+            return Map.copyOf(copied);
         }
 
         @Override
