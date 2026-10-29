@@ -265,10 +265,14 @@ Use `list` to show every client again; searching does not modify the stored reco
 
 Assesses two clients against each other's saved preferences and dealbreakers.
 
-Format: `match INDEX_A INDEX_B`
+Format: `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`
 
-* Use two different positive indexes from the **currently displayed list**, including after `find`.
-* Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
+* Give exactly two different clients. Each is either a positive index from the **currently displayed list**
+  (including after `find`) or `n/` followed by the client's name. Indexes come before names.
+* A name is looked up among **all** clients, so you do not need to `find` a client first. An exact name is used
+  if one exists; otherwise the name may differ in letter case and spacing, e.g. `n/alex   yeoh` finds `Alex Yeoh`.
+* Invalid, repeated, or out-of-range indexes display an error. So does a name no client has, or a name that matches
+  several clients only when letter case and spacing are ignored; use their indexes instead.
 * The result replaces the client list until your next command. An **Overall result** box names both clients and shows
   the outcome in color (green for compatible, red for incompatible, amber for insufficient information) with a
   one-line reason.
@@ -300,7 +304,10 @@ Overall results, in priority order:
 Missing gender, smoking status, religion, or relationship goal is unknown, not a match or a violation.
 An omitted criterion adds no constraint. `No religion` and `unsure` are explicit values, not missing information.
 
-Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
+Examples:
+* `list` followed by `match 1 3` assesses the first and third clients without changing their records.
+* `match n/Alex Yeoh n/Bernice Yu` assesses those two clients, whether or not they are displayed.
+* `match 2 n/Bernice Yu` assesses the second displayed client and Bernice Yu.
 
 ### Organising clients into groups: `grp` and `show`
 
@@ -499,6 +506,6 @@ Action | Format, Examples
 **Group members** | `grp NAME add INDEX [MORE_INDEXES]` or `grp NAME remove INDEX [MORE_INDEXES]`<br> e.g., `grp VIP add 1 3`, `grp VIP remove 2`
 **Group matches** | `grp NAME matches INDEX`<br> e.g., `grp Candidates matches 1`
 **Show group** | `show NAME`<br> e.g., `show VIP`
-**Match** | `match INDEX_A INDEX_B`<br> e.g., `match 1 3`
+**Match** | `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B`, or `match INDEX_A n/NAME_B`<br> e.g., `match 1 3`, `match n/Alex Yeoh n/Bernice Yu`
 **Help** | `help`
 **Exit** | `exit`
