@@ -149,6 +149,12 @@ How the parsing works:
 The overview omits individual contact and dating attributes. Partner-criteria details are shown in the
 [dating-criteria class diagram](#recording-preference-and-dealbreaker-attributes). Click for a full-size view.
 
+The class diagram below shows the attributes that make up a `Person`. A `Person` has no religion when it is
+not recorded, and any number of tags. Gender and smoking status are always present and use an unspecified value
+when not recorded.
+
+[![Classes that make up a Person](images/PersonClassDiagram.png)](images/PersonClassDiagram.png)
+
 
 The `Model` component,
 
@@ -474,6 +480,11 @@ Any known violation makes the pair incompatible, even if another comparison is u
 comparison or no criteria on either client gives insufficient information. All other pairs are compatible with
 recorded dealbreakers, including pairs with unmet preferences.
 
+The activity diagram below shows how `MatchAssessment#getOutcome()` decides the outcome. A violated dealbreaker
+is stored as an `UNMET` dealbreaker comparison and shown to the user as *Violated*.
+
+![How the outcome of a pairwise match is decided](images/MatchOutcomeActivityDiagram.png)
+
 `MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome and
 a table per direction in the command-result area. Plain-text feedback uses the same labels for logs.
 Other commands and errors retain their text display. Matching does not change model data,
@@ -573,6 +584,10 @@ for every other client in the full address book, excluding
 including insufficient-information candidates, but does not apply its preference-score ordering. An existing
 group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
 Tests check that the snapshot stays unchanged after later edits.
+
+The sequence diagram below shows how `grp Candidates matches 1` is parsed and executed.
+
+![Interactions inside the Logic and Model components for the `grp Candidates matches 1` command](images/GroupMatchesSequenceDiagram.png)
 
 Display, membership updates and persistence use the shared group mechanics described in
 [Forming named client groups](#forming-named-client-groups).

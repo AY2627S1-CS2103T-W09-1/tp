@@ -1,0 +1,27 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+start
+:Compare the first client's preferences, then dealbreakers,
+against the second client;
+:Compare the second client's preferences, then dealbreakers,
+against the first client;
+note right
+Each comparison is MET, UNMET or UNKNOWN.
+It is UNKNOWN when the other client's
+attribute is not recorded.
+end note
+
+'Since the beta syntax does not support placing the condition outside the
+'diamond we place it as the true branch instead.
+
+if () then ([any dealbreaker comparison is UNMET])
+    :Outcome is INCOMPATIBLE;
+elseif () then ([no comparisons, or any comparison is UNKNOWN])
+    :Outcome is INSUFFICIENT_INFORMATION;
+else ([else])
+    :Outcome is COMPATIBLE;
+endif
+stop
+@enduml

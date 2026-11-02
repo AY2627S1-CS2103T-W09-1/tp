@@ -1,0 +1,41 @@
+@startuml
+!pragma layout smetana
+!include style.puml
+skinparam arrowColor MODEL_COLOR
+skinparam classBackgroundColor MODEL_COLOR
+skinparam nodesep 30
+skinparam ranksep 50
+
+class Person
+class Name
+class Phone
+class Email
+class Address
+class Age
+class Gender <<enumeration>>
+class SmokingStatus
+class Religion
+class Tag
+class DatingCriteria
+
+Person *-down-> "1" Name
+Person *-down-> "1" Phone
+Person *-down-> "1" Email
+Person *-down-> "1" Address
+Person *-down-> "1" Age
+Person *-down-> "1" Gender
+Person *-down-> "1" SmokingStatus
+Person *-down-> "0..1" Religion
+Person *-down-> "*" Tag
+Person *-down-> "1" DatingCriteria
+
+Name -[hidden]right-> Phone
+Phone -[hidden]right-> Email
+Email -[hidden]right-> Address
+Address -[hidden]right-> Age
+Age -[hidden]right-> Gender
+Gender -[hidden]right-> SmokingStatus
+SmokingStatus -[hidden]right-> Religion
+Religion -[hidden]right-> Tag
+Tag -[hidden]right-> DatingCriteria
+@enduml
