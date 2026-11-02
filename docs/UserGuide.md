@@ -231,8 +231,8 @@ Format: `edit INDEX [{CRITERIA}] [<CRITERIA>]`
 When editing, a non-empty block preserves omitted criteria. Age and smoking are single-valued: a new
 value replaces the old value. Gender, religion, and relationship goal are multi-valued: new values are
 added and values already recorded are retained with a duplicate warning. An empty attribute prefix
-inside an `edit` block removes age, gender, religion, or relationship-goal criteria; empty smoking
-criteria have no effect. Use `{}` to clear all preferences or `<>` to clear all dealbreakers. See
+inside an `edit` block removes age, gender, smoking, religion, or relationship-goal criteria.
+Use `{}` to clear all preferences or `<>` to clear all dealbreakers. See
 [Parameter list](#parameter-list) for each attribute's value and contradiction rules.
 
 Examples:
@@ -512,8 +512,8 @@ status is unknown. Older records without this field display `Not specified`.
   status, `edit INDEX s/` clears it, and omitting `s/` preserves it. `add` and `find` need a value.
 * Each preference or dealbreaker block may contain `s/` once only and may contain only `yes` or `no`.
   On `edit`, a new value adds the criterion when absent or replaces its previous value. Repeating the
-  identical value leaves it unchanged and reports a duplicate warning. An empty criterion `s/` has no
-  effect; use `{}` or `<>` to clear the whole bucket.
+  identical value leaves it unchanged and reports a duplicate warning. On `edit`, `{s/}` removes the
+  smoking preference and `<s/>` removes the smoking dealbreaker; use `{}` or `<>` to clear the whole bucket.
 * The same smoking status cannot be both preferred and excluded, including criteria retained from an
   earlier edit. A conflicting command is rejected and leaves the record unchanged.
 
