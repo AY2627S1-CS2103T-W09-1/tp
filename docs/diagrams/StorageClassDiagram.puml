@@ -10,11 +10,11 @@ package Storage as StoragePackage {
 Class "<<interface>>\nStorage" as Storage
 Class StorageManager
 
-package "UserPrefs Storage" #F4F6F6{
+package "UserPrefs Storage\n" #F4F6F6{
 Class JsonUserPrefsStorage
 }
 
-package "AddressBook Storage" #F4F6F6{
+package "AddressBook Storage\n" #F4F6F6{
 Class JsonAddressBookStorage
 Class JsonSerializableAddressBook
 Class JsonAdaptedPerson

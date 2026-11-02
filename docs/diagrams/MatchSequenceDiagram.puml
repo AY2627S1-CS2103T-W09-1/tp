@@ -26,7 +26,7 @@ note right of LogicManager : The parser has returned c.
 LogicManager -> MatchCommand : execute(model)
 activate MatchCommand
 
-loop first reference, then second reference
+loop for each ref in {first, second}
     MatchCommand -> ClientReference : resolve(model)
     activate ClientReference
     note right of ClientReference
