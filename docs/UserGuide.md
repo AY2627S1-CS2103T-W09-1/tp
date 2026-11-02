@@ -337,7 +337,9 @@ Formats: `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B` or `match INDEX_A n/
 * The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
   and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
   and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
-* The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
+* The client list is temporarily hidden while the match result is shown; its contents, order and client records
+  stay unchanged. Run `help` to show the same list again, or `list` to show all clients.
+  This command does not save a pairing or comparison history.
 
 The meanings, formats, allowed attributes and editing rules for recorded criteria are described under
 [Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker) and

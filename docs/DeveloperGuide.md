@@ -486,7 +486,8 @@ is stored as an `UNMET` dealbreaker comparison and shown to the user as *Violate
 ![How the outcome of a pairwise match is decided](images/MatchOutcomeActivityDiagram.png)
 
 `MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome and
-a table per direction in the command-result area. Plain-text feedback uses the same labels for logs.
+a table per direction in the command-result area. `MainWindow` temporarily hides the client list for this view;
+the next non-match command or error shows it again. Plain-text feedback uses the same labels for logs.
 Other commands and errors retain their text display. Matching does not change model data,
 the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
 save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
@@ -734,7 +735,7 @@ A missing client attribute does not satisfy an attribute search. Use `list` to d
 1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
 3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
-4. The displayed list and stored client records remain unchanged.
+4. The client list is temporarily hidden; its contents and order, and stored client records, remain unchanged.
 
    Use case ends.
 
