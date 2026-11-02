@@ -228,7 +228,8 @@ editing, for unspecified gender. A gender list is accepted only by `find`.
 * `EditPersonDescriptor` uses an absent gender for “keep existing” and `UNSPECIFIED` for “clear”. `EditCommand` preserves gender when another field is edited and uses the displayed client index as before.
 * `FindCommandParser` retains name-only search and parses one `g/` into a set of genders. It rejects repeated prefixes, duplicate normalized values, unknown values and empty list items. Empty `g/` selects all three specified genders. `GenderMatchesPredicate` tests set membership, and `FindCommand` accepts `Predicate<Person>` so name, age and gender searches share the existing execution path. Age searches retain upstream's exact-age and inclusive-range validation.
 * `JsonAdaptedPerson` saves the canonical gender code. Missing, null or empty gender values load as `UNSPECIFIED`, so valid records containing the required age need no gender migration. Invalid non-empty values use the existing storage error handling.
-* `PersonCard` and command feedback display the full gender label, including “Unspecified”.
+* `PersonCard` and command feedback display the full recorded gender label. Missing gender appears as
+  `not set` on the card and `Unspecified` in command feedback.
 
 Tests cover gender value validation, parser rules, full command execution, filtering, editing the correct displayed client, persistence, older JSON records and unchanged data/results after invalid commands. Existing name-search tests are retained. Shared builders and command helpers carry gender so they do not silently discard it.
 
@@ -245,7 +246,7 @@ not a non-smoker.
 `EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
 `JsonAdaptedPerson` saves the `smokingStatus` string and reads absent or null fields in older JSON files as unspecified.
 An empty stored string also means unspecified. Other invalid stored values are rejected using the existing storage-error path.
-The person card and command feedback display the status, including `Not specified` for missing information.
+The person card displays missing smoking status as `not set`; command feedback uses `Not specified`.
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
@@ -940,7 +941,7 @@ Manual checks (use distinct test names):
 
 Use a test data file and distinct client names for these checks.
 
-1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be “Unspecified”.
+1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be `not set` on the card and `Unspecified` in command feedback.
 2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find n/Gender` searches names, while `find Gender` without `n/` is rejected.
 3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
 4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.

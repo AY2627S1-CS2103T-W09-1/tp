@@ -492,7 +492,8 @@ accepted and normalized to `MIN-MAX`.
 
 `s/SMOKING` records the client's own smoking habit. Use `s/yes` for a smoker or `s/no` for a
 non-smoker; values are case-insensitive and surrounding whitespace is ignored. Omit the field if the
-status is unknown. Older records without this field display `Not specified`.
+status is unknown. Missing smoking status, including in older records, appears as `not set` on client
+cards and `Not specified` in command feedback.
 
 * `s/o` in a name is read as a smoking status. Put such a name in quotes, e.g. `n/"Ravi s/o Kumar"`.
 * To use text that looks like a prefix inside a value, such as `s/o` in a name, put the whole value in double quotes.<br>
