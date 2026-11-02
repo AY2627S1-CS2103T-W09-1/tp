@@ -107,10 +107,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GEND
 * `AGE` is compulsory. The valid values for `AGE`, `SMOKING`, `GENDER` and `RELIGION` are listed in
   [Parameter list](#parameter-list).
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
-
-* `AGE` is compulsory. The valid values for `AGE`, `SMOKING`, `GENDER`, `RELIGION` and
-  `Relationship goals` are recorded only inside the criteria blocks, e.g. `{rg/long}`. See
+* Relationship goals are recorded only inside the criteria blocks, e.g. `{rg/long}`. See
   [Relationship goals](#relationship-goals).
   
 * Each prefix outside a criteria block may be supplied only once. Values entered here describe the
@@ -146,7 +143,7 @@ Examples:
 
 Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION]`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, …​
 * At least one of the optional fields must be provided.
@@ -314,22 +311,10 @@ Assesses two clients against each other's saved preferences and dealbreakers.
 
 Formats: `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B` or `match INDEX_A n/NAME_B`
 
-* An index refers to the **currently displayed list**, including after `find`.
-* A name is looked up among **all** clients, so they need not be displayed. Letter case and extra spaces are
-  ignored. If several clients share the name, use their indexes instead.
+* An index must be a positive integer and refers to the **currently displayed list**, including after `find`.
+* A name is looked up among **all** clients, so they need not be displayed. An exact name is preferred;
+  otherwise, letter case and extra spaces are ignored. If several clients match that way, use their indexes.
 * Give exactly two different clients. When mixing the two forms, the index comes first.
-
-| An index for `find match/INDEX` is invalid | `The person index provided is invalid.` |
-| An attribute value or gender list is invalid | The relevant attribute constraint or `Gender list must contain one or more of m, w, nb without duplicates.` |
-
-### Matching two clients: `match`
-
-Assesses two clients against each other's saved preferences and dealbreakers.
-
-Format: `match INDEX_A INDEX_B`
-
-* Use two different positive indexes from the **currently displayed list**, including after `find`.
-* Exactly two indexes are required. Invalid, repeated, or out-of-range indexes display an error.
 * The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
   and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
   and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
@@ -364,8 +349,6 @@ Examples:
 | Both refer to the same client | `Choose two different clients.` followed by the `match` usage |
 | No client has that name | `No client is named NAME.` |
 | Several clients have that name | `Several clients are named NAME. Use their list indexes instead.` |
-
-Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
 
 ### Organising clients into groups: `grp` and `show`
 
@@ -603,11 +586,6 @@ Keyword | Relationship goal
 | A full name such as `{rg/Long-term relationship}` | Use the keyword: `{rg/long}` |
 | An empty or repeated item, such as `{rg/long,}` or `{rg/long,LONG}` | List each goal once, separated by commas |
 | `{rg/long} <rg/long>` | Choose goals that are not both preferred and excluded |
-* Keywords and goal names are matched without regard to letter case or repeated spaces: for example, `rg/LONG` and `rg/long-term   RELATIONSHIP` are both saved as `Long-term relationship`.
-* Omit the field if the goal is not known. The client card then displays `Relationship goal: Not specified`. This is different from `rg/unsure`, which records that the client is still figuring out their goals.
-* Other values, such as `rg/marriage`, are rejected with the list of accepted keywords, and no records are changed.
-* The relationship goal is saved between sessions. Older records without this field remain usable and display `Not specified`.
-* This field records the client's own goal; partner criteria use the same accepted values.
 
 
 ### Deleting a person: `delete`
@@ -727,11 +705,6 @@ Action | Format, Examples
 **Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find n/"PHRASE"`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL[,GOAL]…`, `find s/yes` or `find s/no`<br> e.g., `find n/James Jake`, `find n/"Ravi s/o"`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long,short`, `find s/no`
 **Find matches** | `find match/INDEX`<br> e.g., `find match/2`
-**Add** | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 age/25 rg/long t/friend t/colleague`
-**Clear** | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit** | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [rg/RELATIONSHIP_GOAL] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
-**Find** | `find n/KEYWORD [MORE_KEYWORDS]`, `find age/AGE`, `find age/MIN-MAX`, `find g/GENDER[,GENDER]…`, `find g/`, `find r/RELIGION`, `find rg/GOAL`, `find s/yes`, `find s/no`, or `find match/INDEX`<br> e.g., `find n/James Jake`, `find age/25-35`, `find g/m,nb`, `find r/Jainism`, `find rg/long`, `find s/no`, `find match/2`
 **List** | `list`
 **Group members** | `grp NAME add INDEX [MORE_INDEXES]` or `grp NAME remove INDEX [MORE_INDEXES]`<br> e.g., `grp VIP add 1 3`, `grp VIP remove 2`
 **Group matches** | `grp NAME matches INDEX`<br> e.g., `grp Candidates matches 1`

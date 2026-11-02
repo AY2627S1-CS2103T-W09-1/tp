@@ -507,7 +507,7 @@ and other searches return to insertion order without any changes.
 
 ### Forming groups
 
-#### Forming Named client groups
+#### Forming named client groups
 
 `grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
 `GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
@@ -529,11 +529,6 @@ The command flow is:
    requires an existing group. Any already-present member on add or absent member on remove rejects the
    whole command. Single-member groups and empty groups after removal are valid.
 4. Publish once through `Model.setGroups`. `LogicManager` then saves clients and groups in the same JSON file.
-
-Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
-`INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
-including insufficient-information candidates, but does not apply its preference-score ordering. An existing
-group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
 
 `ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
 order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
@@ -558,31 +553,14 @@ persons and legacy/malformed files. Group rename/delete and an all-groups listin
 
 #### Forming groups based on match
 
-Match-based creation uses `MatchAssessment` for every other client in the full address book, excluding
+`grp NAME matches INDEX` resolves the source from the displayed list, then uses `MatchAssessment`
+for every other client in the full address book, excluding
 `INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
 including insufficient-information candidates, but does not apply its preference-score ordering. An existing
 group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
 
-`ModelManager.showGroup` clears any match-result comparator and filters by current membership in address-book
-order. A group-list listener reapplies the predicate after membership changes. Normal list/find operations
-clear the selected-group state. `AddressBook.setPerson` replaces membership references when immutable
-persons are edited; `removePerson` removes references but retains empty groups. Bulk person replacement
-prunes obsolete references. `resetData` validates a complete copy before replacing persons and groups;
-clearing the book therefore clears groups too. Existing add/edit commands still restore the full list.
-
-`JsonAdaptedGroup` stores `name` and `memberNames`, resolving members against the loaded persons' unique
-names. This uses the existing name-based client identity and is independent of displayed or file-array
-positions. App-driven renames are saved consistently; manual JSON renames must update group references.
-Missing groups in legacy files default to an empty collection. Malformed entries, duplicate group names
-or duplicate/dangling membership references follow the existing `IllegalValueException` storage error path.
-
-`Logic.getGroupList` exposes group changes to `PersonListPanel`, which refreshes its cells when memberships
-change. `PersonCard` displays alphabetically ordered `Group: NAME` badges separately from tags, hiding the
-badge container when empty. No additional client fields or external dependencies are required.
-
-Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
-matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
-persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
+Display, membership updates and persistence use the shared group mechanics described in
+[Forming named client groups](#forming-named-client-groups).
 
 ### Reliability
 
@@ -699,29 +677,30 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
       Use case ends.
 
-**Use case: Filter a shortlist of clients**
+**Use case: Shortlist a group of candidates with one search**
 
 **MSS**
 
-1. The matchmaker requests `filter` with at least one criterion, such as an age range and smoking status.
-2. CupidMaxxing checks that each criterion is supported and has a valid value.
-3. CupidMaxxing searches the entire address book and shows each client who satisfies **all** supplied criteria exactly once.
+1. The matchmaker requests `find` with one search mode, such as `find age/25-35`.
+2. CupidMaxxing checks that the search mode is supported and its value is valid.
+3. CupidMaxxing searches the entire address book and shows each client aged 25 to 35, inclusive, exactly once.
 4. CupidMaxxing reports how many clients matched. The displayed indexes are updated to match the filtered list.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. No criterion is supplied, or a criterion is invalid or repeated.
+* 2a. The search mode is missing, invalid or repeated, or multiple search modes are supplied.
     * 2a1. CupidMaxxing reports the problem and keeps the previously displayed list unchanged.
 
       Use case ends.
-* 3a. No client satisfies every criterion.
+* 3a. No client satisfies the search criterion.
     * 3a1. CupidMaxxing shows an empty list and reports that no clients match.
 
       Use case ends.
 
-A missing client attribute does not satisfy a filter criterion. Separate client records with the same name remain separate results.
+Each search replaces the displayed results using the full address book; successive searches do not combine criteria.
+A missing client attribute does not satisfy an attribute search. Use `list` to display all clients again.
 
 **Use case: Assess a pair of clients**
 
@@ -800,7 +779,7 @@ client, excluding the source. It rejects an existing name or zero candidates. Gr
 * **Characteristic**: A value describing a client, initially age, smoking habit, or religion.
 * **Preference**: A characteristic the client would like a potential partner to have; an unmet preference need not make a pair incompatible.
 * **Dealbreaker**: A requirement that excludes a potential partner when violated.
-* **Filter criterion**: A condition that a client must satisfy to appear in an AND-filtered shortlist.
+* **Search criterion**: A condition used by one `find` search mode to select clients for the displayed shortlist.
 * **Pairwise matching**: Comparing two clients' recorded criteria in both directions without creating or modifying a relationship record.
 * **Unknown**: An assessment made when a required characteristic has not been recorded; it is not equivalent to a match.
 * **Label**: A categorisation attached to a client using the existing AB3 tag mechanism.
