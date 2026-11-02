@@ -9,10 +9,21 @@ title: Developer Guide
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
-* The smoking-status increment follows the model, storage, and UI integration approach in the [SE-EDU Adding a Command tutorial](https://se-education.org/guides/tutorials/ab3AddRemark.html), adapted to the existing `add` and `edit` commands.
-* The relationship-goal increment follows the model, storage, and UI integration approach in the [SE-EDU Adding a Command tutorial](https://se-education.org/guides/tutorials/ab3AddRemark.html), adapted to the existing `add` and `edit` commands. Its goal categories are adapted from the relationship types offered by the Hinge dating app.
+* This project is based on [AddressBook-Level3](https://se-education.org/addressbook-level3/), created by the [SE-EDU initiative](https://se-education.org).
+* The GUI uses [JavaFX](https://openjfx.io/).
+* The diagrams in this guide are made with [PlantUML](https://plantuml.com/).
+* Relationship-goal categories were adapted from those offered by [Hinge](https://hinge.co/).
 
+Notable uses of AI:
+* @yxlyx used Codex to help with writing of functional code, tests, parts of the User Guide and Developer Guide,
+   and for reviewing of PRs
+* @zwqqwz123 used Codex to help with writing of functional code, tests, parts of the User Guide and Developer Guide,
+   and for reviewing of PRs
+* @pulas2345 used Claude to help with writing of functional code, tests, parts of the User Guide and Developer Guide,
+   and for reviewing of PRs
+* @riceric8 used Codex to help with writing of functional code, tests and parts of the User Guide and Developer Guide.
+* @codeforce233 used Claude Code to help with writing of functional code, tests
+   and parts of the User Guide and Documentation Guide
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
@@ -274,7 +285,7 @@ A relationship goal is recorded only as a partner criterion: `{rg/...}` lists th
 `{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
 Keeping one copy avoids an own goal and a goal preference that disagree.
 
-`RelationshipGoal` is an enumeration of the six goals listed in the User Guide, adapted from Hinge. Each value
+`RelationshipGoal` is an enumeration of the six goals listed in the User Guide. Each value
 holds a short keyword (for example, `long-open`) and a full name. Users type keywords only:
 `RelationshipGoal#parseKeywordList` splits the input on commas and rejects unknown, empty or repeated keywords.
 `DatingCriteriaParser` stores each goal as its full name, one per value in the criterion's set, like other
@@ -605,8 +616,6 @@ the application starts with an empty address book rather than partially loading 
 
 ## **Appendix: Requirements**
 
-The user stories below describe capabilities implemented in the current product. Deferred ideas are not included as completed stories; explicitly proposed implementation sections elsewhere in this guide are not current commands.
-
 ### Product scope
 
 **Target user profile**: An independent professional matchmaker who manages a small pool of clients and potential matches, types quickly, and prefers a keyboard-driven desktop application. The matchmaker needs to record client details, retrieve relevant contacts, assess possible introductions, and organise follow-ups.
@@ -619,7 +628,6 @@ The user stories below describe capabilities implemented in the current product.
 * Search and filter clients using those attributes, and compare two clients against each other's preferences and dealbreakers.
 * Categorise clients using labels (the existing AB3 tags) and named groups.
 
-Other ideas, such as fuzzy search, command aliases, archiving, profile sharing, reminders, and match history, are candidates for later iterations rather than MVP commitments.
 
 ### User stories
 
@@ -638,8 +646,6 @@ not a claim that every possible enhancement or input combination is supported.
 | `* *` | matchmaker | rank candidates for a selected client using saved criteria | prioritise possible introductions without re-entering every criterion | `find match/INDEX`; unknown information remains visible |
 | `* *` | matchmaker | save a candidate shortlist as a named group | revisit that set of clients later | `grp NAME matches INDEX`; membership is a snapshot |
 
-Combined manual-trait searches, tag search, fuzzy search, client-status tracking, archiving,
-profile sharing, reminders and match history are not implemented and are not claimed by this table.
 
 ### Use cases
 
