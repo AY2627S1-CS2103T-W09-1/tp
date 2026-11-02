@@ -334,8 +334,10 @@ when the client has no criteria.
 mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
 combines modes, mixes a prefix with name keywords, or repeats `rg/`.
 
-Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching). A criterion is met when it
-shares at least one goal with the other client's `{rg/...}` preference.
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching). A preference is met when it
+shares at least one goal with the other client's `{rg/...}` preference. A dealbreaker is violated when it
+shares a goal with that preference; it is met when the other client's goals are known and none is excluded.
+If the other client has no goal preference, the comparison is unknown.
 
 ##### Miscellaneous values
 
@@ -470,8 +472,8 @@ so `MatchCommand#equals` compares them directly.
 
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes and goal
 preference, preserving unknown gender, smoking status, religion, and goals. Age uses the existing inclusive
-`AgeMatchesPredicate`; a relationship-goal criterion is met when it shares a goal with the other client's goal
-preference; other attributes compare canonical values. Gender, religion and relationship-goal criteria may hold
+`AgeMatchesPredicate`; a relationship-goal preference is met when it shares a goal with the other client's goal
+preference, while an overlapping goal dealbreaker is violated. Other attributes compare canonical values. Gender, religion and relationship-goal criteria may hold
 several values, and a preference is met when any of its values matches. An empty criterion value removes
 that attribute from the corresponding preference or dealbreaker set.
 
