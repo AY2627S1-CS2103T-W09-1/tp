@@ -1,99 +1,46 @@
 @startuml
 !pragma layout smetana
 !include style.puml
-skinparam arrowThickness 1.1
 skinparam arrowColor MODEL_COLOR
-skinparam classBackgroundColor MODEL_COLOR
-skinparam nodesep 45
-skinparam ranksep 55
-scale 1.5
+skinparam classBackgroundColor #FFF5F6
+skinparam classBorderColor MODEL_COLOR
+skinparam classFontColor #202020
+skinparam classAttributeFontColor #202020
+skinparam classStereotypeFontColor #202020
+skinparam classAttributeIconSize 0
+skinparam nodesep 40
+skinparam ranksep 50
 
-Package Model as ModelPackage <<Rectangle>>{
-Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
-Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
-Class "<<interface>>\nModel" as Model
-Class AddressBook
-Class ModelManager
-Class UserPrefs
-
-Class UniquePersonList
-Class Person
-Class Address
-Class Email
-Class Name
-Class Phone
-Class Age
-Enum Gender <<enumeration>> {
-    MAN
-    WOMAN
-    NON_BINARY
-    UNSPECIFIED
+package Model as ModelPackage {
+interface ReadOnlyAddressBook <<interface>>
+interface ReadOnlyUserPrefs <<interface>>
+interface Model <<interface>>
+class AddressBook
+class ModelManager
+class UserPrefs
+class UniquePersonList
+class Person
+class ClientGroup
+class GroupName
+class DatingCriteria {
+    -preferences: Map<DatingAttribute, Set<String>>
+    -dealbreakers: Map<DatingAttribute, Set<String>>
 }
-Class SmokingStatus
-Class Religion
-Enum RelationshipGoal <<enumeration>> {
-    LIFE_PARTNER
-    LONG_TERM
-    LONG_TERM_OPEN_TO_SHORT
-    SHORT_TERM_OPEN_TO_LONG
-    SHORT_TERM_FUN
-    FIGURING_OUT
 }
-Class Tag
-Class ClientGroup
-Class GroupName
-Class DatingCriteria {
-    -preferences: Map<DatingAttribute, String>
-    -dealbreakers: Map<DatingAttribute, String>
-}
-Enum DatingAttribute <<enumeration>> {
-    AGE
-    GENDER
-    SMOKING
-    RELIGION
-    RELATIONSHIP_GOAL
-}
-
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Model
-
-AddressBook .up.|> ReadOnlyAddressBook
 
 ModelManager .up.|> Model
-Model .right.> ReadOnlyUserPrefs
 Model .left.> ReadOnlyAddressBook
-ModelManager -left-> "1" AddressBook
-ModelManager -right-> "1" UserPrefs
+Model .right.> ReadOnlyUserPrefs
+AddressBook .up.|> ReadOnlyAddressBook
 UserPrefs .up.|> ReadOnlyUserPrefs
-
-AddressBook *--> "1" UniquePersonList
-AddressBook *--> "*" ClientGroup
-ClientGroup *-left-> "1" GroupName
+ModelManager -down-> "1" AddressBook
+ModelManager -right-> "1" UserPrefs
+AddressBook *-down-> "1" UniquePersonList
+AddressBook *-right-> "*" ClientGroup
+ClientGroup -down-> "1" GroupName
 ClientGroup --> "0..*" Person : members
-UniquePersonList --> "0..*" Person : all clients
-Person *--> "1" Name
-Person *--> "1" Phone
-Person *--> "1" Email
-Person *--> "1" Address
-Person *--> "1" Age
-Person *--> "1" SmokingStatus
-Person *--> "0..1" Religion
-Person *--> "1" Gender
-Person *--> "*" Tag
-Person *--> "1" DatingCriteria : dating criteria
-DatingCriteria ..> DatingAttribute : preference/dealbreaker keys
-DatingCriteria ..> RelationshipGoal : goal criteria
+UniquePersonList -down-> "0..*" Person : all clients
+Person -down-> "1" DatingCriteria : datingCriteria
 
 show DatingCriteria fields
-show DatingAttribute members
-show Gender members
-show RelationshipGoal members
-
-Name -[hidden]right-> Phone
-Phone -[hidden]right-> Address
-Address -[hidden]right-> Email
-
-ModelManager --> Person : filtered / sorted view
 @enduml
