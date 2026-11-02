@@ -217,7 +217,7 @@ The optional `s/` parameter in `add` and `edit` records a client's own smoking h
 ###### Internal representation
 
 `SmokingStatus` stores a normalized `yes` or `no`; its empty value represents information not yet recorded,
-not a non-smoker. The parsers reject empty, invalid, and repeated `s/` parameters.
+not a non-smoker.
 
 `Person` includes smoking status in full equality and hashing, while its existing name-based identity rule is unchanged.
 `EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
@@ -227,7 +227,7 @@ The person card and command feedback display the status, including `Not specifie
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
-Clearing a recorded smoking status is not supported.
+
 
 ##### Recording religion attributes
 
@@ -318,14 +318,7 @@ and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal e
 so clients with an unknown goal are never returned. A single goal is accepted rather than a
 comma-separated list, because some full goal names contain commas.
 
-Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching).
-
-A relationship goal is recorded only as a partner criterion: `{rg/...}` lists the goals a client is open to and
-`<rg/...>` lists goals the client rules out. There is no separate own-goal field. The goals in a client's
-`{rg/...}` preference also describe that client, so other clients' goal criteria are checked against them.
-Keeping one copy avoids an own goal and a goal preference that disagree.
-
-Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching): a criterion is met when it
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching). A criterion is met when it
 shares at least one goal with the other client's goals.
 
 ##### Miscellaneous values
@@ -450,8 +443,6 @@ Each becomes a `ClientReference`, a sealed interface whose `resolve(Model)` retu
   It returns the client with exactly that `Name` if there is one. Otherwise it accepts a single client whose name
   differs only in letter case and spacing, and rejects a name with no such client or with several.
 
-The parser rejects two identical references, and `MatchCommand` rejects two references that resolve to the same
-client, such as `match 1 n/Alex Yeoh` when Alex Yeoh is displayed first.
 The parser rejects two identical references. `MatchCommand` also rejects two references that resolve to the same
 client, such as `match 1 n/Alex Yeoh` when Alex Yeoh is displayed first. Records keep the references comparable,
 so `MatchCommand#equals` compares them directly.

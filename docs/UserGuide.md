@@ -141,7 +141,6 @@ Examples:
 
 ### Editing a client: `edit`
 
-Edits the client at `INDEX` in the currently displayed list. `INDEX` must be a positive integer.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
 
@@ -156,7 +155,6 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [age/AGE] [s/SMOKIN
 * Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status, and an empty `s/` clears it to *not set*.
 * Relationship goals are changed through the criteria blocks, e.g. `edit 3 {rg/short-open}`. See
   [Editing a preference or dealbreaker](#editing-a-preference-or-dealbreaker).
-* Use `s/yes` or `s/no` to update smoking status. Omitting `s/` preserves the existing status. Clearing a recorded smoking status through a command is not supported yet; an empty `s/` is rejected.
 
 
 Examples:
@@ -178,8 +176,7 @@ Examples:
 ### Adding a preference or dealbreaker
 
 Use a preference to record a value a client would like in a partner, and a dealbreaker to record a
-value a partner must not have. These criteria can be supplied with `add`. Attributes
-contained within the specified blocks describe attributes that the client desires their partner to have.
+value a partner must not have. These criteria can be supplied with `add`.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE ... [{CRITERIA}] [<CRITERIA>]`
 
@@ -246,7 +243,7 @@ Formats:
 * `find g/` returns every client with a specified gender, equivalent to `find g/m,w,nb`. Unspecified genders are excluded from gender searches.
 * `find r/RELIGION` searches the client's **own religion**, not partner criteria. Use one category from the
   [religion reference table](#religion), which also explains unknown values and invalid inputs.
-* `find rg/GOAL` returns clients with that relationship goal. `GOAL` accepts the same keywords and full names as `add` and `edit`, such as `life`, `long`, `long-open`, `short-open`, `short` or `unsure`. Clients with no recorded goal are excluded.
+* `find rg/GOAL[,GOAL]…` returns clients whose `{rg/...}` preferences include any listed goal. Use keywords such as `life`, `long`, `long-open`, `short-open`, `short` or `unsure`; full goal names are not accepted. Clients with no recorded goal are excluded.
 * `find s/yes` or `find s/no` searches the client's **own smoking habit**, ignoring case and surrounding whitespace in the value. Clients with unspecified smoking status are excluded from both searches; unspecified does not mean non-smoker. Partner preferences and dealbreakers do not affect these results.
 * A blank `s/`, unsupported values (such as `unknown`), repeated `s/` prefixes and lists such as `s/yes,no` are rejected.
 * `find match/INDEX` lists clients compatible with the client at `INDEX` in the displayed list, best matches first. It uses the same rules as [`match`](#matching-two-clients-match). The rest are sorted by how many recorded criteria they meet. Unrecorded details never hide anyone. Use `match INDEX_A INDEX_B` to see the full breakdown for one pair. `list` or any other `find` restores the normal order.
@@ -267,7 +264,6 @@ Examples:
 * `find n/"Ravi s/o"` finds clients whose names contain `Ravi s/o`.
 * `find rg/long` finds clients open to a long-term relationship.
 * `find rg/long,short` finds clients open to a long-term relationship or short-term fun.
-* `find rg/long` finds clients looking for a long-term relationship.
 * `find s/YES` finds clients recorded as smokers.
 * `find s/no` finds clients explicitly recorded as non-smokers.
 * `find match/2` lists clients compatible with the 2nd displayed client, best matches first.
