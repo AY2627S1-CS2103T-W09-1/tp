@@ -15,6 +15,7 @@ title: Developer Guide
 * Relationship-goal categories were adapted from those offered by [Hinge](https://hinge.co/).
 
 Declaration of use of AI:
+
 * @yxlyx used Codex to help with writing of functional code, tests, generating UML diagrams, parts of the 
    User Guide and Developer Guide, and for reviewing of PRs
 * @zwqqwz123 used Codex to help with writing of functional code, tests, parts of the User Guide and Developer Guide,
@@ -24,7 +25,8 @@ Declaration of use of AI:
 * @riceric8 used Codex to help with writing of functional code, tests, generating UML diagrams, and parts of the 
    User Guide and Developer Guide.
 * @codeforce233 used Claude Code to help with writing of functional code, tests and parts 
-   of the User Guide and Documentation Guide
+   of the User Guide and Developer Guide
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
