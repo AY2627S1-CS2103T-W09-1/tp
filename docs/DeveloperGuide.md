@@ -253,7 +253,6 @@ partner-criteria map and may equal or differ from its values. `JsonAdaptedPerson
 own-religion name and treats a missing or null property as unknown. The existing unknown-property
 handling ignores obsolete `preferredReligion`, `requiredReligion` and `excludedReligions` properties;
 they are omitted on the next save rather than migrated into the new maps.
-=======
 
 
 The class diagram below focuses on the religion-related model.
@@ -264,8 +263,6 @@ The `0..1` multiplicity represents an unknown or recorded own religion, while
 are canonical strings in those maps, not references to the client's own `Religion`.
 The dashed dependencies show the map key type and the shared religion validation;
 they do not represent additional stored associations.
-
-=======
 
 ##### Recording relationship goals
 
@@ -298,28 +295,24 @@ with an unknown goal are never returned.
 
 ###### Internal representation
 
-`AddCommandParser` and `EditCommandParser` reject invalid and repeated `rg/` parameters.
-`Person` exposes the goal as an `Optional`, because an absent goal means **unknown**, not
-`Figuring out my goals`, which is an explicit category. `Person` includes the goal in full equality
-and hashing, while its existing name-based identity rule is unchanged. `EditPersonDescriptor`
-records whether `rg/` was supplied separately from its value, so `rg/` with no value clears the goal
+`DatingCriteriaParser` rejects invalid and repeated `rg/` values inside a criteria block.
+`DatingCriteria` stores each block's goals as a set of full names. A client with no goal preference has an **unknown** goal, not
+`Figuring out my goals`, which is an explicit category. `Person` includes the criteria in full equality
+and hashing, while its existing name-based identity rule is unchanged. `EditCommand` adds new goals
+to the existing set. `{rg/}` with no value clears the goal preference,
 and edits to other fields preserve it.
 
-`JsonAdaptedPerson` saves the full category name as the `relationshipGoal` string and reads absent
-or null fields in older JSON files as unknown. Other invalid stored values are rejected using the
-existing storage-error path. The person card and command feedback display the goal, including
-`Not specified` for missing information.
+`JsonAdaptedPerson` saves the full category names in the `relationshipGoal` list of the `preferences` or
+`dealbreakers` map. Other invalid stored values are rejected using the
+existing storage-error path. The person card shows goal criteria under **Partner criteria**, and `none`
+when the client has no criteria.
 
-`find rg/GOAL` searches by relationship goal. `FindCommandParser` treats `rg/` as one more search
+`find rg/GOAL[,GOAL]...` searches clients' `{rg/...}` preferences. `FindCommandParser` treats `rg/` as one more search
 mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
-combines modes, mixes a prefix with name keywords, or repeats `rg/`. The value is parsed with
-`ParserUtil#parseRelationshipGoal`, so search accepts exactly the keywords and full names that `add`
-and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal equals the parsed goal,
-so clients with an unknown goal are never returned. A single goal is accepted rather than a
-comma-separated list, because some full goal names contain commas.
+combines modes, mixes a prefix with name keywords, or repeats `rg/`.
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching). A criterion is met when it
-shares at least one goal with the other client's goals.
+shares at least one goal with the other client's `{rg/...}` preference.
 
 ##### Miscellaneous values
 
@@ -514,7 +507,7 @@ and other searches return to insertion order without any changes.
 
 #### Forming named client groups
 
-`grp NAME add INDEX...`, `grp NAME remove INDEX...` and `grp NAME matches INDEX` are parsed by
+`grp NAME add INDEX...` and `grp NAME remove INDEX...` are parsed by
 `GroupCommandParser` into `GroupCommand`. `ShowGroupCommandParser` handles `show NAME`.
 Group names use the shared `GroupName` validation: 1–30 ASCII letters, digits, hyphens or underscores,
 with an alphanumeric first character. Equality and hashing use a `Locale.ROOT` lowercase key, while
@@ -553,16 +546,17 @@ change. `PersonCard` displays alphabetically ordered group chips after a **Group
 in a strip below the card's columns that is hidden when the client has no tags or groups. No additional client fields or external dependencies are required.
 
 Automated tests cover value validation/immutability, atomic failures, filtered and sorted displayed indexes,
-matching snapshots, edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
+edits/deletion/clear, shown-group updates, persistence round trips, reordered JSON
 persons and legacy/malformed files. Group rename/delete and an all-groups listing command are deferred.
 
 #### Forming groups based on match
 
-`grp NAME matches INDEX` resolves the source from the displayed list, then uses `MatchAssessment`
+`GroupCommandParser` also parses `grp NAME matches INDEX`, which resolves the source from the displayed list, then uses `MatchAssessment`
 for every other client in the full address book, excluding
 `INCOMPATIBLE` outcomes and the selected source. It shares the eligibility rule of `FindMatchCommand`,
 including insufficient-information candidates, but does not apply its preference-score ordering. An existing
 group or no candidates is an error. Membership is a snapshot and is not recomputed on later attribute edits.
+Tests check that the snapshot stays unchanged after later edits.
 
 Display, membership updates and persistence use the shared group mechanics described in
 [Forming named client groups](#forming-named-client-groups).
@@ -644,7 +638,7 @@ not a claim that every possible enhancement or input combination is supported.
 | Priority | As a … | I want to … | So that I can … | Implemented workflow |
 | -------- | ------ | ----------- | --------------- | -------------------- |
 | `* * *` | matchmaker | add and update a client's contact details | keep an accurate way to reach the client | `add`, `edit` |
-| `* * *` | matchmaker | record age, gender, smoking habit, religion, relationship goal, preferences and dealbreakers | retain the information needed to assess candidates | Own fields and `{...}` / `<...>` criteria in `add` and `edit` |
+| `* * *` | matchmaker | record age, gender, smoking habit, religion, preferences and dealbreakers (including relationship goals) | retain the information needed to assess candidates | Own fields and `{...}` / `<...>` criteria in `add` and `edit` |
 | `* * *` | matchmaker | find clients by one recorded characteristic at a time | identify candidates without scanning every record | `find n/`, `age/`, `g/`, `s/`, `r/` or `rg/` |
 | `* * *` | matchmaker | compare two clients against each other's preferences and dealbreakers | understand conflicts and unknown information before an introduction | `match INDEX_A INDEX_B` |
 | `* * *` | matchmaker | attach labels to clients | categorise client records | Repeated `t/` fields in `add` and replacement tags in `edit` |
@@ -828,16 +822,17 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
 `find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
 because a successful edit restores the full list and changes the displayed indexes.
 
-- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no rg/long t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
-   Expected: One client is added with own religion Jainism, preference religion Buddhism
-   and age 25, and excluded religion Islam. Ordinary details, gender, smoking status,
-   relationship goal and tag are recorded normally. Inspect the saved JSON: outer
-   `religion` is `Jainism`, `preferences` contains `religion: Buddhism` and `age: 25`,
-   and `dealbreakers` contains `religion: Islam` (JSON keys and values are strings).
+- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no t/demo r/jAiNiSm {r/bUdDhIsM age/25 rg/long} <r/iSlAm>`.<br>
+   Expected: One client is added with own religion Jainism, preference religion Buddhism,
+   age 25 and relationship goal Long-term relationship, and excluded religion Islam. Ordinary details,
+   gender, smoking status and tag are recorded normally. Inspect the saved JSON: outer
+   `religion` is `Jainism`, `preferences` contains `religion: ["Buddhism"]`, `age: ["25"]` and
+   `relationshipGoal: ["Long-term relationship"]`, and `dealbreakers` contains `religion: ["Islam"]`
+   (each criterion is a list of strings, even with one value).
 - [ ] Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
    Expected: Only the phone changes. Own religion and both entire criteria maps remain
    unchanged. In the remaining steps, check that name, this phone, email, address,
-   age, gender, smoking status, relationship goal and tag remain unchanged unless
+   age, gender, smoking status and tag remain unchanged unless
    explicitly edited.
 - [ ] Run `edit 1 r/Buddhism`, then `edit 1 r/Islam`, finding the test client again
    before each edit.<br>
@@ -984,9 +979,9 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 
 - [ ] Adding, editing and retaining the client's own religion
 
-  - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb rg/long r/jAiNiSm`.<br>
+  - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb r/jAiNiSm`.<br>
       Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
-      non-binary gender and a long-term relationship goal. No partner criteria appear.
+      and non-binary gender. No partner criteria appear.
 
   - Enter `find n/Nia`, then `edit 1 r/Christianity`.<br>
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
@@ -1032,41 +1027,41 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 
 ### Relationship goals
 
-1. Adding and retaining a relationship goal
+1. Adding and retaining a relationship goal preference
 
-   1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 rg/LONG`.<br>
-      Expected: The contact card shows `Relationship goal: Long-term relationship`. The keyword
+   1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 {rg/LONG}`.<br>
+      Expected: The card shows `relationship goal = Long-term relationship` under **Partner criteria**. The keyword
       is converted to the goal's full name.
 
-   1. Enter `find n/Rae`, then `edit 1 rg/short-open`.<br>
-      Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
+   1. Enter `find n/Rae`, then `edit 1 {rg/short-open}`.<br>
+      Expected: The goal is added to the preference, so the card lists both `Long-term relationship` and `Short-term relationship, open to long`.
 
    1. Enter `find n/Rae`, then `edit 1 p/99999999`.<br>
-      Expected: The phone number changes and the relationship goal is unchanged.
+      Expected: The phone number changes and the goal preference is unchanged.
 
    1. Close and relaunch the app.<br>
-      Expected: Rae's relationship goal is still `Short-term relationship, open to long`.
+      Expected: Rae's preference still lists both goals.
 
-   1. Enter `find n/Rae`, then `edit 1 rg/`.<br>
-      Expected: The contact card shows `Relationship goal: Not specified`.
+   1. Enter `find n/Rae`, then `edit 1 {rg/}`.<br>
+      Expected: The goal preference is removed and the card shows `none` under **Partner criteria**.
 
 1. Rejecting unsupported and repeated values
 
-   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/marriage`.<br>
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/long`.<br>
+      Expected: The command is rejected with a message to use `{rg/GOAL}` or `<rg/GOAL>`. No contact is added.
+
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 {rg/marriage}`.<br>
       Expected: The command is rejected with the list of accepted keywords and goals. No contact is added.
 
-   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/short rg/life`.<br>
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 {rg/short rg/life}`.<br>
       Expected: The command is rejected because `rg/` is repeated. No contact is added.
 
-1. Finding clients by relationship goal
+1. Finding clients by relationship goal preference
 
-   1. Ensure Rae has `rg/long` and another client has a different or no goal, then enter `find rg/long`.<br>
-      Expected: Rae is listed and clients with other or unspecified goals are not. The status shows the number listed.
+   1. Enter `find n/Rae`, then `edit 1 {rg/long}`. With another client having a different or no goal preference, enter `find rg/long`.<br>
+      Expected: Rae is listed and clients with other or no goal preferences are not. The status shows the number listed.
 
-   1. Enter `find rg/Long-term relationship`.<br>
-      Expected: The same clients are listed as for `find rg/long`.
-
-   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
+   1. Enter `find rg/marriage`, `find rg/Long-term relationship`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
 
 ### Finding clients by smoking status
