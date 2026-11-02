@@ -24,8 +24,8 @@ class Person {
 }
 class Religion
 class DatingCriteria {
-    -preferences: Map<DatingAttribute, String>
-    -dealbreakers: Map<DatingAttribute, String>
+    -preferences: Map<DatingAttribute, Set<String>>
+    -dealbreakers: Map<DatingAttribute, Set<String>>
 }
 enum DatingAttribute <<enumeration>> {
     RELIGION

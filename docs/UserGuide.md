@@ -64,6 +64,12 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
 
+Malformed command structure is reported as `Invalid COMMAND syntax. Type help for usage.`,
+followed by that command's usage (for example, `Invalid add syntax. Type help for usage.`).
+An unknown command reports `Unknown command. Type help for usage.`; whitespace-only input reports
+`Enter a command. Type help for usage.`. Pressing Enter in an empty command box is ignored. Invalid field values, duplicate fields and state-dependent
+errors retain their more specific explanations instead of being replaced by a syntax error.
+
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
@@ -131,10 +137,24 @@ Examples:
 * `add n/Priya Nair p/90001111 e/priya@example.com a/8 Tampines St age/28 {rg/long}` Records Priya as open to a long-term relationship.
 * `add n/"Ravi s/o Kumar" p/90002222 e/ravi@example.com a/Bedok age/31` Records a name containing `s/o`; without the quotes, `s/o` would start a smoking status.
 
+<a id="successful-add-example"></a>
+**Successful-command example:** In a separate demonstration dataset, the following command records
+Alice's own characteristics, partner preferences and smoking dealbreaker:
+
+```text
+add n/Alice Tan p/90000001 e/alice@example.com a/10 Orchard Road age/30 g/w s/no r/Jainism {age/28-35 g/m r/Jainism rg/long} <s/yes>
+```
+
+[![Successful add showing Alice's client card and partner criteria](images/AddClientSuccess.png)](images/AddClientSuccess.png)
+
+The screenshots use fictional clients. Unused space and the file-path footer are cropped; click an
+image for its full-size view. You do not need to clear your saved clients to follow these examples.
+If these names already exist, use distinct names and adjust the later `match` command accordingly.
 
 | Error handled | Message shown |
 | --- | --- |
-| Missing compulsory fields, malformed prefixes, or invalid profile values | `Invalid command format!` followed by the command usage or the relevant parameter constraint |
+| Missing compulsory fields or invalid command structure | `Invalid add syntax. Type help for usage.` followed by the `add` usage |
+| A supplied profile value is invalid | The relevant field constraint, such as the age or email rules |
 | A single-valued field is supplied more than once | `Multiple values specified for the following single-valued field(s): ...` |
 | A client with the same identity already exists | `This person already exists in the address book.` |
 | `rg/` is used outside a criteria block | `Relationship goals are partner criteria. Use {rg/GOAL} for the goals the client is open to, or <rg/GOAL> for goals the client rules out.` |
@@ -168,9 +188,10 @@ Examples:
 | Error handled | Message shown |
 | --- | --- |
 | No field is supplied | `At least one field to edit must be provided.` |
-| The index is invalid or not displayed | `The person index provided is invalid.` |
+| The index is missing or not a positive integer | `Invalid edit syntax. Type help for usage.` followed by the `edit` usage |
+| A positive index is beyond the displayed list | `The person index provided is invalid.` |
 | The edit would duplicate a client | `This person already exists in the address book.` |
-| A supplied field is malformed or invalid | The relevant parameter constraint or `Invalid command format!` |
+| A supplied field value is invalid | The relevant field constraint; duplicate fields and malformed criteria have their own explanations |
 | `rg/` is used outside a criteria block | `Relationship goals are partner criteria. Use {rg/GOAL} for the goals the client is open to, or <rg/GOAL> for goals the client rules out.` |
 
 ### Adding a preference or dealbreaker
@@ -273,7 +294,8 @@ Use `list` to show every client again; searching does not modify the stored reco
 
 | Error handled | Message shown |
 | --- | --- |
-| More than one search mode, an empty name search, or malformed syntax | `Invalid command format!` followed by the `find` usage |
+| No search mode, more than one search mode, or malformed command structure | `Invalid find syntax. Type help for usage.` followed by the `find` usage |
+| An empty name search, such as `find n/` | `Provide at least one name keyword after n/, e.g. find n/alice bob.` |
 | An unquoted name keyword contains `/` | `Name keywords cannot contain /. To search for a name containing /, put it in quotes, e.g. find n/"Ravi s/o".` |
 | A goal list is empty, repeated or not a keyword | `Use distinct relationship goals separated by commas, e.g. rg/long,long-open.` or the list of accepted keywords |
 | An attribute value or gender list is invalid | The relevant attribute constraint or `Gender list must contain one or more of m, w, nb without duplicates.` |
@@ -300,7 +322,7 @@ Examples:
 | --- | --- |
 | `INDEX` is not a positive integer, e.g. `find match/0` | `Index must be a positive integer.` |
 | `INDEX` is beyond the displayed list | `The person index provided is invalid.` |
-| `match/` is combined with another search prefix | `Invalid command format!` followed by the `find` usage |
+| `match/` is combined with another search prefix | `Invalid find syntax. Type help for usage.` followed by the `find` usage |
 
 ### Matching two clients: `match`
 
@@ -341,11 +363,30 @@ Examples:
 
 | Error handled | Message shown |
 | --- | --- |
-| Not exactly two clients, a name before an index, or an index that is not a positive integer | `Invalid command format!` followed by the `match` usage |
+| Not exactly two clients, a name before an index, or an index that is not a positive integer | `Invalid match syntax. Type help for usage.` followed by the `match` usage |
 | An index is beyond the displayed list | `The person index provided is invalid.` |
 | Both refer to the same client | `Choose two different clients.` followed by the `match` usage |
 | No client has that name | `No client is named NAME.` |
 | Several clients have that name | `Several clients are named NAME. Use their list indexes instead.` |
+
+
+Example: `list` followed by `match 1 3` assesses the first and third clients without changing their records.
+
+**Successful-command example:** After adding [Alice above](#successful-add-example), add Bob and
+compare them by name:
+
+```text
+add n/Bob Lim p/90000002 e/bob@example.com a/20 Orchard Road age/32 g/m s/no r/Jainism {age/25-35 g/w r/Jainism rg/long} <s/yes>
+match n/Alice Tan n/Bob Lim
+```
+
+[![Successful pairwise match showing both clients' criteria and assessments](images/MatchClientsSuccess.png)](images/MatchClientsSuccess.png)
+
+Here, neither client's recorded dealbreakers are violated, and all displayed preferences are met.
+The two tables show the checks in both directions; compatibility is based on the recorded data,
+not a guarantee about a real-world relationship.
+
+
 
 ### Organising clients into groups: `grp` and `show`
 
@@ -402,6 +443,15 @@ the members in address-book order, rather than the preference ranking used by `f
 Membership is a snapshot: adding clients or changing dating attributes and criteria does not automatically
 recompute the shortlist. Edits still update the member's details, and deleting a member removes them from
 the group. Use `add`/`remove` to adjust membership or create another shortlist with a new name.
+
+| Error handled | Message shown |
+| --- | --- |
+| Missing group/operation/index, an unknown operation, or extra arguments after `matches INDEX` | `Invalid grp syntax. Type help for usage.` followed by the `grp` usage |
+| `show` has no name or more than one argument | `Invalid show syntax. Type help for usage.` followed by the `show` usage |
+| An index is not a positive integer | `Index must be a positive integer.` |
+| A displayed index is repeated | `Specify each displayed index only once.` |
+| A positive index is beyond the displayed list | `The person index provided is invalid.` |
+| The group name is invalid | The group-name constraint; a valid but unknown group reports `Unknown group: NAME` |
 
 ### Parameter list
 
@@ -599,6 +649,11 @@ Examples:
 
 * `list` followed by `delete 2` deletes the 2nd client in CupidMaxxing.
 * `find g/nb` followed by `delete 1` deletes the 1st client in the search results.
+
+| Error handled | Message shown |
+| --- | --- |
+| The index is missing, not a positive integer, or followed by extra text | `Invalid delete syntax. Type help for usage.` followed by the `delete` usage |
+| A positive index is beyond the displayed list | `The person index provided is invalid.` |
 
 ### Clearing all entries: `clear`
 

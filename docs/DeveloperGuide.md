@@ -369,13 +369,18 @@ These checks also apply when an edit updates only one bucket and retains the oth
 spaces around the hyphen, such as `age/25 - 30`. A failed add or edit leaves stored records unchanged.
 
 `JsonAdaptedPerson` persists criteria as the `preferences` and `dealbreakers` maps. Each map uses the
-stable `DatingAttribute` storage key and a canonical value; for example,
-`"preferences": {"religion": "Buddhism"}` and `"dealbreakers": {"religion": "Islam"}`.
+stable `DatingAttribute` storage key and a list of canonical values; for example,
+`"preferences": {"religion": ["Buddhism"]}` and `"dealbreakers": {"religion": ["Islam"]}`.
+Legacy scalar strings remain accepted on input, but new saves use lists even for one value.
 `DatingCriteria.fromStorage` restores these maps; older valid records without them load with empty
 criteria. Invalid criteria, including null map values and normalized preference/dealbreaker conflicts,
 are reported through the existing `IllegalValueException` invalid-data path.
 
-> **Class diagram:** To be uploaded here.
+The class diagram below separates the client's own values from set-valued partner criteria. A relationship
+goal is derived from the preference map, not stored as another own-value field. Ordinary associations
+avoid implying that shared enum values belong exclusively to a client. Click the diagram to view it at full size.
+
+[![Client characteristics and set-valued partner criteria](images/DatingCriteriaClassDiagram.png)](images/DatingCriteriaClassDiagram.png)
 
 
 A quoted value, `find n/"PHRASE"`, is searched as one phrase instead. The tokenizer removes the quotes, so the
@@ -466,6 +471,13 @@ Other commands and errors retain their text display. Matching does not change mo
 the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
 save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
 
+The following sequence focuses on successful command execution after parsing `match 1 n/Bernice Yu`.
+Each reference resolves a client before one assessment compares criteria in both directions. The result
+retains the structured assessment for the UI; the diagram omits parsing, error branches, saving and rendering.
+`ref` represents each reference in turn, not a reference shared by both clients. Click to view at full size.
+
+[![Pairwise matching execution and structured result](images/MatchSequenceDiagram.png)](images/MatchSequenceDiagram.png)
+
 Tests cover parsing and dispatch, comparison rules and missing values, filtered indexes, reloads, and unchanged
 records and saved data. Run `./gradlew test --tests '*Match*'` for the matching tests.
 
@@ -485,7 +497,9 @@ computed once before sorting, and ties keep insertion order because the sort is 
 
 The sequence diagram below shows how `find match/1` is parsed and executed.
 
-![Interactions inside the Logic and Model components for the `find match/1` command](images/FindMatchSequenceDiagram.png)
+[![Interactions inside the Logic and Model components for the `find match/1` command](images/FindMatchSequenceDiagram.png)](images/FindMatchSequenceDiagram.png)
+
+Click the diagram to view the calls and loop guards at full size.
 
 <div markdown="span" class="alert alert-info">:information_source: **Note:** One `MatchAssessment` is created per candidate; the diagram shows a single lifeline for brevity. The source client is skipped using `isSamePerson`, so it never appears in its own results.
 </div>

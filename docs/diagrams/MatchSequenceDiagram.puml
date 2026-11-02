@@ -1,0 +1,65 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+skinparam maxMessageSize 250
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant "c:MatchCommand" as MatchCommand LOGIC_COLOR
+participant "ref:ClientReference" as ClientReference LOGIC_COLOR
+participant "r:MatchCommandResult" as MatchCommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "a:MatchAssessment" as MatchAssessment MODEL_COLOR
+end box
+
+note over LogicManager, MatchAssessment
+Successful execution after parsing match 1 n/Bernice Yu.
+Parsing, error branches, model lookups inside resolve,
+feedback formatting, saving and UI rendering are omitted.
+end note
+
+[-> LogicManager : execute(commandText)
+activate LogicManager
+note right of LogicManager : The parser has returned c.
+LogicManager -> MatchCommand : execute(model)
+activate MatchCommand
+
+loop first reference, then second reference
+    MatchCommand -> ClientReference : resolve(model)
+    activate ClientReference
+    note right of ClientReference
+    ByIndex uses the displayed list.
+    ByName uses the full address book:
+    exact name, then a unique normalized match.
+    end note
+    ClientReference --> MatchCommand : resolved Person
+    deactivate ClientReference
+end
+
+note over MatchCommand, ClientReference
+ref represents each reference in turn.
+The two resolved clients must be different.
+end note
+
+create MatchAssessment
+MatchCommand -> MatchAssessment : new MatchAssessment(first, second)
+activate MatchAssessment
+note right of MatchAssessment : Compare criteria in both directions.
+MatchAssessment --> MatchCommand
+ deactivate MatchAssessment
+
+note right of MatchCommand
+Read the outcome and both comparison lists
+from a; format plain-text feedback.
+No client record or displayed filter is changed.
+end note
+
+create MatchCommandResult
+MatchCommand -> MatchCommandResult : new MatchCommandResult(...)
+MatchCommand --> LogicManager : r
+ deactivate MatchCommand
+[<-- LogicManager : r
+ deactivate LogicManager
+@enduml

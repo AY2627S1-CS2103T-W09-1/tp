@@ -1,0 +1,63 @@
+@startuml
+!pragma layout smetana
+!include style.puml
+skinparam arrowColor MODEL_COLOR
+skinparam classBackgroundColor #FFF5F6
+skinparam classBorderColor MODEL_COLOR
+skinparam classFontColor #202020
+skinparam classAttributeFontColor #202020
+skinparam classStereotypeFontColor #202020
+skinparam classAttributeIconSize 0
+skinparam nodesep 35
+skinparam ranksep 40
+
+class Person {
+    +getRelationshipGoals(): Set<RelationshipGoal>
+}
+class Age
+class Gender <<enumeration>>
+class SmokingStatus
+class Religion
+class DatingCriteria <<immutable>> {
+    -preferences: Map<DatingAttribute, Set<String>>
+    -dealbreakers: Map<DatingAttribute, Set<String>>
+    +getRelationshipGoals(): Set<RelationshipGoal>
+}
+enum DatingAttribute <<enumeration>> {
+    AGE
+    GENDER
+    SMOKING
+    RELIGION
+    RELATIONSHIP_GOAL
+}
+class RelationshipGoal <<enumeration>>
+
+show Person methods
+show DatingCriteria members
+show DatingAttribute members
+
+Person -down-> "1" Age : age
+Person -down-> "1" Gender : gender
+Person -down-> "1" SmokingStatus : smokingStatus
+Person -down-> "0..1" Religion : religion
+Person -right-> "1" DatingCriteria : datingCriteria
+DatingCriteria .right.> DatingAttribute : map key type
+DatingCriteria .down.> RelationshipGoal : derived goal values
+
+note top of DatingCriteria
+Maps and value sets are normalized and unmodifiable.
+Construction rejects contradictory criteria.
+Dealbreakers store excluded partner values.
+end note
+
+note bottom of RelationshipGoal
+Person.getRelationshipGoals() delegates to DatingCriteria.
+Goals come from preferences[RELATIONSHIP_GOAL];
+there is no separate relationshipGoal field in Person.
+An empty set means no goals are recorded.
+end note
+
+Age -[hidden]right-> Gender
+Gender -[hidden]right-> SmokingStatus
+SmokingStatus -[hidden]right-> Religion
+@enduml

@@ -12,8 +12,15 @@ end box
 
 box Model MODEL_COLOR_T1
 participant "m:Model" as Model MODEL_COLOR
+participant "book:ReadOnlyAddressBook" as AddressBook MODEL_COLOR
 participant "a:MatchAssessment" as MatchAssessment MODEL_COLOR
 end box
+
+note over LogicManager, MatchAssessment
+Successful execution is shown. Tokenization, index validation,
+comparison getters and preference-counting internals,
+LogicManager restore-point/save handling and UI refresh are omitted.
+end note
 
 [-> LogicManager : execute("find match/1")
 activate LogicManager
@@ -28,7 +35,7 @@ activate FindCommandParser
 FindCommandParser --> AddressBookParser
 deactivate FindCommandParser
 
-AddressBookParser -> FindCommandParser : parse("match/1")
+AddressBookParser -> FindCommandParser : parse(" match/1")
 activate FindCommandParser
 
 create FindMatchCommand
@@ -40,9 +47,6 @@ deactivate FindMatchCommand
 
 FindCommandParser --> AddressBookParser : f
 deactivate FindCommandParser
-'Hidden arrow to position the destroy marker below the end of the activation bar.
-FindCommandParser -[hidden]-> AddressBookParser
-destroy FindCommandParser
 
 AddressBookParser --> LogicManager : f
 deactivate AddressBookParser
@@ -59,30 +63,53 @@ note right of FindMatchCommand
 target = displayed list[0]
 end note
 
-loop each other client c in the address book
-    create MatchAssessment
-    FindMatchCommand -> MatchAssessment : new MatchAssessment(target, c)
-    activate MatchAssessment
-    MatchAssessment --> FindMatchCommand
-    deactivate MatchAssessment
+FindMatchCommand -> Model : getAddressBook()
+activate Model
+Model --> FindMatchCommand : book
+deactivate Model
+FindMatchCommand -> AddressBook : getPersonList()
+activate AddressBook
+AddressBook --> FindMatchCommand : all clients
+deactivate AddressBook
 
-    FindMatchCommand -> MatchAssessment : getOutcome()
-    activate MatchAssessment
-    MatchAssessment --> FindMatchCommand : outcome
-    deactivate MatchAssessment
+loop each candidate c in all clients
+    opt !c.isSamePerson(target) (skip the source client)
+        create MatchAssessment
+        FindMatchCommand -> MatchAssessment : new MatchAssessment(target, c)
+        activate MatchAssessment
+        MatchAssessment --> FindMatchCommand
+        deactivate MatchAssessment
 
-    opt outcome != INCOMPATIBLE
-        FindMatchCommand -> FindMatchCommand : scores.put(c, preferences met)
+        FindMatchCommand -> MatchAssessment : getOutcome()
+        activate MatchAssessment
+        MatchAssessment --> FindMatchCommand : outcome
+        deactivate MatchAssessment
+
+        opt outcome != INCOMPATIBLE
+            FindMatchCommand -> FindMatchCommand : countPreferencesMet(assessment)
+            note right of FindMatchCommand
+            Store the number of MET preferences
+            across both directions in scores[c].
+            INSUFFICIENT_INFORMATION is retained.
+            end note
+        end
     end
 end
 
-FindMatchCommand -> Model : updateFilteredPersonList(scores::containsKey, score descending)
+FindMatchCommand -> Model : updateFilteredPersonList(scores::containsKey, comparator)
 activate Model
 Model --> FindMatchCommand
 deactivate Model
 
+note right of FindMatchCommand : comparator sorts by score descending.
+
+FindMatchCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> FindMatchCommand : ranked matches
+deactivate Model
+
 create CommandResult
-FindMatchCommand -> CommandResult
+FindMatchCommand -> CommandResult : new CommandResult(listed-count feedback)
 activate CommandResult
 CommandResult --> FindMatchCommand
 deactivate CommandResult

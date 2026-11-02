@@ -60,7 +60,8 @@ public class FindCommandParser implements Parser<Command> {
                 + (hasGoal ? 1 : 0) + (hasSmoking ? 1 : 0) + (hasMatch ? 1 : 0);
         // Every search mode, including name search, needs exactly one prefix and no bare keywords.
         if (searchModes != 1 || !argMultimap.getPreamble().isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                    FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE));
         }
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION,
                 PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING, PREFIX_MATCH);

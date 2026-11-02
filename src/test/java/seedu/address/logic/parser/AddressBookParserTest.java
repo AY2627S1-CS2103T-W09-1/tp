@@ -2,14 +2,13 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,12 +19,17 @@ import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.GroupCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.MatchCommand;
+import seedu.address.logic.commands.ShowGroupCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.Age;
 import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Religion;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -97,13 +101,33 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_invalidSyntax_identifiesCommandAndRetainsUsage() {
+        Map<String, String> usages = Map.of("add", AddCommand.MESSAGE_USAGE, "edit", EditCommand.MESSAGE_USAGE,
+                "delete", DeleteCommand.MESSAGE_USAGE, "find", FindCommand.MESSAGE_USAGE,
+                "match", MatchCommand.MESSAGE_USAGE, "grp", GroupCommand.MESSAGE_USAGE,
+                "show", ShowGroupCommand.MESSAGE_USAGE);
+        usages.forEach((command, usage) -> assertThrows(ParseException.class,
+                "Invalid " + command + " syntax. Type help for usage.\n" + usage, () -> parser.parseCommand(command)));
+    }
+
+    @Test
+    public void parseCommand_specificErrors_preservesParameterGuidance() {
+        assertThrows(ParseException.class, Age.MESSAGE_CONSTRAINTS, () -> parser.parseCommand("find age/17"));
+        assertThrows(ParseException.class, Religion.MESSAGE_CONSTRAINTS, () -> parser.parseCommand("find r/Other"));
+        assertThrows(ParseException.class, EditCommand.MESSAGE_NOT_EDITED, () -> parser.parseCommand("edit 1"));
+    }
+
+    @Test
     public void parseCommand_unrecognisedInput_throwsParseException() {
-        assertThrows(ParseException.class, String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE), ()
-            -> parser.parseCommand(""));
+        for (String input : List.of("", " ", "\t\n")) {
+            assertThrows(ParseException.class,
+                    "Enter a command. Type help for usage.", () -> parser.parseCommand(input));
+        }
     }
 
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
+        assertThrows(ParseException.class,
+                "Unknown command. Type help for usage.", () -> parser.parseCommand("unknownCommand"));
     }
 }
