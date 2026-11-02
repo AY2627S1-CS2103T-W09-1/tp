@@ -663,7 +663,7 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 
 **Main success scenario (MSS)**
 
-1. The matchmaker requests to add a client with contact details and optional gender, age, smoking habit, religion, preferences, and dealbreakers.
+1. The matchmaker requests to add a client with required contact details and age, and optional gender, smoking habit, religion, preferences, and dealbreakers.
 2. CupidMaxxing validates the supplied values and checks for repeated attributes within the command.
 3. CupidMaxxing creates the client record and shows the stored information.
 4. At a later visit, the matchmaker requests to edit that client with a new preference or characteristic.
@@ -713,7 +713,7 @@ A missing client attribute does not satisfy an attribute search. Use `list` to d
 
 1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
-3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
+3. CupidMaxxing shows both names, a breakdown of each comparison as Met, Unmet, Violated, or Unknown, and an overall assessment.
 4. The displayed list and stored client records remain unchanged.
 
    Use case ends.
