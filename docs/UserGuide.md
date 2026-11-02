@@ -298,7 +298,7 @@ Use `list` to show every client again; searching does not modify the stored reco
 | An empty name search, such as `find n/` | `Provide at least one name keyword after n/, e.g. find n/alice bob.` |
 | An unquoted name keyword contains `/` | `Name keywords cannot contain /. To search for a name containing /, put it in quotes, e.g. find n/"Ravi s/o".` |
 | A goal list is empty, repeated or not a keyword | `Use distinct relationship goals separated by commas, e.g. rg/long,long-open.` or the list of accepted keywords |
-| An attribute value or gender list is invalid | The relevant attribute constraint or `Gender list must contain one or more of m, w, nb without duplicates.` |
+| An attribute value or gender list is invalid | The relevant attribute constraint or `Use distinct genders separated by commas (m, w, nb), or leave g/ empty for any specified gender.` |
 
 ### Finding matches for one client: `find match/`
 
