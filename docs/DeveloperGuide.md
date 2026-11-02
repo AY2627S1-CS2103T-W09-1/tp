@@ -403,7 +403,7 @@ A quoted value, `find n/"PHRASE"`, is searched as one phrase instead. The tokeni
 parser checks the raw argument text after `n/` for a leading `"`. A quoted value may contain `/` and becomes a
 `NameContainsPhrasePredicate`, which splits the phrase and the name into lower-case words and matches when the
 phrase's words appear together and in order in the name (`Collections#indexOfSubList`). `find n/"Ravi s/o"`
-therefore finds `Ravi s/o Kumar` but not `Kumar Ravi s/o x` or `Ravisankar`. An unquoted value containing `/`
+therefore finds both `Ravi s/o Kumar` and `Kumar Ravi s/o x`, but not `Kumar Ravi` or `Ravisankar`. An unquoted value containing `/`
 is rejected with a message suggesting quotes.
 
 ### Maintaining preferences and dealbreakers
