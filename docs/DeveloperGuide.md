@@ -253,7 +253,6 @@ partner-criteria map and may equal or differ from its values. `JsonAdaptedPerson
 own-religion name and treats a missing or null property as unknown. The existing unknown-property
 handling ignores obsolete `preferredReligion`, `requiredReligion` and `excludedReligions` properties;
 they are omitted on the next save rather than migrated into the new maps.
-=======
 
 
 The class diagram below focuses on the religion-related model.
@@ -264,8 +263,6 @@ The `0..1` multiplicity represents an unknown or recorded own religion, while
 are canonical strings in those maps, not references to the client's own `Religion`.
 The dashed dependencies show the map key type and the shared religion validation;
 they do not represent additional stored associations.
-
-=======
 
 ##### Recording relationship goals
 
@@ -291,32 +288,11 @@ Older data files stored a client's own goal in a `relationshipGoal` field. `Json
 field but no longer writes it. When loading, it moves the goal into the `{rg/...}` preference unless the client
 already has one or excludes that goal, so an older file never fails to load because of the migration.
 
-`find rg/GOAL[,GOAL]...` parses the list with `ParserUtil#parseRelationshipGoals`.
-`RelationshipGoalMatchesPredicate` keeps clients whose goals share at least one goal with the list, so clients
-with an unknown goal are never returned.
+`find rg/GOAL[,GOAL]...` is one search mode alongside name, `age/`, `g/`, `r/` and `s/`, so `FindCommandParser`
+rejects input that combines modes or repeats `rg/`. It parses the list with `ParserUtil#parseRelationshipGoals`,
+which accepts the same keywords as the criteria. `RelationshipGoalMatchesPredicate` keeps clients whose goals share
+at least one goal with the list, so clients with an unknown goal are never returned.
 
-
-###### Internal representation
-
-`AddCommandParser` and `EditCommandParser` reject invalid and repeated `rg/` parameters.
-`Person` exposes the goal as an `Optional`, because an absent goal means **unknown**, not
-`Figuring out my goals`, which is an explicit category. `Person` includes the goal in full equality
-and hashing, while its existing name-based identity rule is unchanged. `EditPersonDescriptor`
-records whether `rg/` was supplied separately from its value, so `rg/` with no value clears the goal
-and edits to other fields preserve it.
-
-`JsonAdaptedPerson` saves the full category name as the `relationshipGoal` string and reads absent
-or null fields in older JSON files as unknown. Other invalid stored values are rejected using the
-existing storage-error path. The person card and command feedback display the goal, including
-`Not specified` for missing information.
-
-`find rg/GOAL` searches by relationship goal. `FindCommandParser` treats `rg/` as one more search
-mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
-combines modes, mixes a prefix with name keywords, or repeats `rg/`. The value is parsed with
-`ParserUtil#parseRelationshipGoal`, so search accepts exactly the keywords and full names that `add`
-and `edit` accept. `RelationshipGoalMatchesPredicate` keeps clients whose goal equals the parsed goal,
-so clients with an unknown goal are never returned. A single goal is accepted rather than a
-comma-separated list, because some full goal names contain commas.
 
 Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching). A criterion is met when it
 shares at least one goal with the other client's goals.
@@ -814,11 +790,12 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
 `find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
 because a successful edit restores the full list and changes the displayed indexes.
 
-- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no rg/long t/demo r/jAiNiSm {r/bUdDhIsM age/25} <r/iSlAm>`.<br>
+- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no t/demo r/jAiNiSm {r/bUdDhIsM age/25 rg/long} <r/iSlAm>`.<br>
    Expected: One client is added with own religion Jainism, preference religion Buddhism
-   and age 25, and excluded religion Islam. Ordinary details, gender, smoking status,
-   relationship goal and tag are recorded normally. Inspect the saved JSON: outer
-   `religion` is `Jainism`, `preferences` contains `religion: Buddhism` and `age: 25`,
+   and age 25, preferred relationship goal Long-term relationship, and excluded religion Islam.
+   Ordinary details, gender, smoking status and tag are recorded normally. Inspect the saved JSON: outer
+   `religion` is `Jainism`, `preferences` contains `religion: Buddhism`, `age: 25` and
+   `relationshipGoal: Long-term relationship`,
    and `dealbreakers` contains `religion: Islam` (JSON keys and values are strings).
 - [ ] Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
    Expected: Only the phone changes. Own religion and both entire criteria maps remain
@@ -970,9 +947,9 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 
 - [ ] Adding, editing and retaining the client's own religion
 
-  - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb rg/long r/jAiNiSm`.<br>
+  - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb r/jAiNiSm`.<br>
       Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
-      non-binary gender and a long-term relationship goal. No partner criteria appear.
+      and non-binary gender. No partner criteria appear.
 
   - Enter `find n/Nia`, then `edit 1 r/Christianity`.<br>
       Expected: The religion changes to `Christianity`; all other details remain unchanged.
@@ -1018,41 +995,57 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 
 ### Relationship goals
 
-1. Adding and retaining a relationship goal
+1. Adding, editing and retaining relationship goals
 
-   1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 rg/LONG`.<br>
-      Expected: The contact card shows `Relationship goal: Long-term relationship`. The keyword
-      is converted to the goal's full name.
+   1. Enter `add n/Rae Test p/91234567 e/rae@example.com a/Test Lane age/30 {rg/LONG}`.<br>
+      Expected: Rae's card shows `relationship goal = Long-term relationship` under **Partner criteria**.
+      The keyword is converted to the goal's full name.
 
-   1. Enter `find n/Rae`, then `edit 1 rg/short-open`.<br>
-      Expected: The contact card shows `Relationship goal: Short-term relationship, open to long`.
+   1. Enter `find n/Rae`, then `edit 1 {rg/short-open}`.<br>
+      Expected: The goal is added, so the preference lists both `Long-term relationship` and
+      `Short-term relationship, open to long`.
+
+   1. Enter `find n/Rae`, then `edit 1 {rg/long}`.<br>
+      Expected: The goals are unchanged and the feedback ends with
+      `Attribute already added for criteria: Relationship goal = Long-term relationship`.
 
    1. Enter `find n/Rae`, then `edit 1 p/99999999`.<br>
-      Expected: The phone number changes and the relationship goal is unchanged.
+      Expected: The phone number changes and the goals are unchanged.
 
    1. Close and relaunch the app.<br>
-      Expected: Rae's relationship goal is still `Short-term relationship, open to long`.
+      Expected: Rae still has both goals. In the data file they are under `preferences` as `relationshipGoal`.
 
-   1. Enter `find n/Rae`, then `edit 1 rg/`.<br>
-      Expected: The contact card shows `Relationship goal: Not specified`.
+   1. Enter `find n/Rae`, then `edit 1 <rg/life>`.<br>
+      Expected: `relationship goal = Life partner` appears under Rae's dealbreakers.
 
-1. Rejecting unsupported and repeated values
+   1. Enter `find n/Rae`, then `edit 1 {rg/}`.<br>
+      Expected: Rae's goal preference is removed and the dealbreaker is kept.
 
-   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/marriage`.<br>
-      Expected: The command is rejected with the list of accepted keywords and goals. No contact is added.
+1. Rejecting goals outside the criteria and invalid values
 
-   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/short rg/life`.<br>
-      Expected: The command is rejected because `rg/` is repeated. No contact is added.
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 rg/long`.<br>
+      Expected: The command is rejected with a message to use `{rg/GOAL}` or `<rg/GOAL>`. No contact is added.
+
+   1. Enter `find n/Rae`, then `edit 1 rg/long`.<br>
+      Expected: Rejected with the same message. Rae is unchanged.
+
+   1. Enter `add n/Sam Test p/92345678 e/sam@example.com a/Test Lane age/30 {rg/marriage}`.<br>
+      Expected: The command is rejected with the list of accepted keywords. No contact is added.
+
+   1. Try the same `add` with each of `{rg/Long-term relationship}`, `{rg/long,}`, `{rg/long,LONG}` and
+      `{rg/long} <rg/long>` in turn.<br>
+      Expected: Each command is rejected and no contact is added.
 
 1. Finding clients by relationship goal
 
-   1. Ensure Rae has `rg/long` and another client has a different or no goal, then enter `find rg/long`.<br>
-      Expected: Rae is listed and clients with other or unspecified goals are not. The status shows the number listed.
+   1. Ensure Rae has `{rg/long}` and another client has a different or no goal, then enter `find rg/long`.<br>
+      Expected: Rae is listed and clients with other or unknown goals are not. The status shows the number listed.
 
-   1. Enter `find rg/Long-term relationship`.<br>
-      Expected: The same clients are listed as for `find rg/long`.
+   1. Enter `find rg/life,long`.<br>
+      Expected: Clients open to either goal are listed, including Rae.
 
-   1. Enter `find rg/marriage`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
+   1. Enter `find rg/marriage`, `find rg/Long-term relationship`, `find rg/`, `find rg/long rg/short`,
+      `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
 
 ### Finding clients by smoking status
