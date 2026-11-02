@@ -14,16 +14,17 @@ title: Developer Guide
 * The diagrams in this guide are made with [PlantUML](https://plantuml.com/).
 * Relationship-goal categories were adapted from those offered by [Hinge](https://hinge.co/).
 
-Notable uses of AI:
-* @yxlyx used Codex to help with writing of functional code, tests, parts of the User Guide and Developer Guide,
-   and for reviewing of PRs
+Declaration of use of AI:
+* @yxlyx used Codex to help with writing of functional code, tests, generating UML diagrams, parts of the 
+   User Guide and Developer Guide, and for reviewing of PRs
 * @zwqqwz123 used Codex to help with writing of functional code, tests, parts of the User Guide and Developer Guide,
    and for reviewing of PRs
 * @pulas2345 used Claude to help with writing of functional code, tests, parts of the User Guide and Developer Guide,
    and for reviewing of PRs
-* @riceric8 used Codex to help with writing of functional code, tests and parts of the User Guide and Developer Guide.
-* @codeforce233 used Claude Code to help with writing of functional code, tests
-   and parts of the User Guide and Documentation Guide
+* @riceric8 used Codex to help with writing of functional code, tests, generating UML diagrams, and parts of the 
+   User Guide and Developer Guide.
+* @codeforce233 used Claude Code to help with writing of functional code, tests and parts 
+   of the User Guide and Documentation Guide
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Setting up, getting started**
