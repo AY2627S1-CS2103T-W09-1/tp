@@ -27,7 +27,8 @@ public class MatchCommandParserTest {
 
     @Test
     public void parse_invalidArguments_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, MatchCommand.MESSAGE_USAGE);
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                MatchCommand.COMMAND_WORD, MatchCommand.MESSAGE_USAGE);
         for (String arguments : new String[] {"", "1", "1 2 3", "0 2", "1 0", "-1 2", "1 -2",
             "a 2", "1 b", "1.5 2", "1 2147483648", "2147483648 1", "1 2 {s/no}", "1,2"}) {
             assertParseFailure(parser, arguments, message);
@@ -48,7 +49,8 @@ public class MatchCommandParserTest {
 
     @Test
     public void parse_invalidNameArguments_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, MatchCommand.MESSAGE_USAGE);
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                MatchCommand.COMMAND_WORD, MatchCommand.MESSAGE_USAGE);
         for (String arguments : new String[] {" n/Alex Yeoh", " n/Alex n/Bernice n/Carl", " 1 2 n/Alex",
             " 0 n/Alex", " a n/Alex", " 1 2 n/Alex n/Bernice"}) {
             assertParseFailure(parser, arguments, message);

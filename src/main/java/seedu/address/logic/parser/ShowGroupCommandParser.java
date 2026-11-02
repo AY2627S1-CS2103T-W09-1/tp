@@ -11,7 +11,8 @@ public class ShowGroupCommandParser implements Parser<ShowGroupCommand> {
     public ShowGroupCommand parse(String args) throws ParseException {
         String name = args.trim();
         if (name.isEmpty() || name.split("\\s+").length != 1) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, ShowGroupCommand.MESSAGE_USAGE));
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                    ShowGroupCommand.COMMAND_WORD, ShowGroupCommand.MESSAGE_USAGE));
         }
         return new ShowGroupCommand(GroupCommandParser.parseGroupName(name));
     }

@@ -20,7 +20,8 @@ public class MatchCommandParser implements Parser<MatchCommand> {
     @Override
     public MatchCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, MatchCommand.MESSAGE_USAGE);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                MatchCommand.COMMAND_WORD, MatchCommand.MESSAGE_USAGE);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NAME);
         String preamble = argMultimap.getPreamble();
         List<String> indexes = preamble.isEmpty() ? List.of() : List.of(preamble.split("\\s+"));

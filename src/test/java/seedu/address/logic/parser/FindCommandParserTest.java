@@ -32,7 +32,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_emptyArg_throwsParseException() {
-        assertParseFailure(parser, "     ", String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "     ", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE));
     }
 
     @Test
@@ -61,7 +62,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_bareNameKeywords_throwsParseException() {
-        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         assertParseFailure(parser, "Alice", usage);
         assertParseFailure(parser, "Alice Bob", usage);
         assertParseFailure(parser, "Alice n/Bob", usage);
@@ -73,7 +75,8 @@ public class FindCommandParserTest {
         assertParseFailure(parser, "n/   ", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
         assertParseFailure(parser, "n/Alice x/1", FindCommandParser.MESSAGE_SLASH_IN_NAME_KEYWORDS);
         assertParseFailure(parser, "n/Siti d/o Ahmad", FindCommandParser.MESSAGE_SLASH_IN_NAME_KEYWORDS);
-        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String args : new String[] {"N/Alice", "n /Alice", "name/Alice"}) {
             assertParseFailure(parser, args, usage);
         }
@@ -94,14 +97,16 @@ public class FindCommandParserTest {
         assertParseFailure(parser, "n/\"Ravi s/o", ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTE);
         assertParseFailure(parser, "n/\"Ravi s/o\" Kumar", ArgumentTokenizer.MESSAGE_TEXT_AFTER_QUOTE);
         assertParseFailure(parser, "n/\"Ravi s/o\" s/yes",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                        FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE));
     }
 
     @Test
     public void parse_repeatedOrCombinedNamePrefix_throwsParseException() {
         assertParseFailure(parser, "n/Alice n/Bob",
                 Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NAME));
-        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String criterion : new String[] {"age/25", "g/m", "r/Jainism", "rg/long", "s/yes", "match/1"}) {
             assertParseFailure(parser, "n/Alice " + criterion, usage);
             assertParseFailure(parser, criterion + " n/Alice", usage);
@@ -142,7 +147,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_mixedNameOrIncorrectPrefix_throwsParseException() {
-        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String args : new String[] {"Alice g/m", "G/m", "g /m", "gp/m"}) {
             assertParseFailure(parser, args, usage);
         }
@@ -175,7 +181,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_mixedReligionSearchModes_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String args : new String[] {"Alice r/Jainism", "r/Jainism age/25", "age/25 r/Jainism",
             "r/Jainism g/nb", "g/nb r/Jainism", "R/Jainism", "r /Jainism", "rp/Jainism", "rx/Islam"}) {
             assertParseFailure(parser, args, message);
@@ -184,7 +191,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_combinedAgeAndGender_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         assertParseFailure(parser, "age/25-35 g/m", message);
         assertParseFailure(parser, "g/m age/25-35", message);
     }
@@ -206,7 +214,8 @@ public class FindCommandParserTest {
         assertParseFailure(parser, "rg/forever", RelationshipGoal.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, "rg/long rg/short",
                 Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_RELATIONSHIP_GOAL));
-        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String args : new String[] {"rg/long g/m", "r/Jainism rg/long", "Alice rg/long"}) {
             assertParseFailure(parser, args, usage);
         }
@@ -238,7 +247,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_combinedSmokingSearchModes_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String criterion : new String[] {"age/25", "g/m", "r/Jainism", "rg/long"}) {
             assertParseFailure(parser, "s/yes " + criterion, message);
             assertParseFailure(parser, criterion + " s/no", message);
@@ -248,7 +258,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_incorrectSmokingPrefixOrCriteriaEnvironment_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String args : new String[] {"S/yes", "s /yes", "smoking/yes", "{s/yes}", "<s/no>"}) {
             assertParseFailure(parser, args, message);
         }
@@ -272,7 +283,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_matchCombinedWithOtherMode_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String args : new String[] {"match/1 g/m", "age/25 match/1", "Alice match/1"}) {
             assertParseFailure(parser, args, message);
         }

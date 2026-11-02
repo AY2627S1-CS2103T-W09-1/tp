@@ -19,7 +19,8 @@ public class GroupCommandParser implements Parser<GroupCommand> {
     public GroupCommand parse(String args) throws ParseException {
         String[] tokens = args.trim().split("\\s+");
         if (tokens.length < 3) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, GroupCommand.MESSAGE_USAGE));
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                    GroupCommand.COMMAND_WORD, GroupCommand.MESSAGE_USAGE));
         }
         GroupName name = parseGroupName(tokens[0]);
         Operation operation = switch (tokens[1]) {
@@ -27,10 +28,12 @@ public class GroupCommandParser implements Parser<GroupCommand> {
             case "remove" -> Operation.REMOVE;
             case "matches" -> Operation.MATCHES;
             default -> throw new ParseException(
-                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, GroupCommand.MESSAGE_USAGE));
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                            GroupCommand.COMMAND_WORD, GroupCommand.MESSAGE_USAGE));
         };
         if (operation == Operation.MATCHES && tokens.length != 3) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, GroupCommand.MESSAGE_USAGE));
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                    GroupCommand.COMMAND_WORD, GroupCommand.MESSAGE_USAGE));
         }
         List<Index> indexes = new ArrayList<>();
         Set<Integer> seen = new HashSet<>();

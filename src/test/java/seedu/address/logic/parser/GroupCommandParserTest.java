@@ -19,9 +19,10 @@ import seedu.address.model.group.GroupName;
 public class GroupCommandParserTest {
 
     private static final String INVALID_GROUP_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, GroupCommand.MESSAGE_USAGE);
+            String.format(MESSAGE_INVALID_COMMAND_FORMAT, GroupCommand.COMMAND_WORD, GroupCommand.MESSAGE_USAGE);
     private static final String INVALID_SHOW_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, ShowGroupCommand.MESSAGE_USAGE);
+            String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                    ShowGroupCommand.COMMAND_WORD, ShowGroupCommand.MESSAGE_USAGE);
 
     private final GroupCommandParser parser = new GroupCommandParser();
     private final ShowGroupCommandParser showParser = new ShowGroupCommandParser();
