@@ -330,7 +330,7 @@ is repeated. `ParserUtil` trims each supplied value before constructing the corr
 
 | Value | Prefix | Underlying constraint |
 | --- | --- | --- |
-| Name | `n/` | Must be non-blank and contain only alphanumeric characters and spaces. |
+| Name | `n/` | Must start with an alphanumeric character and contain only alphanumeric characters, spaces and slashes (`/`). Quote names containing prefix-like text, e.g. `n/"Ravi s/o Kumar"`. |
 | Address | `a/` | Must be non-blank; after trimming, any characters are allowed. |
 | Email | `e/` | Must use `local-part@domain` format. The local part contains alphanumeric characters and `+`, `_`, `.`, or `-`, cannot start or end with one of them, and cannot contain consecutive periods. Domain labels are dot-separated, begin and end alphanumerically, may contain internal hyphens, and the final label has at least two characters. |
 | Age | `age/` | Must contain digits only and represent an integer from 18 through 99, inclusive. |

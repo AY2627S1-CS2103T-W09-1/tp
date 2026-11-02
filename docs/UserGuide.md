@@ -110,8 +110,8 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GEND
 * Relationship goals are recorded only inside the criteria blocks, e.g. `{rg/long}`. See
   [Relationship goals](#relationship-goals).
   
-* Each prefix outside a criteria block may be supplied only once. Values entered here describe the
-  client's profile.
+* Each single-valued prefix outside a criteria block may be supplied only once. Repeat `t/` to add
+  multiple tags, e.g. `t/referral t/newclient`. Values entered here describe the client's profile.
 * Criteria blocks constitute preferences and dealbreakers that the client has for their partner. See
   [Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker) and the
   [Parameter list](#parameter-list) for their syntax and value rules.
@@ -293,7 +293,8 @@ Format: `find match/INDEX`
 Examples:
 
 * `find match/2` lists clients who could suit the 2nd displayed client.
-* `find match/2` followed by `match 2 1` explains the top result.
+* If the 2nd displayed client is named `Beta`, run `find match/2`, then `match 1 n/Beta` to explain the top result (if any).
+  The results exclude Beta and have new indexes; the name still identifies Beta across the full client list.
 
 | Error handled | Message shown |
 | --- | --- |
