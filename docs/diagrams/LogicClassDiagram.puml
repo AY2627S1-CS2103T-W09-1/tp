@@ -1,57 +1,37 @@
 @startuml
 !pragma layout smetana
 !include style.puml
-skinparam arrowThickness 1.1
 skinparam arrowColor LOGIC_COLOR_T4
-skinparam classBackgroundColor LOGIC_COLOR
+skinparam classBackgroundColor #F0F0FF
+skinparam classBorderColor LOGIC_COLOR
+skinparam classFontColor #202020
+skinparam classAttributeFontColor #202020
+skinparam classStereotypeFontColor #202020
+skinparam nodesep 40
+skinparam ranksep 50
 
 package Logic as LogicPackage {
-
-package "Parser Classes" as ParserClasses{
-}
-Class XYZCommand
-Class CommandResult
-Class MatchCommand
-Class FindMatchCommand
-Class MatchCommandResult
-Class "{abstract}\nCommand" as Command
-
-
-Class "<<interface>>\nLogic" as Logic
-Class LogicManager
+interface Logic <<interface>>
+class LogicManager
+class AddressBookParser
+abstract class Command
+class XYZCommand
+class MatchCommand
+class FindMatchCommand
+class CommandResult
+class MatchCommandResult
 }
 
-package Model {
-Class HiddenModel #FFFFFF
-}
-
-package Storage {
-}
-
-Class HiddenOutside #FFFFFF
-HiddenOutside ..> Logic
-
-LogicManager .right.|> Logic
-LogicManager -right->"1" ParserClasses
-ParserClasses ..> XYZCommand : <<create>>
-ParserClasses ..> MatchCommand : <<create>>
-ParserClasses ..> FindMatchCommand : <<create>>
-
+LogicManager .up.|> Logic
+LogicManager -right-> "1" AddressBookParser : parses input
+AddressBookParser ..> Command : returns
+LogicManager .down.> Command : executes
+Logic ..> CommandResult : returns
+Command ..> CommandResult : returns
 XYZCommand -up-|> Command
 MatchCommand -up-|> Command
 FindMatchCommand -up-|> Command
 MatchCommandResult -up-|> CommandResult
-MatchCommand ..> MatchCommandResult : <<create>>
-LogicManager .left.> Command : <<call>>
+MatchCommand ..> MatchCommandResult : creates
 
-LogicManager --> Model
-LogicManager --> Storage
-Storage --[hidden] Model
-Command .[hidden]up.> Storage
-Command .right.> Model
-note right of XYZCommand: XYZCommand = AddCommand, \nFindCommand, GroupCommand, etc
-
-Logic ..> CommandResult
-LogicManager .down.> CommandResult
-Command .up.> CommandResult : <<create>>
 @enduml

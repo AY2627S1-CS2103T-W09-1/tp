@@ -84,7 +84,11 @@ The sections below give more details of each component.
 
 The **API** of this component is specified in [`Ui.java`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/ui/Ui.java)
 
-![Structure of the UI Component](images/UiClassDiagram.png)
+[![Structure of the UI Component](images/UiClassDiagram.png)](images/UiClassDiagram.png)
+
+This overview shows the main UI parts and their connections to `Logic`. UI inheritance, the command
+callback and list-cell implementation details are omitted for readability. `MatchResultView` extends
+JavaFX `ScrollPane`; the other visible UI parts shown extend `UiPart`. Click the diagram for a full-size view.
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
@@ -103,7 +107,9 @@ The `UI` component,
 
 Here's a (partial) class diagram of the `Logic` component:
 
-<img src="images/LogicClassDiagram.png" width="750" alt="Logic classes, including pairwise match results and candidate-search commands" />
+[![Logic classes, including pairwise match results and candidate-search commands](images/LogicClassDiagram.png)](images/LogicClassDiagram.png)
+
+The overview omits command-specific parsers and dependencies on Model and Storage. Click for a full-size view.
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
@@ -120,7 +126,7 @@ How the `Logic` component works:
    Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
-`MatchCommand` compares two displayed clients and returns a `MatchCommandResult`, a subclass of
+`MatchCommand` compares two clients, referenced by displayed index or name, and returns a `MatchCommandResult`, a subclass of
 `CommandResult` carrying structured match details for the UI. `FindMatchCommand`, created by
 `FindCommandParser` for `find match/INDEX`, filters and ranks candidates and returns an ordinary
 `CommandResult`. The diagram shows these separately; `XYZCommand` stands for the other concrete commands.
@@ -136,7 +142,10 @@ How the parsing works:
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-W09-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<img src="images/ModelClassDiagram.png" width="800" />
+[![Model ownership, client groups and set-valued dating criteria](images/ModelClassDiagram.png)](images/ModelClassDiagram.png)
+
+The overview omits individual contact and dating attributes. Partner-criteria details are shown in the
+[dating-criteria class diagram](#recording-preference-and-dealbreaker-attributes). Click for a full-size view.
 
 
 The `Model` component,
@@ -144,17 +153,10 @@ The `Model` component,
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
 * stores named `ClientGroup` objects in `AddressBook`. Each immutable group has a `GroupName` and references
   existing persons; membership does not duplicate client records or reuse ordinary tags. Dating attributes
-  and criteria are omitted from this overview diagram for readability.
+  are omitted from this overview diagram for readability.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
-
-<div markdown="span" class="alert alert-info">:information_source: **Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
-
-<img src="images/BetterModelClassDiagram.png" width="450" />
-
-</div>
-
 
 ### Storage component
 
@@ -833,9 +835,9 @@ because a successful edit restores the full list and changes the displayed index
    Expected: One client is added with own religion Jainism, preference religion Buddhism,
    age 25 and relationship goal Long-term relationship, and excluded religion Islam. Ordinary details,
    gender, smoking status and tag are recorded normally. Inspect the saved JSON: outer
-   `religion` is `Jainism`, `preferences` contains `religion: ["Buddhism"]`, `age: ["25"]` and
-   `relationshipGoal: ["Long-term relationship"]`, and `dealbreakers` contains `religion: ["Islam"]`
-   (each criterion is a list of strings, even with one value).
+   `religion` is `Jainism`; `preferences` contains `"religion": ["Buddhism"]`, `"age": ["25"]`
+   and `"relationshipGoal": ["Long-term relationship"]`; `dealbreakers` contains `"religion": ["Islam"]`.
+   Criteria values are lists of strings, including single values; legacy scalar strings remain accepted input.
 - [ ] Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
    Expected: Only the phone changes. Own religion and both entire criteria maps remain
    unchanged. In the remaining steps, check that name, this phone, email, address,
@@ -849,18 +851,18 @@ because a successful edit restores the full list and changes the displayed index
    Expected: The first clears only own religion to unknown; the second restores it.
    Preferences and exclusions remain unchanged throughout.
 - [ ] Run `edit 1 {r/ Baha'i   Faith }`.<br>
-   Expected: The preferred religion becomes Baha'i Faith; the existing age preference
-   remains 25. Islam remains excluded, and own religion stays Jainism. Run
+   Expected: Baha'i Faith is added alongside Buddhism in the preferred-religion list; the existing age
+   preference remains 25. Islam remains excluded, and own religion stays Jainism. Run
    `edit 1 <r/ Christianity >` after finding the client again.<br>
-   Expected: The excluded religion is updated to canonical Christianity;
-   the Baha'i Faith preference is preserved.
+   Expected: Canonical Christianity is added alongside Islam in the excluded-religion list;
+   both preferred religions are preserved. Saved criteria use lists of strings.
 - [ ] Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
    Expected: The supplied entries are updated in each bucket; other criteria are preserved.
    Run `find n/Criteria` again, then try `edit 1 {r/ iSlAm }`.<br>
    Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
    Neither the existing preference map nor any other field changes. Also try
    `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
-- [ ] Try each of `edit 1 {r/}`, `edit 1 <r/>`, `edit 1 {r/Other}`,
+- [ ] Try each of `edit 1 {r/Other}`,
    `edit 1 <r/Islam r/Christianity>`, `edit 1 r/Jainism r/Islam`,
    `edit 1 {r/Buddhism} {r/Jainism}`, `edit 1 <r/Islam> <r/Christianity>`,
    `edit 1 {r/Buddhism <r/Islam>}`, and `edit 1 {r/Buddhism`.<br>
@@ -889,7 +891,7 @@ because a successful edit restores the full list and changes the displayed index
     Expected: The client loads with empty criteria; own religion and ordinary details
     remain intact. Restore the valid backup before continuing.
 - [ ] In separate copies of the valid test file, set the preference map's `religion`
-    value to `Other`, to null, and to `ISLAM` while the exclusion remains `Islam`.
+    value to `["Other"]`, to null, and to `["ISLAM"]` while the exclusion remains `["Islam"]`.
     Restart for each case, without issuing a saving command.<br>
     Expected: Each invalid file uses the existing invalid-data handling (an empty
     address book), without an unchecked crash. The invalid file remains on disk

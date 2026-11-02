@@ -711,9 +711,10 @@ invalid names and malformed entries reject the data file. Back up the file and c
 
 Records with valid required fields but no own-religion property load with unknown
 own religion, not `No religion`. Partner criteria are saved in the `preferences` and
-`dealbreakers` maps: for example, `"preferences": {"religion": "Buddhism"}` and
-`"dealbreakers": {"religion": "Islam"}`. The latter records an exclusion, not a requirement
-to have Islam. Older valid records without these maps load with empty partner criteria.
+`dealbreakers` maps: for example, `"preferences": {"religion": ["Buddhism"]}` and
+`"dealbreakers": {"religion": ["Islam"]}`. Values are saved as lists, even for one criterion value;
+legacy scalar strings are still accepted when loading. The latter map records an exclusion, not a
+requirement to have Islam. Older valid records without these maps load with empty partner criteria.
 Invalid religion values (including a null religion entry inside a criteria map), or the
 same normalized religion in both maps, reject the file through the existing invalid-data
 handling. A missing or null own-religion property still means unknown.
