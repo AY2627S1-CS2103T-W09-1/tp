@@ -393,7 +393,8 @@ not a guarantee about a real-world relationship.
 ### Organising clients into groups: `grp` and `show`
 
 Keep named collections of clients, such as event invitations or a shortlist. A client can belong to
-several groups. Membership is shown as a separate `Group: NAME` badge; ordinary `t/` tags are unchanged.
+several groups. Memberships appear as group-name chips under a shared `Groups` label, separate from
+ordinary `t/` tag chips.
 
 Action | Format | Example
 -------|--------|--------

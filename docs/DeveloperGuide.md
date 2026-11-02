@@ -826,7 +826,7 @@ Use an isolated writable JAR folder with test data. Do not clear a real client d
 1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
    Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
 2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, with separate
-   `Group: VIP` badges. Alice's ordinary VIP tag should still appear. Check at a narrow window size that badges
+   `VIP` chips under the `Groups` label. Alice's ordinary VIP tag should still appear separately under `Tags`. Check at a narrow window size that badges
    wrap and the client details remain readable.
 3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
    records remain and their VIP group badges disappear, while Alice's ordinary tag remains.
