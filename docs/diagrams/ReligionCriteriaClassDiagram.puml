@@ -9,10 +9,11 @@ skinparam arrowThickness 1.1
 skinparam arrowColor #9D0012
 skinparam arrowFontColor #202020
 skinparam arrowFontSize 14
-skinparam classBackgroundColor #FFF5F6
-skinparam classBorderColor #9D0012
-skinparam classFontColor #202020
-skinparam classAttributeFontColor #202020
+skinparam classBackgroundColor #9D0012
+skinparam classBorderColor #FFFFFF
+skinparam classFontColor #FFFFFF
+skinparam classAttributeFontColor #FFFFFF
+skinparam classStereotypeFontColor #FFFFFF
 skinparam classAttributeIconSize 0
 
 hide circle

@@ -47,6 +47,9 @@ deactivate FindMatchCommand
 
 FindCommandParser --> AddressBookParser : f
 deactivate FindCommandParser
+'Hidden arrow to position the destroy marker below the end of the activation bar.
+FindCommandParser -[hidden]-> AddressBookParser
+destroy FindCommandParser
 
 AddressBookParser --> LogicManager : f
 deactivate AddressBookParser
@@ -72,8 +75,8 @@ activate AddressBook
 AddressBook --> FindMatchCommand : all clients
 deactivate AddressBook
 
-loop each candidate c in all clients
-    opt !c.isSamePerson(target) (skip the source client)
+loop for each c in allClients
+    opt !c.isSamePerson(target)
         create MatchAssessment
         FindMatchCommand -> MatchAssessment : new MatchAssessment(target, c)
         activate MatchAssessment

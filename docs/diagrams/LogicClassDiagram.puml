@@ -2,11 +2,7 @@
 !pragma layout smetana
 !include style.puml
 skinparam arrowColor LOGIC_COLOR_T4
-skinparam classBackgroundColor #F0F0FF
-skinparam classBorderColor LOGIC_COLOR
-skinparam classFontColor #202020
-skinparam classAttributeFontColor #202020
-skinparam classStereotypeFontColor #202020
+skinparam classBackgroundColor LOGIC_COLOR
 skinparam nodesep 40
 skinparam ranksep 50
 

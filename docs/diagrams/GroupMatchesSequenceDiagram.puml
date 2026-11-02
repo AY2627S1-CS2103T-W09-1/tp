@@ -1,0 +1,128 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":GroupCommandParser" as GroupCommandParser LOGIC_COLOR
+participant "g:GroupCommand" as GroupCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "book:ReadOnlyAddressBook" as AddressBook MODEL_COLOR
+participant "a:MatchAssessment" as MatchAssessment MODEL_COLOR
+participant "cg:ClientGroup" as ClientGroup MODEL_COLOR
+end box
+
+note over LogicManager, ClientGroup
+Successful execution is shown. Token and index validation, error branches,
+LogicManager restore-point/save handling and UI refresh are omitted.
+end note
+
+[-> LogicManager : execute("grp Candidates matches 1")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("grp Candidates matches 1")
+activate AddressBookParser
+
+create GroupCommandParser
+AddressBookParser -> GroupCommandParser
+activate GroupCommandParser
+
+GroupCommandParser --> AddressBookParser
+deactivate GroupCommandParser
+
+AddressBookParser -> GroupCommandParser : parse(" Candidates matches 1")
+activate GroupCommandParser
+
+create GroupCommand
+GroupCommandParser -> GroupCommand : new GroupCommand(Candidates, MATCHES, [1])
+activate GroupCommand
+
+GroupCommand --> GroupCommandParser
+deactivate GroupCommand
+
+GroupCommandParser --> AddressBookParser : g
+deactivate GroupCommandParser
+'Hidden arrow to position the destroy marker below the end of the activation bar.
+GroupCommandParser -[hidden]-> AddressBookParser
+destroy GroupCommandParser
+
+AddressBookParser --> LogicManager : g
+deactivate AddressBookParser
+
+LogicManager -> GroupCommand : execute(m)
+activate GroupCommand
+
+GroupCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> GroupCommand : displayed list
+deactivate Model
+
+note right of GroupCommand : target = displayed list[0]
+
+GroupCommand -> Model : getAddressBook()
+activate Model
+Model --> GroupCommand : book
+deactivate Model
+
+GroupCommand -> AddressBook : getGroupList()
+activate AddressBook
+AddressBook --> GroupCommand : groups
+deactivate AddressBook
+
+GroupCommand -> Model : getAddressBook()
+activate Model
+Model --> GroupCommand : book
+deactivate Model
+
+GroupCommand -> AddressBook : getPersonList()
+activate AddressBook
+AddressBook --> GroupCommand : all clients
+deactivate AddressBook
+
+loop for each c in allClients
+    opt !c.isSamePerson(target)
+        create MatchAssessment
+        GroupCommand -> MatchAssessment : new MatchAssessment(target, c)
+        activate MatchAssessment
+        MatchAssessment --> GroupCommand
+        deactivate MatchAssessment
+
+        GroupCommand -> MatchAssessment : getOutcome()
+        activate MatchAssessment
+        MatchAssessment --> GroupCommand : outcome
+        deactivate MatchAssessment
+
+        opt outcome != INCOMPATIBLE
+            GroupCommand -> GroupCommand : matches.add(c)
+        end
+    end
+end
+
+create ClientGroup
+GroupCommand -> ClientGroup : new ClientGroup(Candidates, matches)
+activate ClientGroup
+ClientGroup --> GroupCommand
+deactivate ClientGroup
+
+GroupCommand -> Model : setGroups(groups + cg)
+activate Model
+Model --> GroupCommand
+deactivate Model
+
+create CommandResult
+GroupCommand -> CommandResult
+activate CommandResult
+CommandResult --> GroupCommand
+deactivate CommandResult
+
+GroupCommand --> LogicManager : r
+deactivate GroupCommand
+
+[<--LogicManager
+deactivate LogicManager
+@enduml

@@ -2,11 +2,7 @@
 !pragma layout smetana
 !include style.puml
 skinparam arrowColor UI_COLOR_T4
-skinparam classBackgroundColor #F0FFF0
-skinparam classBorderColor UI_COLOR_T4
-skinparam classFontColor #202020
-skinparam classAttributeFontColor #202020
-skinparam classStereotypeFontColor #202020
+skinparam classBackgroundColor UI_COLOR
 skinparam nodesep 45
 skinparam ranksep 55
 
@@ -22,7 +18,7 @@ class StatusBarFooter
 class MatchResultView
 }
 
-interface "Logic" as LogicApi <<interface>> LOGIC_COLOR_T1
+interface "Logic" as LogicApi <<interface>> LOGIC_COLOR
 
 UiManager .up.|> Ui
 UiManager -down-> "1" MainWindow
