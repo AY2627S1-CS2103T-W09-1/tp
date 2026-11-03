@@ -694,7 +694,7 @@ the application starts with an empty address book rather than partially loading 
 
 **Minimum viable product (MVP)**:
 
-* Record a client's own characteristics, dating preferences, and dealbreakers. The supported attributes are age, gender, smoking habit, religion, and relationship goal.
+* Record a client's own characteristics (age, gender, smoking habit, and religion), and their partner preferences and dealbreakers, which can also include relationship goals.
 * Search and filter clients using those attributes, and compare two clients against each other's preferences and dealbreakers.
 * Categorise clients using labels (the existing AB3 tags) and named groups.
 
@@ -918,17 +918,17 @@ testers are expected to do more *exploratory* testing.
 
 Use a disposable, empty, writable folder for the JAR. Never run these checks against real client data.
 
-- [ ] In a terminal, run `java -version` and confirm Java 25. From the JAR folder run
+- In a terminal, run `java -version` and confirm Java 25. From the JAR folder run
   `java -jar "addressbook.jar"`; do not rely on double-clicking to select the right Java installation.
   **Expected:** The main window opens with sample clients and no startup exception. Application files
   and runtime folders stay in the JAR home.
-- [ ] Resize and move the main window, then enter `exit`. Launch the same JAR again using the same command.
+- Resize and move the main window, then enter `exit`. Launch the same JAR again using the same command.
   **Expected:** The window closes cleanly; the last saved size and position are restored where the
   current display arrangement permits. Do not change OS display settings as part of this check.
-- [ ] Open `help`, return to the main window and exit the app. Repeat with the window close control.
+- Open `help`, return to the main window and exit the app. Repeat with the window close control.
   **Expected:** All application windows close and the Java process exits. On macOS, also check the help
   dialog in ordinary windowed mode; do not assume fullscreen secondary dialogs behave identically.
-- [ ] Add `add n/Launch Demo p/91234567 e/launch@example.com a/Test Lane age/25`, exit and relaunch.
+- Add `add n/Launch Demo p/91234567 e/launch@example.com a/Test Lane age/25`, exit and relaunch.
   Run `find n/Launch`.
   **Expected:** Exactly the saved test client is found; closing the window does not discard a
   successfully saved command.
@@ -936,7 +936,7 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
 ### Application data sandbox
 
 
-- [ ] Launch from another working folder
+- Launch from another working folder
 
   - Put the packaged JAR in a new writable home folder. From a different empty
       folder, run `java -jar /path/to/home/addressbook.jar` using Java 25. Add a
@@ -945,7 +945,7 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
       only in the JAR home folder; the working folder remains empty. Relaunching
       from either folder retains the contact.
 
-- [ ] Reject outward symbolic links (where supported by the OS)
+- Reject outward symbolic links (where supported by the OS)
 
   - Back up the isolated test data. With the app closed, replace its `data`
       subfolder with a symbolic link to a separate folder containing a sentinel
@@ -953,7 +953,7 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
       Expected: External data is not loaded or overwritten. Saving is rejected;
       the sentinel file is unchanged. Restore the real in-home data folder afterward.
 
-- [ ] Reject all runtime-folder symbolic links (where supported by the OS)
+- Reject all runtime-folder symbolic links (where supported by the OS)
 
   - Use an isolated packaged-JAR home and back up its test data. With the app closed,
       test `.javafx` and `.tmp` separately: place a symbolic link at the runtime-folder
@@ -1020,7 +1020,7 @@ Use a separate test data set.
 #### Recording and clearing own religion
 
 
-- [ ] Adding, editing and retaining the client's own religion
+- Adding, editing and retaining the client's own religion
 
   - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb r/jAiNiSm`.<br>
       Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
@@ -1039,12 +1039,12 @@ Use a separate test data set.
   - Enter `find n/Nia`, then `edit 1 r/`, then close and relaunch the app and enter `find n/Nia`.<br>
       Expected: Religion remains unknown, not `No religion`; the other details are retained.
 
-- [ ] Rejecting unsupported categories
+- Rejecting unsupported categories
 
   - Enter `edit 1 r/Other` after locating Nia.<br>
       Expected: The edit is rejected with the supported-category list; `Other` is not stored.
 
-- [ ] Loading data containing obsolete partner criteria
+- Loading data containing obsolete partner criteria
 
   - With the app closed, back up its in-home data file. Add `preferredReligion`,
       `requiredReligion`, and `excludedReligions` properties to a valid contact,
@@ -1062,66 +1062,66 @@ the valid backup between invalid-file tests. In steps using `edit 1`, first run
 `find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
 because a successful edit restores the full list and changes the displayed indexes.
 
-- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no t/demo r/jAiNiSm {r/bUdDhIsM age/25 rg/long} <r/iSlAm>`.<br>
+- Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no t/demo r/jAiNiSm {r/bUdDhIsM age/25 rg/long} <r/iSlAm>`.<br>
    Expected: One client is added with own religion Jainism, preference religion Buddhism,
    age 25 and relationship goal Long-term relationship, and excluded religion Islam. Ordinary details,
    gender, smoking status and tag are recorded normally. Inspect the saved JSON: outer
    `religion` is `Jainism`; `preferences` contains `"religion": ["Buddhism"]`, `"age": ["25"]`
    and `"relationshipGoal": ["Long-term relationship"]`; `dealbreakers` contains `"religion": ["Islam"]`.
    Criteria values are lists of strings, including single values; legacy scalar strings remain accepted input.
-- [ ] Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
+- Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
    Expected: Only the phone changes. Own religion and both entire criteria maps remain
    unchanged. In the remaining steps, check that name, this phone, email, address,
    age, gender, smoking status and tag remain unchanged unless
    explicitly edited.
-- [ ] Run `edit 1 r/Buddhism`, then `edit 1 r/Islam`, finding the test client again
+- Run `edit 1 r/Buddhism`, then `edit 1 r/Islam`, finding the test client again
    before each edit.<br>
    Expected: Both succeed. Own religion may equal the preferred or excluded religion;
    neither edit changes the criteria maps.
-- [ ] Run `edit 1 r/`, then `edit 1 r/Jainism`, finding the client again each time.<br>
+- Run `edit 1 r/`, then `edit 1 r/Jainism`, finding the client again each time.<br>
    Expected: The first clears only own religion to unknown; the second restores it.
    Preferences and exclusions remain unchanged throughout.
-- [ ] Run `edit 1 {r/ Baha'i   Faith }`.<br>
+- Run `edit 1 {r/ Baha'i   Faith }`.<br>
    Expected: Baha'i Faith is added alongside Buddhism in the preferred-religion list; the existing age
    preference remains 25. Islam remains excluded, and own religion stays Jainism. Run
    `edit 1 <r/ Christianity >` after finding the client again.<br>
    Expected: Canonical Christianity is added alongside Islam in the excluded-religion list;
    both preferred religions are preserved. Saved criteria use lists of strings.
-- [ ] Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
+- Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
    Expected: The supplied entries are updated in each bucket; other criteria are preserved.
    Run `find n/Criteria` again, then try `edit 1 {r/ iSlAm }`.<br>
    Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
    Neither the existing preference map nor any other field changes. Also try
    `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
-- [ ] Try each of `edit 1 {r/Other}`,
+- Try each of `edit 1 {r/Other}`,
    `edit 1 <r/Islam r/Christianity>`, `edit 1 r/Jainism r/Islam`,
    `edit 1 {r/Buddhism} {r/Jainism}`, `edit 1 <r/Islam> <r/Christianity>`,
    `edit 1 {r/Buddhism <r/Islam>}`, and `edit 1 {r/Buddhism`.<br>
    Expected: Every command is rejected; the entire previous record is unchanged.
-- [ ] Try `add n/Religion Invalid p/91234567 e/invalid@example.com a/Test Lane age/25 {r/Islam} <r/islam>`.<br>
+- Try `add n/Religion Invalid p/91234567 e/invalid@example.com a/Test Lane age/25 {r/Islam} <r/islam>`.<br>
    Expected: Rejected after normalization; no new client is added. Repeat with the
    criteria replaced by `{r/}` and then `{r/Buddhism r/Islam}`; both are rejected.
    For each legacy prefix `rp/`, `rr/` and `rx/`, try `edit 1 PREFIXIslam`,
    `edit 1 PREFIX`, and `edit 1 {PREFIXIslam}`, replacing `PREFIX` literally.<br>
    Expected: Legacy prefixes are rejected, including blank values; no record changes.
-- [ ] Find the test client again and run `edit 1 {}`.<br>
+- Find the test client again and run `edit 1 {}`.<br>
    Expected: All preferences are cleared, including age; excluded Islam and own Jainism
    remain. Run `edit 1 {r/Buddhism}` after finding it again, then `edit 1 <>` after
    finding it once more.<br>
    Expected: The latter clears all exclusions, preserving the Buddhism preference
    and own Jainism. Saved maps reflect each change.
-- [ ] Restore `edit 1 <r/Islam>` after finding the client, exit, and restart the JAR.<br>
+- Restore `edit 1 <r/Islam>` after finding the client, exit, and restart the JAR.<br>
     Expected: Own Jainism, preferred Buddhism, excluded Islam and all ordinary details
     survive. Run `find r/Jainism`, `find r/Buddhism` and `find r/Islam`.<br>
     Expected: The test client appears only for Jainism, never solely because of a
     preference or exclusion. Use `list` to restore the full display. These searches
     do not evaluate compatibility. Exit and back up this latest valid test file before
     the following JSON fixture checks.
-- [ ] With the app closed, remove only the test client's `preferences` and `dealbreakers`
+- With the app closed, remove only the test client's `preferences` and `dealbreakers`
     properties from `data/addressbook.json` and restart.<br>
     Expected: The client loads with empty criteria; own religion and ordinary details
     remain intact. Restore the valid backup before continuing.
-- [ ] In separate copies of the valid test file, set the preference map's `religion`
+- In separate copies of the valid test file, set the preference map's `religion`
     value to `["Other"]`, to null, and to `["ISLAM"]` while the exclusion remains `["Islam"]`.
     Restart for each case, without issuing a saving command.<br>
     Expected: Each invalid file uses the existing invalid-data handling (an empty
@@ -1132,11 +1132,11 @@ because a successful edit restores the full list and changes the displayed index
 
 Use distinct test names.
 
-- [ ] Add `Religion Jain` with `add n/Religion Jain p/91234567 e/jain@example.com a/Test Lane age/25 r/jAiNiSm`, `Religion None` with `add n/Religion None p/91234567 e/none@example.com a/Test Lane age/25 r/No religion`, and `Religion Unknown` with `add n/Religion Unknown p/91234567 e/unknown@example.com a/Test Lane age/25`.
-- [ ] Run `find n/Unknown`, then `find r/JAINISM`. The Jainism client appears even though the prior list contained only the unknown client. The count equals the displayed matches across the full book.
-- [ ] Run `find r/No religion`. Only explicitly recorded No religion clients appear; unknown clients are excluded. Try a supported category absent from the book: the list is empty and the count is zero. Run `list` to restore all contacts.
-- [ ] With a non-empty result list, try `find r/`, `find r/Other`, `find r/Jainism r/Islam`, `find Religion r/Jainism`, `find r/Jainism age/25`, and `find r/Jainism g/nb`. Each fails without changing records or the previous results.
-- [ ] Restart and repeat the religion searches. Own religion and ordinary client details remain unchanged. Confirm that name, age and gender searches still work independently.
+- Add `Religion Jain` with `add n/Religion Jain p/91234567 e/jain@example.com a/Test Lane age/25 r/jAiNiSm`, `Religion None` with `add n/Religion None p/91234567 e/none@example.com a/Test Lane age/25 r/No religion`, and `Religion Unknown` with `add n/Religion Unknown p/91234567 e/unknown@example.com a/Test Lane age/25`.
+- Run `find n/Unknown`, then `find r/JAINISM`. The Jainism client appears even though the prior list contained only the unknown client. The count equals the displayed matches across the full book.
+- Run `find r/No religion`. Only explicitly recorded No religion clients appear; unknown clients are excluded. Try a supported category absent from the book: the list is empty and the count is zero. Run `list` to restore all contacts.
+- With a non-empty result list, try `find r/`, `find r/Other`, `find r/Jainism r/Islam`, `find Religion r/Jainism`, `find r/Jainism age/25`, and `find r/Jainism g/nb`. Each fails without changing records or the previous results.
+- Restart and repeat the religion searches. Own religion and ordinary client details remain unchanged. Confirm that name, age and gender searches still work independently.
 
 ### Relationship goals
 
@@ -1260,19 +1260,19 @@ Use an isolated writable JAR folder with test data. Do not clear a real client d
 Use separate disposable JAR homes for the missing-file and invalid-file cases. Keep a valid backup
 inside each home and close the app before changing JSON. Do not edit a real client database.
 
-- [ ] Add a test client, run a successful command and inspect `data/addressbook.json` after the save.
+- Add a test client, run a successful command and inspect `data/addressbook.json` after the save.
   Exit and relaunch the same JAR.
   **Expected:** The saved client and its characteristics survive. This also checks the automatic-save
   path; there is no separate save command.
-- [ ] With the app closed, move the isolated home's data file to a backup name in that same home, then launch.
+- With the app closed, move the isolated home's data file to a backup name in that same home, then launch.
   **Expected:** A missing data file selects the sample address book. Run `list`, exit and confirm that a
   new `data/addressbook.json` was saved; the renamed backup is unchanged.
-- [ ] With the app closed, replace the disposable data file with invalid JSON, such as `{`, and launch.
+- With the app closed, replace the disposable data file with invalid JSON, such as `{`, and launch.
   **Expected:** The app starts with an empty address book and logs a loading warning, rather than crashing.
   Before entering any command, confirm that the invalid file has not changed.
-- [ ] In that invalid-file fixture only, run `list` and inspect the file again.
+- In that invalid-file fixture only, run `list` and inspect the file again.
   **Expected:** The current implementation saves after every successful command, including `list`, so
   the empty in-memory book replaces the invalid file. This is destructive: restore the valid backup
   before continuing and never use this procedure on real records.
-- [ ] Restart from the restored valid backup and verify the test client is present.
+- Restart from the restored valid backup and verify the test client is present.
   **Expected:** Restoring valid data recovers the fixture; the other test homes and launch folder are unchanged.
