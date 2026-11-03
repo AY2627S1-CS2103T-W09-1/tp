@@ -17,7 +17,9 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 
 1. Download the latest `.jar` file from [here](https://github.com/AY2627S1-CS2103T-W09-1/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for CupidMaxxing.
+1. Copy the file to a writable folder you want to use as the _home folder_ for CupidMaxxing.
+   Avoid folder names ending in `!` anywhere in the JAR's path (for example, use `Cupid` rather than
+   `Cupid!`). See [Known issues](#known-issues) for the startup limitation and workaround.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar CupidMaxxing.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
@@ -723,8 +725,15 @@ data file only if you are confident that you can update it correctly.
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+1. **On macOS, a folder name ending in `!` anywhere in the JAR's path can prevent startup.**
+   The app may exit before showing a window, with JavaFX graphics or toolkit errors such as
+   `No toolkit found`. With the app closed, rename the offending folder or move the **whole home
+   folder** to a writable location whose path has no folder name ending in `!`. Keep the JAR,
+   `data/`, `preferences.json` and other home-folder contents together to retain records and settings,
+   then launch the JAR from its new location. Quoting the JAR path or changing only the terminal's
+   working folder does not resolve this limitation.
+2. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
+3. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 

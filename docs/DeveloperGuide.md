@@ -661,8 +661,16 @@ Command parsers report invalid input through `ParseException`; command execution
 through `CommandException`; and JSON loading reports invalid persisted data through `IllegalValueException` and
 the existing storage error path. Validation happens before model mutation. The protected invariants include valid
 typed attributes, unique client identity, non-conflicting criteria, valid group membership, and sandbox-confined
-paths. Consequently, a failed command leaves the current model and saved data unchanged; a malformed data file
-does not create a partially loaded model. Tests exercise these paths alongside normal command behaviour.
+paths. A command rejected during parsing or validation before saving leaves the current model and saved client
+data unchanged; a malformed data file does not create a partially loaded model. Tests exercise these paths
+alongside normal command behaviour.
+
+If saving throws an `IOException`, `LogicManager` uses the model restore point to roll back the in-memory
+records and displayed list state before reporting the error. This permits a retry without applying the command
+twice; `help` and `exit` remain available without saving. This rollback is not an on-disk transaction:
+`FileUtil` writes directly to the data file, without atomic replacement or restoration of the previous bytes.
+A write failure after truncation or partial output can therefore leave an incomplete file even though the model
+is restored. Do not assume restarting will recover the previous saved data; keep backups of important records.
 
 If `data/addressbook.json` is manually edited and becomes malformed, or contains values that fail model
 validation, loading fails through the storage error path. `MainApp` logs a warning and starts the session
