@@ -673,64 +673,42 @@ Format: `exit`
 
 ### Saving the data
 
-CupidMaxxing automatically saves client data after every successful command except `help` and `exit`,
-which do not change client records. These two commands remain available if the client data file cannot
-be saved. You do not need to save manually. Gender is saved with each client; valid existing records
-without a gender load as unspecified. The existing required-age rule still applies.
+CupidMaxxing saves your clients and groups automatically after every successful command except `help`
+and `exit`. There is no need to save manually.
 
-Groups and memberships are saved in the same file as the clients and restored when the app restarts.
-Older valid files without a `groups` field load with no groups.
+CupidMaxxing keeps all its files in its **home folder**, the folder containing the JAR file, even if you
+launch it from another folder. Keep that folder writable. It contains:
 
-The app's **home folder** is the folder containing its JAR, even if you launch it
-from a different working folder. Keep that folder writable. Client data is stored
-in `data/addressbook.json`, window preferences in `preferences.json`, and rotating
-logs in `addressbook.log.*`, all inside that home folder. JavaFX runtime caches and
-temporary files also stay there, in `.javafx/` and `.tmp/`. The app does not change
-OS-level settings. Paths and symbolic links leading outside the home folder are
-not supported for application data; move the data itself into the home folder instead.
+* `data/addressbook.json`: your clients and groups
+* `preferences.json`: the window size and position
+* `addressbook.log.*`: log files
+* `.javafx/` and `.tmp/`: temporary files used while the app runs
 
-The private `.javafx/` and `.tmp/` runtime folders must be ordinary folders, with no
-symbolic links at either folder's root or anywhere inside, even links pointing back
-inside the home folder. This prevents inward links from hiding outward links in their
-targets. An unsafe or unwritable runtime layout stops startup before JavaFX starts;
-the app does not automatically delete or rewrite existing caches or client data.
-In-home symbolic links for normal data and preferences retain their existing behavior;
-the stricter no-symbolic-link rule applies only to these two runtime folders.
+Keep these files and folders as ordinary files inside the home folder. If the data is stored elsewhere and
+reached through a shortcut (a symbolic link), CupidMaxxing will not use it. A shortcut inside `.javafx/` or
+`.tmp/` stops the app from starting; delete the shortcut and launch again. The app does not change any of
+your computer's settings.
 
 ### Editing the data file
 
-CupidMaxxing data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+Advanced users can edit `data/addressbook.json` in the home folder directly. Close the app and back up the
+file first.
 
-Groups use a top-level array alongside `persons`, for example:
-
-```json
-"groups": [{"name": "VIP", "memberNames": ["Alice Pauline", "Benson Meier"]}]
-```
-
-Each member name must exactly match one existing client's name, including letter case. Reordering the
-`persons` array does not change group membership. If you manually rename or remove a client, also update
-every group's `memberNames` references; edits made through the app handle this automatically. Empty
-`memberNames` arrays are valid. Duplicate group names (ignoring case), repeated or missing members,
-invalid names and malformed entries reject the data file. Back up the file and close the app before editing it.
-
-Records with valid required fields but no own-religion property load with unknown
-own religion, not `No religion`. Partner criteria are saved in the `preferences` and
-`dealbreakers` maps: for example, `"preferences": {"religion": ["Buddhism"]}` and
-`"dealbreakers": {"religion": ["Islam"]}`. Values are saved as lists, even for one criterion value;
-legacy scalar strings are still accepted when loading. The latter map records an exclusion, not a
-requirement to have Islam. Older valid records without these maps load with empty partner criteria.
-Invalid religion values (including a null religion entry inside a criteria map), or the
-same normalized religion in both maps, reject the file through the existing invalid-data
-handling. A missing or null own-religion property still means unknown.
-Obsolete `preferredReligion`, `requiredReligion`, and `excludedReligions` properties are
-ignored when loading and omitted on the next save; they are not migrated into the new
-maps. Valid own religion and other contact details are retained. Back up older development
-data before migrating it; replace an obsolete `Other` religion only with an accurate
-supported category, or remove that optional property if the religion is unknown.
+* **Groups** are stored as a list next to the clients, e.g.
+  `"groups": [{"name": "VIP", "memberNames": ["Alice Pauline", "Benson Meier"]}]`.
+  Each member name must exactly match one client's name, including letter case. If you rename or remove a
+  client in the file, update every group that lists them; the app does this for you when you use `edit` or `delete`.
+* **Preferences and dealbreakers** are stored in each client's `preferences` and `dealbreakers` maps, with
+  each value in a list, e.g. `"preferences": {"religion": ["Buddhism"]}`. The same value cannot be in both maps.
+* To leave an optional detail such as religion **unknown**, remove that property rather than entering a
+  placeholder value.
 
 <div markdown="span" class="alert alert-warning">:exclamation: **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. A successful command other than `help` or `exit` can overwrite the invalid file with the current data. Back up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file invalid, CupidMaxxing starts with an empty client list at the next run. The
+invalid file is kept until you run a command that saves data (any successful command other than `help` or
+`exit`), which replaces it. Restore your backup before doing so.<br>
+Certain edits can also make the app behave unexpectedly (e.g., a value outside the accepted range). Edit the
+data file only if you are confident that you can update it correctly.
 </div>
 
 

@@ -248,7 +248,10 @@ not a non-smoker.
 An empty stored string also means unspecified. Other invalid stored values are rejected using the existing storage-error path.
 The person card displays missing smoking status as `not set`; command feedback uses `Not specified`.
 
-This increment supplies personal-characteristic data for later filtering and matching work.
+Searching by smoking status: The `FindCommandParser` reuses `ParserUtil.parseSmokingStatus` to validate a single `s/yes` or `s/no`
+criterion. `SmokingStatusMatchesPredicate` compares only the client's recorded smoking status.
+It rejects an unspecified search criterion, and unspecified client statuses match neither value.
+The existing `FindCommand` filters the full address book without changing stored records.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
 
 
@@ -286,6 +289,17 @@ The `0..1` multiplicity represents an unknown or recorded own religion, while
 are canonical strings in those maps, not references to the client's own `Religion`.
 The dashed dependencies show the map key type and the shared religion validation;
 they do not represent additional stored associations.
+
+Searching by own religion: `FindCommandParser` recognizes `r/` alongside the existing age and gender modes. It
+requires exactly one search mode, rejects repeated prefixes and uses `ParserUtil.parseReligion`
+to share the same fixed categories and normalization as add/edit. Blank and unsupported
+values fail during parsing, before the displayed list or stored records can change.
+
+`ReligionMatchesPredicate` compares only `Person.getReligion()` with the requested category.
+Unknown religion never matches, including a request for the explicit `No religion` category.
+`FindCommand` updates the full address book's filtered view, so a previous shortlist does not
+restrict the next search. The existing result-count feedback and zero-result behavior apply.
+No partner preferences, combined-trait OR/AND search or compatibility assessment is added.
 
 ##### Recording relationship goals
 
@@ -617,6 +631,30 @@ If the folder layout is unsafe or unusable, startup stops before JavaFX starts r
 runtime files outside the application home. These properties apply only to the running process and do
 not modify OS-level configuration.
 
+#### Data file format and compatibility
+
+`JsonSerializableAddressBook` stores a `persons` array and a `groups` array. Each `JsonAdaptedGroup` stores
+`name` and `memberNames`; on loading, each member name must resolve to exactly one loaded client (names are
+compared exactly, including case), so reordering `persons` does not change membership. Empty `memberNames` are
+valid, but duplicate group names (ignoring case), repeated or missing members, and malformed entries reject
+the whole file.
+
+Loading is backward compatible with older files:
+
+* A missing `groups` property loads as no groups; a missing gender loads as unspecified; a missing or null
+  own religion loads as unknown rather than `No religion`. Age is still required.
+* Missing `preferences` and `dealbreakers` maps load as empty criteria. Criteria values are saved as lists,
+  but legacy scalar strings are still accepted.
+* Obsolete `preferredReligion`, `requiredReligion` and `excludedReligions` properties are ignored and
+  dropped on the next save; they are not migrated into the criteria maps. An obsolete `Other` religion is
+  rejected, so it must be replaced with a supported category or removed.
+* Invalid values, including a null entry inside a criteria map or the same normalized value in both maps,
+  reject the file through the error path described below.
+
+The `.javafx/` and `.tmp/` runtime folders reject every symbolic link, including links that point back
+inside the home folder, because an inward link could otherwise hide an outward link inside its target.
+Symbolic links inside the home folder for ordinary data and preferences keep the default behaviour.
+
 #### Error handling, validation and recovery
 
 Command parsers report invalid input through `ParseException`; command execution reports state-dependent errors
@@ -656,7 +694,7 @@ the application starts with an empty address book rather than partially loading 
 
 **Minimum viable product (MVP)**:
 
-* Record a client's own characteristics, dating preferences, and dealbreakers. The initially planned attributes are age, smoking habit, and religion.
+* Record a client's own characteristics (age, gender, smoking habit, and religion), and their partner preferences and dealbreakers, which can also include relationship goals.
 * Search and filter clients using those attributes, and compare two clients against each other's preferences and dealbreakers.
 * Categorise clients using labels (the existing AB3 tags) and named groups.
 
@@ -683,36 +721,50 @@ not a claim that every possible enhancement or input combination is supported.
 
 For the use cases below, the **System** is CupidMaxxing and the **Actor** is an independent matchmaker. Client indexes refer to the currently displayed list.
 
-**Use case: Record a client's matchmaking details**
+**Use case: UC01 - Record a new client**
 
 **Main success scenario (MSS)**
 
-1. The matchmaker requests to add a client with contact details and optional gender, age, smoking habit, religion, preferences, and dealbreakers.
-2. CupidMaxxing validates the supplied values and checks for repeated attributes within the command.
+1. The matchmaker requests to add a client with required contact details and age, and optional gender, smoking habit, religion, tags, preferences, and dealbreakers.
+2. CupidMaxxing validates the supplied values.
 3. CupidMaxxing creates the client record and shows the stored information.
-4. At a later visit, the matchmaker requests to edit that client with a new preference or characteristic.
-5. CupidMaxxing validates the update, replaces the specified existing values, and refreshes the client display.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. A supplied value is invalid, an attribute is repeated, or a preference conflicts with a dealbreaker in the same command.
-    * 2a1. CupidMaxxing explains the invalid input and changes no data.
+* 2a. A required field is missing, a supplied value is invalid, or a single-valued field is repeated.
+    * 2a1. CupidMaxxing explains the invalid input and adds no client.
 
       Use case ends.
-* 5a. The requested client index is not in the displayed list.
-    * 5a1. CupidMaxxing reports the invalid index and leaves all records unchanged.
+* 2b. The same value is both a preference and a dealbreaker, e.g. `{s/yes} <s/yes>`.
+    * 2b1. CupidMaxxing reports the contradiction and adds no client.
+
+      Use case ends.
+* 2c. A client with the same name already exists.
+    * 2c1. CupidMaxxing reports the duplicate and adds no client.
 
       Use case ends.
 
-**Use case: Shortlist a group of candidates with one search**
+**Use case: UC02 - Update a client's details**
+
+This is similar to UC01, with these differences:
+
+* The matchmaker identifies the client by displayed index and supplies only the fields to change.
+* Fields that are not supplied keep their values. New criteria are merged into the existing preferences and
+  dealbreakers. An empty criterion such as `{s/}` removes it, `{}` or `<>` clears that whole block, and an empty
+  outer `s/`, `g/` or `r/` clears that characteristic.
+* Extension 2b also applies when a new criterion contradicts one that is kept from before.
+* An additional extension applies: if the index is not in the displayed list, CupidMaxxing reports the
+  invalid index and changes no record.
+
+**Use case: UC03 - Narrow down clients with one search**
 
 **MSS**
 
-1. The matchmaker requests `find` with one search mode, such as `find age/25-35`.
+1. The matchmaker requests `find` with one search mode and its value, such as an age range or a religion.
 2. CupidMaxxing checks that the search mode is supported and its value is valid.
-3. CupidMaxxing searches the entire address book and shows each client aged 25 to 35, inclusive, exactly once.
+3. CupidMaxxing searches the entire address book and shows each client that satisfies the criterion exactly once.
 4. CupidMaxxing reports how many clients matched. The displayed indexes are updated to match the filtered list.
 
    Use case ends.
@@ -731,13 +783,13 @@ For the use cases below, the **System** is CupidMaxxing and the **Actor** is an 
 Each search replaces the displayed results using the full address book; successive searches do not combine criteria.
 A missing client attribute does not satisfy an attribute search. Use `list` to display all clients again.
 
-**Use case: Assess a pair of clients**
+**Use case: UC04 - Assess a pair of clients**
 
 **MSS**
 
 1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
-3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
+3. CupidMaxxing shows both names, a breakdown of each comparison as Met, Unmet, Violated, or Unknown, and an overall assessment.
 4. The client list is temporarily hidden; its contents and order, and stored client records, remain unchanged.
 
    Use case ends.
@@ -762,7 +814,36 @@ A missing client attribute does not satisfy an attribute search. Use `list` to d
 
       Use case resumes at step 4.
 
-**Use case: Organise clients in a named group**
+**Use case: UC05 - Shortlist candidates for one client**
+
+**MSS**
+
+1. The matchmaker requests candidates for a client in the displayed list.
+2. CupidMaxxing compares that client with every other client in the address book, in both directions, using the same rules as UC04.
+3. CupidMaxxing shows every candidate that violates no known dealbreaker in either direction, best matches first. The selected client is not listed.
+4. The matchmaker requests to save the candidates for that client as a new named group.
+5. CupidMaxxing creates the group with those candidates as members and reports how many were added.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The index is not in the displayed list.
+    * 1a1. CupidMaxxing reports the invalid index and leaves the displayed list unchanged.
+
+      Use case ends.
+* 3a. No other client is a possible match.
+    * 3a1. CupidMaxxing shows an empty list and reports zero matches.
+
+      Use case ends.
+* 4a. A group with that name already exists, or there are no candidates.
+    * 4a1. CupidMaxxing reports the problem and creates no group.
+
+      Use case ends.
+
+The saved group is a snapshot: later changes to client details do not add or remove its members.
+
+**Use case: UC06 - Organise clients in a named group**
 
 **MSS**
 
@@ -787,8 +868,7 @@ A missing client attribute does not satisfy an attribute search. Use `list` to d
       Use case ends.
 
 A client may belong to several different groups. Removing the last member retains an empty group.
-`grp Candidates matches INDEX` instead creates a new snapshot of all eligible candidates for a displayed
-client, excluding the source. It rejects an existing name or zero candidates. Group rename/delete is deferred.
+To create a group from match results instead, see UC05. Renaming and deleting groups are not yet supported.
 
 ### Non-Functional Requirements
 
@@ -796,158 +876,37 @@ client, excluding the source. It rejects an existing name or zero candidates. Gr
 2. The application should support a single matchmaker working with local data. Client records should remain in a human-editable text file, with at least the data-editing support of AB3; no DBMS should be required.
 3. The product should be distributable as one JAR file, or as one ZIP if additional files are unavoidable, and the distributed product should not exceed 100 MB.
 4. A matchmaker who prefers typing should be able to perform the main client-management, filtering, matching, and grouping workflows using commands without a mouse.
-5. Typical operations on an address book containing up to 1000 clients should not feel noticeably sluggish.
+5. With up to 1000 clients, each command (including `find match/INDEX`) should show its result within 2 seconds on a typical laptop.
 6. Validation failures should not partially change stored client records or group membership.
 7. The GUI should work well at 1920×1080 or higher with 100% or 125% scaling, and remain usable at 1280×720 or higher with 150% scaling.
-8. Any proposed third-party library or service should satisfy the course's external-software rules and receive teaching-team approval before use.
+8. All features should work without an internet connection, because client data never leaves the local machine.
 9. The packaged app must read and write application files only inside the folder containing its JAR or its subfolders, and must not change OS-level configuration settings (Constraint-Data-Sandbox).
 
 ### Glossary
 
+* **Characteristic**: A value describing the client themself: age, gender, smoking habit, or religion. It is recorded with an outer prefix such as `s/no`.
 * **Client**: A person whose contact details and matchmaking information are recorded by the matchmaker.
-* **Characteristic**: A value describing a client, initially age, smoking habit, or religion.
-* **Preference**: A characteristic the client would like a potential partner to have; an unmet preference need not make a pair incompatible.
-* **Dealbreaker**: A requirement that excludes a potential partner when violated.
-* **Search criterion**: A condition used by one `find` search mode to select clients for the displayed shortlist.
-* **Pairwise matching**: Comparing two clients' recorded criteria in both directions without creating or modifying a relationship record.
-* **Unknown**: An assessment made when a required characteristic has not been recorded; it is not equivalent to a match.
-* **Label**: A categorisation attached to a client using the existing AB3 tag mechanism.
+* **Criteria block**: The part of an `add` or `edit` command that records partner criteria: `{...}` for preferences and `<...>` for dealbreakers. The code calls each block an *environment*.
+* **Dealbreaker**: A partner characteristic that makes a potential partner incompatible when the partner has it, e.g. `<s/yes>` rules out smokers.
+* **Displayed index**: The number shown beside a client in the current list. Commands such as `edit`, `match` and `grp` use it, so it changes after `find`, `show` or `list`.
 * **Group**: A named collection of client records; membership does not create duplicate client records.
+* **Home folder**: The folder containing the CupidMaxxing JAR. All application data, preferences and logs are kept inside it.
+* **Label**: A categorisation attached to a client using the existing AB3 tag mechanism (`t/`).
+* **Mainstream OS**: Windows, Linux, or macOS.
+* **Pairwise matching**: Comparing two clients' recorded criteria in both directions without creating or modifying a relationship record.
+* **Preference**: A characteristic the client would like a potential partner to have; an unmet preference need not make a pair incompatible.
+* **Relationship goal**: The kind of relationship a client is looking for, such as a long-term relationship. It is recorded only as partner criteria (`{rg/GOAL}` or `<rg/GOAL>`), not as an outer characteristic.
+* **Search criterion**: A condition used by one `find` search mode to select clients for the displayed shortlist.
+* **Snapshot group**: A group created by `grp NAME matches INDEX`. Its members are fixed when it is created and do not change when client details change later.
+* **Unknown**: An assessment made when a required characteristic has not been recorded; it is not equivalent to a match.
 
 
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Appendix: Instructions for manual testing**
 
-Given below are instructions to test the app manually.
-
-### Named groups and badges
-
-Use an isolated writable JAR folder with test data. Do not clear a real client database.
-
-1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
-   Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
-2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, with separate
-   `VIP` chips under the `Groups` label. Alice's ordinary VIP tag should still appear separately under `Tags`. Check at a narrow window size that badges
-   wrap and the client details remain readable.
-3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
-   records remain and their VIP group badges disappear, while Alice's ordinary tag remains.
-4. Run `grp VIP add 2` then `grp VIP add 1 2`. Expect the second command to fail without adding Alice.
-   `show VIP` should display only Bob. Run `grp VIP remove 1 2`; it must fail without removing Bob.
-5. Run `edit 1 n/Group Robert`, then `show VIP`. Expect Robert still in VIP. Restart the app and run `show VIP`
-   again; membership and the new name must survive. `delete 1` should retain an empty VIP group.
-6. Run `list`, then `grp Candidates matches 1`. With only Alice and Cara remaining, expect an error because
-   Alice excludes smokers. Add a fourth client with unknown smoking status, run `list` and repeat the command.
-   Expect a new Candidates group containing only the fourth client, with Alice excluded.
-7. Edit the fourth client's smoking status to `yes`, then `show Candidates`. The client should remain a member:
-   membership is a snapshot. `grp candidates matches 1` must reject the existing group name.
-8. Restart and check both groups. Finally run `clear`, restart and run `show VIP`; expect an unknown-group error.
-
-### Recording religion preferences and exclusions
-
-Use an isolated writable JAR home folder with test data, not real client records. All
-JSON inspection and fixtures below are confined to that folder's `data/addressbook.json`.
-Back up the test file before changing it, close the app before editing JSON, and restore
-the valid backup between invalid-file tests. In steps using `edit 1`, first run
-`find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
-because a successful edit restores the full list and changes the displayed indexes.
-
-- [ ] Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no t/demo r/jAiNiSm {r/bUdDhIsM age/25 rg/long} <r/iSlAm>`.<br>
-   Expected: One client is added with own religion Jainism, preference religion Buddhism,
-   age 25 and relationship goal Long-term relationship, and excluded religion Islam. Ordinary details,
-   gender, smoking status and tag are recorded normally. Inspect the saved JSON: outer
-   `religion` is `Jainism`; `preferences` contains `"religion": ["Buddhism"]`, `"age": ["25"]`
-   and `"relationshipGoal": ["Long-term relationship"]`; `dealbreakers` contains `"religion": ["Islam"]`.
-   Criteria values are lists of strings, including single values; legacy scalar strings remain accepted input.
-- [ ] Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
-   Expected: Only the phone changes. Own religion and both entire criteria maps remain
-   unchanged. In the remaining steps, check that name, this phone, email, address,
-   age, gender, smoking status and tag remain unchanged unless
-   explicitly edited.
-- [ ] Run `edit 1 r/Buddhism`, then `edit 1 r/Islam`, finding the test client again
-   before each edit.<br>
-   Expected: Both succeed. Own religion may equal the preferred or excluded religion;
-   neither edit changes the criteria maps.
-- [ ] Run `edit 1 r/`, then `edit 1 r/Jainism`, finding the client again each time.<br>
-   Expected: The first clears only own religion to unknown; the second restores it.
-   Preferences and exclusions remain unchanged throughout.
-- [ ] Run `edit 1 {r/ Baha'i   Faith }`.<br>
-   Expected: Baha'i Faith is added alongside Buddhism in the preferred-religion list; the existing age
-   preference remains 25. Islam remains excluded, and own religion stays Jainism. Run
-   `edit 1 <r/ Christianity >` after finding the client again.<br>
-   Expected: Canonical Christianity is added alongside Islam in the excluded-religion list;
-   both preferred religions are preserved. Saved criteria use lists of strings.
-- [ ] Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
-   Expected: The supplied entries are updated in each bucket; other criteria are preserved.
-   Run `find n/Criteria` again, then try `edit 1 {r/ iSlAm }`.<br>
-   Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
-   Neither the existing preference map nor any other field changes. Also try
-   `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
-- [ ] Try each of `edit 1 {r/Other}`,
-   `edit 1 <r/Islam r/Christianity>`, `edit 1 r/Jainism r/Islam`,
-   `edit 1 {r/Buddhism} {r/Jainism}`, `edit 1 <r/Islam> <r/Christianity>`,
-   `edit 1 {r/Buddhism <r/Islam>}`, and `edit 1 {r/Buddhism`.<br>
-   Expected: Every command is rejected; the entire previous record is unchanged.
-- [ ] Try `add n/Religion Invalid p/91234567 e/invalid@example.com a/Test Lane age/25 {r/Islam} <r/islam>`.<br>
-   Expected: Rejected after normalization; no new client is added. Repeat with the
-   criteria replaced by `{r/}` and then `{r/Buddhism r/Islam}`; both are rejected.
-   For each legacy prefix `rp/`, `rr/` and `rx/`, try `edit 1 PREFIXIslam`,
-   `edit 1 PREFIX`, and `edit 1 {PREFIXIslam}`, replacing `PREFIX` literally.<br>
-   Expected: Legacy prefixes are rejected, including blank values; no record changes.
-- [ ] Find the test client again and run `edit 1 {}`.<br>
-   Expected: All preferences are cleared, including age; excluded Islam and own Jainism
-   remain. Run `edit 1 {r/Buddhism}` after finding it again, then `edit 1 <>` after
-   finding it once more.<br>
-   Expected: The latter clears all exclusions, preserving the Buddhism preference
-   and own Jainism. Saved maps reflect each change.
-- [ ] Restore `edit 1 <r/Islam>` after finding the client, exit, and restart the JAR.<br>
-    Expected: Own Jainism, preferred Buddhism, excluded Islam and all ordinary details
-    survive. Run `find r/Jainism`, `find r/Buddhism` and `find r/Islam`.<br>
-    Expected: The test client appears only for Jainism, never solely because of a
-    preference or exclusion. Use `list` to restore the full display. These searches
-    do not evaluate compatibility. Exit and back up this latest valid test file before
-    the following JSON fixture checks.
-- [ ] With the app closed, remove only the test client's `preferences` and `dealbreakers`
-    properties from `data/addressbook.json` and restart.<br>
-    Expected: The client loads with empty criteria; own religion and ordinary details
-    remain intact. Restore the valid backup before continuing.
-- [ ] In separate copies of the valid test file, set the preference map's `religion`
-    value to `["Other"]`, to null, and to `["ISLAM"]` while the exclusion remains `["Islam"]`.
-    Restart for each case, without issuing a saving command.<br>
-    Expected: Each invalid file uses the existing invalid-data handling (an empty
-    address book), without an unchecked crash. The invalid file remains on disk
-    until a saving command; restore the backup before testing the next case.
-
-### Finding clients by their own religion
-
-`FindCommandParser` recognizes `r/` alongside the existing age and gender modes. It
-requires exactly one search mode, rejects repeated prefixes and uses `ParserUtil.parseReligion`
-to share the same fixed categories and normalization as add/edit. Blank and unsupported
-values fail during parsing, before the displayed list or stored records can change.
-
-`ReligionMatchesPredicate` compares only `Person.getReligion()` with the requested category.
-Unknown religion never matches, including a request for the explicit `No religion` category.
-`FindCommand` updates the full address book's filtered view, so a previous shortlist does not
-restrict the next search. The existing result-count feedback and zero-result behavior apply.
-No partner preferences, combined-trait OR/AND search or compatibility assessment is added.
-
-Manual checks (use distinct test names):
-
-- [ ] Add `Religion Jain` with `add n/Religion Jain p/91234567 e/jain@example.com a/Test Lane age/25 r/jAiNiSm`, `Religion None` with `add n/Religion None p/91234567 e/none@example.com a/Test Lane age/25 r/No religion`, and `Religion Unknown` with `add n/Religion Unknown p/91234567 e/unknown@example.com a/Test Lane age/25`.
-- [ ] Run `find n/Unknown`, then `find r/JAINISM`. The Jainism client appears even though the prior list contained only the unknown client. The count equals the displayed matches across the full book.
-- [ ] Run `find r/No religion`. Only explicitly recorded No religion clients appear; unknown clients are excluded. Try a supported category absent from the book: the list is empty and the count is zero. Run `list` to restore all contacts.
-- [ ] With a non-empty result list, try `find r/`, `find r/Other`, `find r/Jainism r/Islam`, `find Religion r/Jainism`, `find r/Jainism age/25`, and `find r/Jainism g/nb`. Each fails without changing records or the previous results.
-- [ ] Restart and repeat the religion searches. Own religion and ordinary client details remain unchanged. Confirm that name, age and gender searches still work independently.
-
-### Recording and finding gender
-
-Use a test data file and distinct client names for these checks.
-
-1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be `not set` on the card and `Unspecified` in command feedback.
-2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find n/Gender` searches names, while `find Gender` without `n/` is rejected.
-3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
-4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.
-5. Restart the application and verify that recorded and cleared genders persist. An older valid data file containing ages but no gender fields should still load with all clients' genders unspecified.
+Given below are instructions to test the app manually, grouped by feature. The User Guide gives the full
+rules for each command, so these steps only cover the most important cases.
 
 <div markdown="span" class="alert alert-info">:information_source: **Note:** These instructions only provide a starting point for testers to work on;
 testers are expected to do more *exploratory* testing.
@@ -956,26 +915,28 @@ testers are expected to do more *exploratory* testing.
 
 ### Launch and shutdown
 
+
 Use a disposable, empty, writable folder for the JAR. Never run these checks against real client data.
 
-- [ ] In a terminal, run `java -version` and confirm Java 25. From the JAR folder run
+- In a terminal, run `java -version` and confirm Java 25. From the JAR folder run
   `java -jar "addressbook.jar"`; do not rely on double-clicking to select the right Java installation.
   **Expected:** The main window opens with sample clients and no startup exception. Application files
   and runtime folders stay in the JAR home.
-- [ ] Resize and move the main window, then enter `exit`. Launch the same JAR again using the same command.
+- Resize and move the main window, then enter `exit`. Launch the same JAR again using the same command.
   **Expected:** The window closes cleanly; the last saved size and position are restored where the
   current display arrangement permits. Do not change OS display settings as part of this check.
-- [ ] Open `help`, return to the main window and exit the app. Repeat with the window close control.
+- Open `help`, return to the main window and exit the app. Repeat with the window close control.
   **Expected:** All application windows close and the Java process exits. On macOS, also check the help
   dialog in ordinary windowed mode; do not assume fullscreen secondary dialogs behave identically.
-- [ ] Add `add n/Launch Demo p/91234567 e/launch@example.com a/Test Lane age/25`, exit and relaunch.
+- Add `add n/Launch Demo p/91234567 e/launch@example.com a/Test Lane age/25`, exit and relaunch.
   Run `find n/Launch`.
   **Expected:** Exactly the saved test client is found; closing the window does not discard a
   successfully saved command.
 
 ### Application data sandbox
 
-- [ ] Launch from another working folder
+
+- Launch from another working folder
 
   - Put the packaged JAR in a new writable home folder. From a different empty
       folder, run `java -jar /path/to/home/addressbook.jar` using Java 25. Add a
@@ -984,7 +945,7 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
       only in the JAR home folder; the working folder remains empty. Relaunching
       from either folder retains the contact.
 
-- [ ] Reject outward symbolic links (where supported by the OS)
+- Reject outward symbolic links (where supported by the OS)
 
   - Back up the isolated test data. With the app closed, replace its `data`
       subfolder with a symbolic link to a separate folder containing a sentinel
@@ -992,7 +953,7 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
       Expected: External data is not loaded or overwritten. Saving is rejected;
       the sentinel file is unchanged. Restore the real in-home data folder afterward.
 
-- [ ] Reject all runtime-folder symbolic links (where supported by the OS)
+- Reject all runtime-folder symbolic links (where supported by the OS)
 
   - Use an isolated packaged-JAR home and back up its test data. With the app closed,
       test `.javafx` and `.tmp` separately: place a symbolic link at the runtime-folder
@@ -1005,9 +966,61 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
       ordinary runtime folders with no symbolic links anywhere inside and relaunch;
       startup succeeds and runtime files remain inside the JAR home.
 
-### Religion attributes
+### Adding, editing and deleting clients
 
-- [ ] Adding, editing and retaining the client's own religion
+Use a disposable, empty JAR home folder. Run `clear` first.
+
+1. Run `add n/Test Ada p/91230001 e/ada@example.com a/Test Lane age/25`.<br>
+   Expected: Test Ada is added with age 25; gender, smoking status and religion are not set.
+2. Repeat the command with another name and `age/17`, `age/100` or `age/25-30`, then with `age/` omitted.<br>
+   Expected: The first three report that age must be an integer between 18 and 99. Omitting age reports
+   invalid `add` syntax. No client is added.
+3. Run `add n/"Ravi s/o Kumar" p/91230002 e/ravi@example.com a/Test Lane age/31`, then the same command
+   without the quotes, then with only the opening quote.<br>
+   Expected: The first adds `Ravi s/o Kumar` without the quotes. The second is rejected because ` s/` starts
+   the smoking status; the error suggests quoting the name. The third reports the missing closing quote.
+   `n/Siti d/o Ahmad` needs no quotes because `d/` is not a prefix.
+4. Run `find n/"Ravi s/o"`, then `edit 1 s/yes`.<br>
+   Expected: Only Ravi is found, and his smoking status becomes `yes`. The full list is shown again after the edit.
+5. Find Ravi again and run `edit 1 s/`. Then try `edit 1 s/ s/no`.<br>
+   Expected: The first clears his smoking status to `not set`; other details are unchanged. The second is
+   rejected because `s/` is repeated.
+6. Run `list`, then `delete 2`, `delete 0` and `delete 9`.<br>
+   Expected: `delete 2` removes the second displayed client. `delete 0` reports invalid `delete` syntax and
+   `delete 9` reports an invalid index; neither changes the list.
+
+### Recording and finding gender
+
+
+Use a test data file and distinct client names for these checks.
+
+1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be `not set` on the card and `Unspecified` in command feedback.
+2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find n/Gender` searches names, while `find Gender` without `n/` is rejected.
+3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
+4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.
+5. Restart the application and verify that recorded and cleared genders persist. An older valid data file containing ages but no gender fields should still load with all clients' genders unspecified.
+
+### Finding clients by smoking status
+
+Use a separate test data set.
+
+1. Add three clients with distinct names: one with `s/yes`, one with `s/no`, and one with no `s/`.
+   Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
+2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
+   even though the previous search hid that client. Check that the displayed count is correct.
+3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find n/Alice s/yes`.
+   Each should report an error and preserve the previous results and records.
+4. Run `list` to restore all three clients. Restart the application and repeat the searches;
+   the results should remain the same. With no clients of the searched status, expect zero matches.
+5. After `find s/no`, run `edit 1 s/yes` or `delete 1` on disposable test data.
+   Confirm that it targets the first displayed client, not the first client in the full book.
+
+### Religion
+
+#### Recording and clearing own religion
+
+
+- Adding, editing and retaining the client's own religion
 
   - Enter `add n/Nia Test p/91234567 e/nia@example.com a/Test Lane age/25 s/no g/nb r/jAiNiSm`.<br>
       Expected: The card shows `Religion: Jainism`, age 25, non-smoking,
@@ -1026,12 +1039,12 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
   - Enter `find n/Nia`, then `edit 1 r/`, then close and relaunch the app and enter `find n/Nia`.<br>
       Expected: Religion remains unknown, not `No religion`; the other details are retained.
 
-- [ ] Rejecting unsupported categories
+- Rejecting unsupported categories
 
   - Enter `edit 1 r/Other` after locating Nia.<br>
       Expected: The edit is rejected with the supported-category list; `Other` is not stored.
 
-- [ ] Loading data containing obsolete partner criteria
+- Loading data containing obsolete partner criteria
 
   - With the app closed, back up its in-home data file. Add `preferredReligion`,
       `requiredReligion`, and `excludedReligions` properties to a valid contact,
@@ -1039,23 +1052,94 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
       Expected: The contact and its own attributes load. Partner criteria are not shown
       and the obsolete properties are omitted from the saved file. Restore the backup.
 
-### Deleting a person
+#### Recording religion preferences and exclusions
 
-1. Deleting a person while all persons are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+Use an isolated writable JAR home folder with test data, not real client records. All
+JSON inspection and fixtures below are confined to that folder's `data/addressbook.json`.
+Back up the test file before changing it, close the app before editing JSON, and restore
+the valid backup between invalid-file tests. In steps using `edit 1`, first run
+`find n/Criteria` and check that only the named test client is displayed. Repeat this before each edit,
+because a successful edit restores the full list and changes the displayed indexes.
 
-   1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+- Run `add n/Religion Criteria p/91234567 e/criteria@example.com a/Test Lane age/25 g/nb s/no t/demo r/jAiNiSm {r/bUdDhIsM age/25 rg/long} <r/iSlAm>`.<br>
+   Expected: One client is added with own religion Jainism, preference religion Buddhism,
+   age 25 and relationship goal Long-term relationship, and excluded religion Islam. Ordinary details,
+   gender, smoking status and tag are recorded normally. Inspect the saved JSON: outer
+   `religion` is `Jainism`; `preferences` contains `"religion": ["Buddhism"]`, `"age": ["25"]`
+   and `"relationshipGoal": ["Long-term relationship"]`; `dealbreakers` contains `"religion": ["Islam"]`.
+   Criteria values are lists of strings, including single values; legacy scalar strings remain accepted input.
+- Run `find n/Criteria`, then `edit 1 p/92345678`.<br>
+   Expected: Only the phone changes. Own religion and both entire criteria maps remain
+   unchanged. In the remaining steps, check that name, this phone, email, address,
+   age, gender, smoking status and tag remain unchanged unless
+   explicitly edited.
+- Run `edit 1 r/Buddhism`, then `edit 1 r/Islam`, finding the test client again
+   before each edit.<br>
+   Expected: Both succeed. Own religion may equal the preferred or excluded religion;
+   neither edit changes the criteria maps.
+- Run `edit 1 r/`, then `edit 1 r/Jainism`, finding the client again each time.<br>
+   Expected: The first clears only own religion to unknown; the second restores it.
+   Preferences and exclusions remain unchanged throughout.
+- Run `edit 1 {r/ Baha'i   Faith }`.<br>
+   Expected: Baha'i Faith is added alongside Buddhism in the preferred-religion list; the existing age
+   preference remains 25. Islam remains excluded, and own religion stays Jainism. Run
+   `edit 1 <r/ Christianity >` after finding the client again.<br>
+   Expected: Canonical Christianity is added alongside Islam in the excluded-religion list;
+   both preferred religions are preserved. Saved criteria use lists of strings.
+- Run `edit 1 {r/Buddhism age/25} <r/Islam>` after finding the client again.<br>
+   Expected: The supplied entries are updated in each bucket; other criteria are preserved.
+   Run `find n/Criteria` again, then try `edit 1 {r/ iSlAm }`.<br>
+   Expected: Rejected because Islam remains excluded in the omitted exclusion bucket.
+   Neither the existing preference map nor any other field changes. Also try
+   `edit 1 <r/buddhism>`; the retained Buddhism preference makes this invalid too.
+- Try each of `edit 1 {r/Other}`,
+   `edit 1 <r/Islam r/Christianity>`, `edit 1 r/Jainism r/Islam`,
+   `edit 1 {r/Buddhism} {r/Jainism}`, `edit 1 <r/Islam> <r/Christianity>`,
+   `edit 1 {r/Buddhism <r/Islam>}`, and `edit 1 {r/Buddhism`.<br>
+   Expected: Every command is rejected; the entire previous record is unchanged.
+- Try `add n/Religion Invalid p/91234567 e/invalid@example.com a/Test Lane age/25 {r/Islam} <r/islam>`.<br>
+   Expected: Rejected after normalization; no new client is added. Repeat with the
+   criteria replaced by `{r/}` and then `{r/Buddhism r/Islam}`; both are rejected.
+   For each legacy prefix `rp/`, `rr/` and `rx/`, try `edit 1 PREFIXIslam`,
+   `edit 1 PREFIX`, and `edit 1 {PREFIXIslam}`, replacing `PREFIX` literally.<br>
+   Expected: Legacy prefixes are rejected, including blank values; no record changes.
+- Find the test client again and run `edit 1 {}`.<br>
+   Expected: All preferences are cleared, including age; excluded Islam and own Jainism
+   remain. Run `edit 1 {r/Buddhism}` after finding it again, then `edit 1 <>` after
+   finding it once more.<br>
+   Expected: The latter clears all exclusions, preserving the Buddhism preference
+   and own Jainism. Saved maps reflect each change.
+- Restore `edit 1 <r/Islam>` after finding the client, exit, and restart the JAR.<br>
+    Expected: Own Jainism, preferred Buddhism, excluded Islam and all ordinary details
+    survive. Run `find r/Jainism`, `find r/Buddhism` and `find r/Islam`.<br>
+    Expected: The test client appears only for Jainism, never solely because of a
+    preference or exclusion. Use `list` to restore the full display. These searches
+    do not evaluate compatibility. Exit and back up this latest valid test file before
+    the following JSON fixture checks.
+- With the app closed, remove only the test client's `preferences` and `dealbreakers`
+    properties from `data/addressbook.json` and restart.<br>
+    Expected: The client loads with empty criteria; own religion and ordinary details
+    remain intact. Restore the valid backup before continuing.
+- In separate copies of the valid test file, set the preference map's `religion`
+    value to `["Other"]`, to null, and to `["ISLAM"]` while the exclusion remains `["Islam"]`.
+    Restart for each case, without issuing a saving command.<br>
+    Expected: Each invalid file uses the existing invalid-data handling (an empty
+    address book), without an unchecked crash. The invalid file remains on disk
+    until a saving command; restore the backup before testing the next case.
 
-   1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+#### Finding clients by their own religion
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+Use distinct test names.
 
+- Add `Religion Jain` with `add n/Religion Jain p/91234567 e/jain@example.com a/Test Lane age/25 r/jAiNiSm`, `Religion None` with `add n/Religion None p/91234567 e/none@example.com a/Test Lane age/25 r/No religion`, and `Religion Unknown` with `add n/Religion Unknown p/91234567 e/unknown@example.com a/Test Lane age/25`.
+- Run `find n/Unknown`, then `find r/JAINISM`. The Jainism client appears even though the prior list contained only the unknown client. The count equals the displayed matches across the full book.
+- Run `find r/No religion`. Only explicitly recorded No religion clients appear; unknown clients are excluded. Try a supported category absent from the book: the list is empty and the count is zero. Run `list` to restore all contacts.
+- With a non-empty result list, try `find r/`, `find r/Other`, `find r/Jainism r/Islam`, `find Religion r/Jainism`, `find r/Jainism age/25`, and `find r/Jainism g/nb`. Each fails without changing records or the previous results.
+- Restart and repeat the religion searches. Own religion and ordinary client details remain unchanged. Confirm that name, age and gender searches still work independently.
 
 ### Relationship goals
+
 
 1. Adding and retaining a relationship goal preference
 
@@ -1094,44 +1178,101 @@ Use a disposable, empty, writable folder for the JAR. Never run these checks aga
    1. Enter `find rg/marriage`, `find rg/Long-term relationship`, `find rg/`, `find rg/long rg/short`, `find rg/long g/m` and `find n/Rae rg/long` in turn.<br>
       Expected: Each command is rejected with an error and the displayed list is unchanged.
 
-### Finding clients by smoking status
+### Editing preferences and dealbreakers
 
-The `FindCommandParser` reuses `ParserUtil.parseSmokingStatus` to validate a single `s/yes` or `s/no`
-criterion. `SmokingStatusMatchesPredicate` compares only the client's recorded smoking status.
-It rejects an unspecified search criterion, and unspecified client statuses match neither value.
-The existing `FindCommand` filters the full address book without changing stored records.
+Run `clear`, then `add n/Crit Amy p/91250001 e/camy@example.com a/Test Lane age/28 g/w s/no {age/25-35 g/m} <s/yes>`.
+Use `edit 1` on this client in each step.
 
-Manual checks (use a separate test data set):
+1. Run `edit 1 {age/30-40}`.<br>
+   Expected: The age preference becomes 30-40; the gender preference and smoking dealbreaker are kept.
+2. Run `edit 1 {g/}`, then `edit 1 <s/>`.<br>
+   Expected: The first removes only the gender preference; the second removes only the smoking dealbreaker.
+3. Run `edit 1 <s/yes>`, then try `edit 1 {s/yes}`.<br>
+   Expected: The dealbreaker is restored. The second command is rejected because a smoking status cannot be
+   both preferred and excluded, including against criteria kept from before.
+4. Run `edit 1 {} <>`.<br>
+   Expected: All preferences and dealbreakers are cleared; the client's own details are unchanged.
+5. Try `edit 1 {age/25-35} {g/m}`, `edit 1 {t/friend}` and `edit 1 {age/25-35`.<br>
+   Expected: Each is rejected without changing the client: the first and third because the blocks are repeated
+   or unclosed, and the second because `t/` cannot be used inside criteria.
 
-1. Add three clients with distinct names: one with `s/yes`, one with `s/no`, and one with no `s/`.
-   Give the smoker a `{s/no}` preference and a `<s/yes>` dealbreaker to distinguish own status from criteria.
-2. Run `find s/YES`, then `find s/no`. Each returns only the corresponding recorded status,
-   even though the previous search hid that client. Check that the displayed count is correct.
-3. Run `find s/`, `find s/maybe`, `find s/yes s/no`, `find s/no age/25`, and `find n/Alice s/yes`.
-   Each should report an error and preserve the previous results and records.
-4. Run `list` to restore all three clients. Restart the application and repeat the searches;
-   the results should remain the same. With no clients of the searched status, expect zero matches.
-5. After `find s/no`, run `edit 1 s/yes` or `delete 1` on disposable test data.
-   Confirm that it targets the first displayed client, not the first client in the full book.
+### Matching
+
+Run `clear`, then add these five clients:
+
+```
+add n/Match Amy p/91240001 e/amy@example.com a/Test Lane age/28 g/w s/no {age/25-35 g/m} <s/yes>
+add n/Match Ben p/91240002 e/ben@example.com a/Test Lane age/30 g/m s/no
+add n/Match Cal p/91240003 e/cal@example.com a/Test Lane age/32 g/m s/yes
+add n/Match Dan p/91240004 e/dan@example.com a/Test Lane age/29 g/m
+add n/Match Eve p/91240005 e/eve@example.com a/Test Lane age/40 g/m s/no
+```
+
+#### Matching two clients
+
+1. Run `match 1 2`.<br>
+   Expected: *Compatible with recorded dealbreakers*. All three of Amy's criteria are Met; Ben has no criteria.
+   The client list is hidden while the result is shown, and the next command restores it.
+2. Run `match 1 3`, `match 1 4` and `match 1 5`.<br>
+   Expected: Cal is *Incompatible*, with the smoking dealbreaker shown as Violated. Dan gives *Insufficient
+   information* because his smoking status is Unknown. Eve is compatible, but the age preference is Unmet.
+3. Run `match n/Match Amy n/Match Ben` and `match 1 n/match ben`.<br>
+   Expected: The same result as `match 1 2`; names are matched ignoring case.
+4. Try `match 1 1`, `match 1 9` and `match n/Nobody n/Match Amy`.<br>
+   Expected: Rejected because the clients must differ, the index is invalid, and no client is named Nobody.
+
+#### Finding matches and saving a shortlist
+
+1. Run `list`, then `find match/1`.<br>
+   Expected: Ben, Dan and Eve are listed, with Ben first. Amy herself and Cal, who violates her dealbreaker, are not listed.
+2. Run `list`, then `find match/9`.<br>
+   Expected: Rejected with an invalid-index error.
+3. Run `grp Shortlist matches 1`, then `show Shortlist`.<br>
+   Expected: A Shortlist group with 3 members (Ben, Dan and Eve) is created. Running `grp Shortlist matches 1`
+   again is rejected because the group already exists.
+
+### Named groups
+
+
+Use an isolated writable JAR folder with test data. Do not clear a real client database.
+
+1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
+   Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
+2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, with separate
+   `VIP` chips under the `Groups` label. Alice's ordinary VIP tag should still appear separately under `Tags`. Check at a narrow window size that badges
+   wrap and the client details remain readable.
+3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
+   records remain and their VIP group badges disappear, while Alice's ordinary tag remains.
+4. Run `grp VIP add 2` then `grp VIP add 1 2`. Expect the second command to fail without adding Alice.
+   `show VIP` should display only Bob. Run `grp VIP remove 1 2`; it must fail without removing Bob.
+5. Run `edit 1 n/Group Robert`, then `show VIP`. Expect Robert still in VIP. Restart the app and run `show VIP`
+   again; membership and the new name must survive. `delete 1` should retain an empty VIP group.
+6. Run `list`, then `grp Candidates matches 1`. With only Alice and Cara remaining, expect an error because
+   Alice excludes smokers. Add a fourth client with unknown smoking status, run `list` and repeat the command.
+   Expect a new Candidates group containing only the fourth client, with Alice excluded.
+7. Edit the fourth client's smoking status to `yes`, then `show Candidates`. The client should remain a member:
+   membership is a snapshot. `grp candidates matches 1` must reject the existing group name.
+8. Restart and check both groups. Finally run `clear`, restart and run `show VIP`; expect an unknown-group error.
 
 ### Saving data
+
 
 Use separate disposable JAR homes for the missing-file and invalid-file cases. Keep a valid backup
 inside each home and close the app before changing JSON. Do not edit a real client database.
 
-- [ ] Add a test client, run a successful command and inspect `data/addressbook.json` after the save.
+- Add a test client, run a successful command and inspect `data/addressbook.json` after the save.
   Exit and relaunch the same JAR.
   **Expected:** The saved client and its characteristics survive. This also checks the automatic-save
   path; there is no separate save command.
-- [ ] With the app closed, move the isolated home's data file to a backup name in that same home, then launch.
+- With the app closed, move the isolated home's data file to a backup name in that same home, then launch.
   **Expected:** A missing data file selects the sample address book. Run `list`, exit and confirm that a
   new `data/addressbook.json` was saved; the renamed backup is unchanged.
-- [ ] With the app closed, replace the disposable data file with invalid JSON, such as `{`, and launch.
+- With the app closed, replace the disposable data file with invalid JSON, such as `{`, and launch.
   **Expected:** The app starts with an empty address book and logs a loading warning, rather than crashing.
   Before entering any command, confirm that the invalid file has not changed.
-- [ ] In that invalid-file fixture only, run `list` and inspect the file again.
+- In that invalid-file fixture only, run `list` and inspect the file again.
   **Expected:** The current implementation saves after every successful command, including `list`, so
   the empty in-memory book replaces the invalid file. This is destructive: restore the valid backup
   before continuing and never use this procedure on real records.
-- [ ] Restart from the restored valid backup and verify the test client is present.
+- Restart from the restored valid backup and verify the test client is present.
   **Expected:** Restoring valid data recovers the fixture; the other test homes and launch folder are unchanged.
