@@ -62,6 +62,13 @@ CupidMaxxing is a **desktop application for managing contacts, optimized for use
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
+
+* Put the whole name or address in double quotes when it contains prefix-like text such as `d/o`,
+  `s/o`, or `c/o`: use `n/"Siti d/o Ahmad"` or `a/"Blk 1 c/o John"` in `add` and `edit`, and
+  `find n/"Siti d/o Ahmad"` when searching. Text inside quotes is treated as part of the value,
+  so it is not interpreted as a prefix. The surrounding quotes are removed; field validation still applies.
+  If an `Unknown prefix` error refers to text intended as part of a name or address, quoting the whole
+  value fixes that error. Correct or remove an actual mistyped prefix instead.
   
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </div>
@@ -112,6 +119,13 @@ religion and partner criteria are optional.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
 
+* Each client must have a unique name. Duplicate checks compare only names: adding a client with an
+  existing name is rejected even if their phone number, email, address or dating attributes differ.
+  Editing a client's name to an existing name is also rejected.
+* Name comparisons are case-sensitive, and internal whitespace counts towards differences. Different
+  capitalization or a different number of spaces between words is treated as a different name and
+  accepted without a duplicate warning. Leading and trailing whitespace is trimmed before comparison.
+
 * `AGE` is compulsory. The valid values for `AGE`, `SMOKING`, `GENDER` and `RELIGION` are listed in
   [Parameter list](#parameter-list).
 * `NAME` may contain Latin letters, including accented letters such as `é`, digits, spaces, hyphens, apostrophes
@@ -158,9 +172,10 @@ If these names already exist, use distinct names and adjust the later `match` co
 | Error handled | Message shown |
 | --- | --- |
 | Missing compulsory fields or invalid command structure | `Invalid add syntax. Type help for usage.` followed by the `add` usage |
+| An unknown prefix appears outside quotes, including prefix-like text within a name or address | `Unknown prefix: PREFIX. To use / inside a value, put the whole value in quotes, e.g. n/"Siti d/o Ahmad".` |
 | A supplied profile value is invalid | The relevant field constraint, such as the age or email rules |
 | A single-valued field is supplied more than once | `Multiple values specified for the following single-valued field(s): ...` |
-| A client with the same identity already exists | `This person already exists in the address book.` |
+| A client with exactly the same name already exists, even if other details differ | `This person already exists in the address book.` |
 | `rg/` is used outside a criteria block | `Relationship goals are partner criteria. Use {rg/GOAL} for the goals the client is open to, or <rg/GOAL> for goals the client rules out.` |
 
 ### Editing a client: `edit`
@@ -196,6 +211,7 @@ Examples:
 | A positive index is beyond the displayed list | `The person index provided is invalid.` |
 | The edit would duplicate a client | `This person already exists in the address book.` |
 | A supplied field value is invalid | The relevant field constraint; duplicate fields and malformed criteria have their own explanations |
+| An unknown prefix appears outside quotes, including prefix-like text within a name or address | `Unknown prefix: PREFIX. To use / inside a value, put the whole value in quotes, e.g. n/"Siti d/o Ahmad".` |
 | `rg/` is used outside a criteria block | `Relationship goals are partner criteria. Use {rg/GOAL} for the goals the client is open to, or <rg/GOAL> for goals the client rules out.` |
 
 ### Adding a preference or dealbreaker
@@ -249,7 +265,7 @@ Examples:
 | Error handled | Message shown |
 | --- | --- |
 | A block is nested, repeated, unbalanced, or malformed | `Dating criteria must use one non-nested {...} preference block and one non-nested <...> dealbreaker block.` |
-| A block uses an unsupported prefix | `Only age/, g/, s/, r/, and rg/ are supported inside dating criteria.` |
+| A block uses an unsupported prefix | `Dating criteria may use only age/, g/, s/, r/, or rg/.` |
 | A value is invalid, or retained and newly supplied criteria contradict each other | The relevant attribute constraint; the command makes no change. |
 
 
@@ -300,7 +316,8 @@ Use `list` to show every client again; searching does not modify the stored reco
 | --- | --- |
 | No search mode, more than one search mode, or malformed command structure | `Invalid find syntax. Type help for usage.` followed by the `find` usage |
 | An empty name search, such as `find n/` | `Provide at least one name keyword after n/, e.g. find n/alice bob.` |
-| An unquoted name keyword contains `/` | `Name keywords cannot contain /. To search for a name containing /, put it in quotes, e.g. find n/"Ravi s/o".` |
+| An unknown prefix appears outside quotes, e.g. `find n/Ravi xy/o` | `Unknown prefix: PREFIX. To use / inside a value, put the whole value in quotes, e.g. n/"Siti d/o Ahmad".` |
+| An unquoted name keyword contains `/` without being parsed as a prefix, e.g. `find n/Ravi/o` | `Name keywords cannot contain /. To search for a name containing /, put it in quotes, e.g. find n/"Ravi s/o".` |
 | A goal list is empty, repeated or not a keyword | `Use distinct relationship goals separated by commas, e.g. rg/long,long-open.` or the list of accepted keywords |
 | An attribute value or gender list is invalid | The relevant attribute constraint or `Use distinct genders separated by commas (m, w, nb), or leave g/ empty for any specified gender.` |
 

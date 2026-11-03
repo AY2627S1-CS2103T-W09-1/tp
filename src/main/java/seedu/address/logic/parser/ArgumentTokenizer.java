@@ -1,7 +1,10 @@
 package seedu.address.logic.parser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -22,8 +25,11 @@ public class ArgumentTokenizer {
             + "followed by a space or the end of the command, e.g. n/\"Ravi s/o Kumar\".";
     public static final String MESSAGE_TEXT_AFTER_QUOTE = "Unexpected text after a quoted value. "
             + "Put the whole value inside the quotes, e.g. n/\"Ravi s/o Kumar\".";
+    public static final String MESSAGE_UNKNOWN_PREFIX = "Unknown prefix: %s. To use / inside a value, "
+            + "put the whole value in quotes, e.g. n/\"Siti d/o Ahmad\".";
 
     private static final char QUOTE = '"';
+    private static final Pattern PREFIX_TOKEN = Pattern.compile("(?<!\\S)([A-Za-z][A-Za-z0-9_-]*/)");
 
     /**
      * Tokenizes an arguments string and returns an {@code ArgumentMultimap} object that maps prefixes to their
@@ -36,6 +42,46 @@ public class ArgumentTokenizer {
      */
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) throws ParseException {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
+        return extractArguments(argsString, positions);
+    }
+
+    /**
+     * Tokenizes arguments, rejecting unrecognized prefixes outside quoted values.
+     *
+     * @throws ParseException if an unknown prefix or invalid quoted value is supplied
+     */
+    public static ArgumentMultimap tokenizeStrict(String argsString, Prefix... prefixes) throws ParseException {
+        return tokenizeStrict(argsString, MESSAGE_UNKNOWN_PREFIX, prefixes);
+    }
+
+    /**
+     * Tokenizes arguments using the supplied error message for unsupported prefixes.
+     * The message may contain {@code %s} for the offending prefix; quote errors retain their own messages.
+     *
+     * @throws ParseException if an unsupported prefix or invalid quoted value is supplied
+     */
+    public static ArgumentMultimap tokenizeStrict(String argsString, String unknownPrefixMessage, Prefix... prefixes)
+            throws ParseException {
+        List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
+        Matcher matcher = PREFIX_TOKEN.matcher(argsString);
+        int positionIndex = 0;
+        while (matcher.find()) {
+            while (positionIndex < positions.size()
+                    && positions.get(positionIndex).getStartPosition() <= matcher.start()) {
+                positionIndex++;
+            }
+            if (positionIndex > 0) {
+                PrefixPosition preceding = positions.get(positionIndex - 1);
+                if (preceding.isQuoted() && matcher.start() > preceding.getOpeningQuote()
+                        && matcher.start() < preceding.getClosingQuote()) {
+                    continue;
+                }
+            }
+            String prefix = matcher.group(1);
+            if (Arrays.stream(prefixes).noneMatch(known -> known.getPrefix().equals(prefix))) {
+                throw new ParseException(String.format(unknownPrefixMessage, prefix));
+            }
+        }
         return extractArguments(argsString, positions);
     }
 

@@ -46,7 +46,7 @@ public class FindCommandParser implements Parser<Command> {
      */
     public Command parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" " + trimmedArgs,
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeStrict(" " + trimmedArgs,
                 PREFIX_NAME, PREFIX_AGE, PREFIX_GENDER, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL, PREFIX_SMOKING,
                 PREFIX_MATCH);
         boolean hasName = argMultimap.getValue(PREFIX_NAME).isPresent();

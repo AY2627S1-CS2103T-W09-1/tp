@@ -86,8 +86,8 @@ public class EditCommandParserTest {
         // invalid arguments being parsed as preamble
         assertParseFailure(parser, "1 some random string", MESSAGE_INVALID_FORMAT);
 
-        // invalid prefix being parsed as preamble
-        assertParseFailure(parser, "1 i/ string", MESSAGE_INVALID_FORMAT);
+        // invalid prefix is identified before parsing the index
+        assertParseFailure(parser, "1 i/ string", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "i/"));
     }
 
     @Test

@@ -54,6 +54,14 @@ public class AddressBookParser {
         // Lower level log messages are used sparingly to minimize noise in the code.
         logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
 
+        switch (commandWord) {
+            case GroupCommand.COMMAND_WORD, ShowGroupCommand.COMMAND_WORD,
+                    DeleteCommand.COMMAND_WORD -> ArgumentTokenizer.tokenizeStrict(arguments);
+            default -> {
+                // Field parsers validate prefixes; no-argument commands ignore extraneous arguments.
+            }
+        }
+
         return switch (commandWord) {
             case GroupCommand.COMMAND_WORD -> new GroupCommandParser().parse(arguments);
             case ShowGroupCommand.COMMAND_WORD -> new ShowGroupCommandParser().parse(arguments);
