@@ -59,7 +59,10 @@ class MatchResultView extends ScrollPane {
         String reason = switch (outcome) {
             case COMPATIBLE -> "No recorded dealbreaker is violated.";
             case INCOMPATIBLE -> "At least one dealbreaker is violated.";
-            case INSUFFICIENT_INFORMATION -> "Some criteria cannot be checked because details are not recorded.";
+            case INSUFFICIENT_INFORMATION -> result.getAssessment().getFirstComparisons().isEmpty()
+                    && result.getAssessment().getSecondComparisons().isEmpty()
+                    ? "Neither client has any recorded preferences or dealbreakers."
+                    : "Some criteria cannot be checked because details are not recorded.";
         };
         VBox summary = new VBox(2,
                 createLabel("Overall result · " + result.getFirstName() + " ↔ " + result.getSecondName(),

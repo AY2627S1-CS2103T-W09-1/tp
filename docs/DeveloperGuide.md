@@ -228,7 +228,8 @@ editing, for unspecified gender. A gender list is accepted only by `find`.
 * `EditPersonDescriptor` uses an absent gender for “keep existing” and `UNSPECIFIED` for “clear”. `EditCommand` preserves gender when another field is edited and uses the displayed client index as before.
 * `FindCommandParser` retains name-only search and parses one `g/` into a set of genders. It rejects repeated prefixes, duplicate normalized values, unknown values and empty list items. Empty `g/` selects all three specified genders. `GenderMatchesPredicate` tests set membership, and `FindCommand` accepts `Predicate<Person>` so name, age and gender searches share the existing execution path. Age searches retain upstream's exact-age and inclusive-range validation.
 * `JsonAdaptedPerson` saves the canonical gender code. Missing, null or empty gender values load as `UNSPECIFIED`, so valid records containing the required age need no gender migration. Invalid non-empty values use the existing storage error handling.
-* `PersonCard` and command feedback display the full gender label, including “Unspecified”.
+* `PersonCard` and command feedback display the full recorded gender label. Missing gender appears as
+  `not set` on the card and `Unspecified` in command feedback.
 
 Tests cover gender value validation, parser rules, full command execution, filtering, editing the correct displayed client, persistence, older JSON records and unchanged data/results after invalid commands. Existing name-search tests are retained. Shared builders and command helpers carry gender so they do not silently discard it.
 
@@ -245,7 +246,7 @@ not a non-smoker.
 `EditPersonDescriptor` carries an optional update; edits to other fields preserve the stored status.
 `JsonAdaptedPerson` saves the `smokingStatus` string and reads absent or null fields in older JSON files as unspecified.
 An empty stored string also means unspecified. Other invalid stored values are rejected using the existing storage-error path.
-The person card and command feedback display the status, including `Not specified` for missing information.
+The person card displays missing smoking status as `not set`; command feedback uses `Not specified`.
 
 This increment supplies personal-characteristic data for later filtering and matching work.
 Partner criteria and matching are covered under [Pairwise matching](#pairwise-matching).
@@ -333,8 +334,10 @@ when the client has no criteria.
 mode alongside name, `age/`, `g/` and `r/`: it counts the prefix modes present and rejects input that
 combines modes, mixes a prefix with name keywords, or repeats `rg/`.
 
-Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching). A criterion is met when it
-shares at least one goal with the other client's `{rg/...}` preference.
+Relationship-goal criteria are evaluated by [Pairwise matching](#pairwise-matching). A preference is met when it
+shares at least one goal with the other client's `{rg/...}` preference. A dealbreaker is violated when it
+shares a goal with that preference; it is met when the other client's goals are known and none is excluded.
+If the other client has no goal preference, the comparison is unknown.
 
 ##### Miscellaneous values
 
@@ -402,7 +405,7 @@ A quoted value, `find n/"PHRASE"`, is searched as one phrase instead. The tokeni
 parser checks the raw argument text after `n/` for a leading `"`. A quoted value may contain `/` and becomes a
 `NameContainsPhrasePredicate`, which splits the phrase and the name into lower-case words and matches when the
 phrase's words appear together and in order in the name (`Collections#indexOfSubList`). `find n/"Ravi s/o"`
-therefore finds `Ravi s/o Kumar` but not `Kumar Ravi s/o x` or `Ravisankar`. An unquoted value containing `/`
+therefore finds both `Ravi s/o Kumar` and `Kumar Ravi s/o x`, but not `Kumar Ravi` or `Ravisankar`. An unquoted value containing `/`
 is rejected with a message suggesting quotes.
 
 ### Maintaining preferences and dealbreakers
@@ -469,8 +472,8 @@ so `MatchCommand#equals` compares them directly.
 
 `MatchAssessment` evaluates each client's `DatingCriteria` against the other's own attributes and goal
 preference, preserving unknown gender, smoking status, religion, and goals. Age uses the existing inclusive
-`AgeMatchesPredicate`; a relationship-goal criterion is met when it shares a goal with the other client's goal
-preference; other attributes compare canonical values. Gender, religion and relationship-goal criteria may hold
+`AgeMatchesPredicate`; a relationship-goal preference is met when it shares a goal with the other client's goal
+preference, while an overlapping goal dealbreaker is violated. Other attributes compare canonical values. Gender, religion and relationship-goal criteria may hold
 several values, and a preference is met when any of its values matches. An empty criterion value removes
 that attribute from the corresponding preference or dealbreaker set.
 
@@ -486,7 +489,8 @@ is stored as an `UNMET` dealbreaker comparison and shown to the user as *Violate
 ![How the outcome of a pairwise match is decided](images/MatchOutcomeActivityDiagram.png)
 
 `MatchCommandResult` supplies structured comparisons to `MatchResultView`, which displays a colored outcome and
-a table per direction in the command-result area. Plain-text feedback uses the same labels for logs.
+a table per direction in the command-result area. `MainWindow` temporarily hides the client list for this view;
+the next non-match command or error shows it again. Plain-text feedback uses the same labels for logs.
 Other commands and errors retain their text display. Matching does not change model data,
 the list filter, or the storage schema, and does not record a pairing. `LogicManager` still performs its normal
 save after successful commands; the saved client data is unchanged. Invalid commands use the existing error display.
@@ -734,7 +738,7 @@ A missing client attribute does not satisfy an attribute search. Use `list` to d
 1. The matchmaker requests `match INDEX_A INDEX_B` using two different indexes in the displayed list.
 2. CupidMaxxing compares each client's recorded preferences and dealbreakers against the other client's characteristics, in both directions.
 3. CupidMaxxing shows both names, a breakdown of each comparison as met, unmet, or unknown, and an overall assessment.
-4. The displayed list and stored client records remain unchanged.
+4. The client list is temporarily hidden; its contents and order, and stored client records, remain unchanged.
 
    Use case ends.
 
@@ -824,7 +828,7 @@ Use an isolated writable JAR folder with test data. Do not clear a real client d
 1. Run `clear`, then add `Group Alice`, `Group Bob` and `Group Cara` with distinct contact details and valid ages.
    Give Alice `s/no <s/yes>`, Bob `s/no`, and Cara `s/yes`. Give Alice an ordinary `t/VIP` tag.
 2. Run `grp VIP add 1 3`, then `show vip`. Expect Alice and Cara, in address-book order, with separate
-   `Group: VIP` badges. Alice's ordinary VIP tag should still appear. Check at a narrow window size that badges
+   `VIP` chips under the `Groups` label. Alice's ordinary VIP tag should still appear separately under `Tags`. Check at a narrow window size that badges
    wrap and the client details remain readable.
 3. Run `grp VIP remove 1 2`. Expect zero displayed clients and an empty VIP group. Run `list`; all three client
    records remain and their VIP group badges disappear, while Alice's ordinary tag remains.
@@ -939,7 +943,7 @@ Manual checks (use distinct test names):
 
 Use a test data file and distinct client names for these checks.
 
-1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be “Unspecified”.
+1. Add a client with `add n/Gender Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/nb`. Check that its card and feedback show “Gender: Non-binary”. Add another client with a different name and no `g/`; its gender should be `not set` on the card and `Unspecified` in command feedback.
 2. Run `find g/nb`, then `find g/m,w`, then `find g/`. Check that each search uses the full list and the last excludes unspecified genders. Confirm that `find n/Gender` searches names, while `find Gender` without `n/` is rejected.
 3. Run `find g/nb`, then `edit 1 g/w`. Check that the first displayed client changes, with contact details preserved. Find that client again before using `edit 1 g/`; its gender should clear. Editing only its phone should preserve its current gender.
 4. Try `find g/m,M`, `find g/m,`, `add n/Invalid Demo p/91234567 e/demo@example.com a/Demo Road age/25 g/m,w`, and `edit 1 g/x`. Each should report an error without changing records or the displayed list.

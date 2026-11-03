@@ -231,8 +231,8 @@ Format: `edit INDEX [{CRITERIA}] [<CRITERIA>]`
 When editing, a non-empty block preserves omitted criteria. Age and smoking are single-valued: a new
 value replaces the old value. Gender, religion, and relationship goal are multi-valued: new values are
 added and values already recorded are retained with a duplicate warning. An empty attribute prefix
-inside an `edit` block removes age, gender, religion, or relationship-goal criteria; empty smoking
-criteria have no effect. Use `{}` to clear all preferences or `<>` to clear all dealbreakers. See
+inside an `edit` block removes age, gender, smoking, religion, or relationship-goal criteria.
+Use `{}` to clear all preferences or `<>` to clear all dealbreakers. See
 [Parameter list](#parameter-list) for each attribute's value and contradiction rules.
 
 Examples:
@@ -298,7 +298,7 @@ Use `list` to show every client again; searching does not modify the stored reco
 | An empty name search, such as `find n/` | `Provide at least one name keyword after n/, e.g. find n/alice bob.` |
 | An unquoted name keyword contains `/` | `Name keywords cannot contain /. To search for a name containing /, put it in quotes, e.g. find n/"Ravi s/o".` |
 | A goal list is empty, repeated or not a keyword | `Use distinct relationship goals separated by commas, e.g. rg/long,long-open.` or the list of accepted keywords |
-| An attribute value or gender list is invalid | The relevant attribute constraint or `Gender list must contain one or more of m, w, nb without duplicates.` |
+| An attribute value or gender list is invalid | The relevant attribute constraint or `Use distinct genders separated by commas (m, w, nb), or leave g/ empty for any specified gender.` |
 
 ### Finding matches for one client: `find match/`
 
@@ -337,7 +337,9 @@ Formats: `match INDEX_A INDEX_B`, `match n/NAME_A n/NAME_B` or `match INDEX_A n/
 * The command-result area shows both names and a colored result line: green for compatible, red for incompatible,
   and amber for insufficient information. Each direction has a table showing type, attribute, criterion, actual value,
   and status (**Met**, **Unmet**, **Violated**, or **Unknown**). Dealbreakers show the excluded value explicitly.
-* The displayed list and client records stay unchanged. This command does not save a pairing or comparison history.
+* The client list is temporarily hidden while the match result is shown; its contents, order and client records
+  stay unchanged. Run `help` to show the same list again, or `list` to show all clients.
+  This command does not save a pairing or comparison history.
 
 The meanings, formats, allowed attributes and editing rules for recorded criteria are described under
 [Adding a preference or dealbreaker](#adding-a-preference-or-dealbreaker) and
@@ -391,7 +393,8 @@ not a guarantee about a real-world relationship.
 ### Organising clients into groups: `grp` and `show`
 
 Keep named collections of clients, such as event invitations or a shortlist. A client can belong to
-several groups. Membership is shown as a separate `Group: NAME` badge; ordinary `t/` tags are unchanged.
+several groups. Memberships appear as group-name chips under a shared `Groups` label, separate from
+ordinary `t/` tag chips.
 
 Action | Format | Example
 -------|--------|--------
@@ -490,7 +493,8 @@ accepted and normalized to `MIN-MAX`.
 
 `s/SMOKING` records the client's own smoking habit. Use `s/yes` for a smoker or `s/no` for a
 non-smoker; values are case-insensitive and surrounding whitespace is ignored. Omit the field if the
-status is unknown. Older records without this field display `Not specified`.
+status is unknown. Missing smoking status, including in older records, appears as `not set` on client
+cards and `Not specified` in command feedback.
 
 * `s/o` in a name is read as a smoking status. Put such a name in quotes, e.g. `n/"Ravi s/o Kumar"`.
 * To use text that looks like a prefix inside a value, such as `s/o` in a name, put the whole value in double quotes.<br>
@@ -512,8 +516,8 @@ status is unknown. Older records without this field display `Not specified`.
   status, `edit INDEX s/` clears it, and omitting `s/` preserves it. `add` and `find` need a value.
 * Each preference or dealbreaker block may contain `s/` once only and may contain only `yes` or `no`.
   On `edit`, a new value adds the criterion when absent or replaces its previous value. Repeating the
-  identical value leaves it unchanged and reports a duplicate warning. An empty criterion `s/` has no
-  effect; use `{}` or `<>` to clear the whole bucket.
+  identical value leaves it unchanged and reports a duplicate warning. On `edit`, `{s/}` removes the
+  smoking preference and `<s/>` removes the smoking dealbreaker; use `{}` or `<>` to clear the whole bucket.
 * The same smoking status cannot be both preferred and excluded, including criteria retained from an
   earlier edit. A conflicting command is rejected and leaves the record unchanged.
 

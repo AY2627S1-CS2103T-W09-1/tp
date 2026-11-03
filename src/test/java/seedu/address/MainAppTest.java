@@ -20,12 +20,13 @@ class MainAppTest {
     Path temporaryFolder;
 
     @Test
-    void initModelManager_nullPersonOrTagEntry_startsWithEmptyAddressBook() throws Exception {
+    void initModelManager_nullRootOrEntry_startsWithEmptyAddressBook() throws Exception {
         Path addressBookFile = temporaryFolder.resolve("addressbook.json");
         String personWithTags = "{\"name\":\"Alice\",\"phone\":\"12345678\","
                 + "\"email\":\"alice@example.com\",\"address\":\"Home\",\"age\":\"25\","
                 + "\"tags\":%s}";
         for (String contents : new String[] {
+            "null",
             "{\"persons\":[null]}",
             "{\"persons\":[" + String.format(personWithTags, "[null]") + "]}"}) {
             Files.writeString(addressBookFile, contents);
