@@ -265,11 +265,13 @@ and an `Other` category are not accepted. A finite list makes values directly co
 search and matching without inventing a meaning for arbitrary free text.
 
 The own religion is optional in `Person`; absent means **unknown**, not the explicit
-`No religion` category. `add` rejects a blank outer `r/`; `edit` supports clearing only
-the own field with an empty outer `r/`. Omitting it preserves the own religion. One
-`r/` is permitted in each environment independently of the outer `r/`. Blank religion
-values inside environments, duplicate prefixes within an environment, repeated
-environments and nested or unbalanced delimiters are rejected.
+`No religion` category. `add` rejects a blank outer `r/`; an empty outer `r/` in `edit`
+clears only the client's own religion. Omitting it preserves the own religion. One
+`r/` is permitted in each environment independently of the outer `r/`. In `edit`,
+`{r/}` removes only the religion preference and `<r/>` removes only the religion
+exclusion, preserving own religion and all other criteria. In `add`, an empty religion
+criterion leaves that criterion unspecified. Duplicate prefixes within an environment,
+repeated environments and nested or unbalanced delimiters are rejected.
 
 ###### Internal representation
 
@@ -1108,7 +1110,7 @@ because a successful edit restores the full list and changes the displayed index
    Expected: Every command is rejected; the entire previous record is unchanged.
 - Try `add n/Religion Invalid p/91234567 e/invalid@example.com a/Test Lane age/25 {r/Islam} <r/islam>`.<br>
    Expected: Rejected after normalization; no new client is added. Repeat with the
-   criteria replaced by `{r/}` and then `{r/Buddhism r/Islam}`; both are rejected.
+   criteria replaced by `{r/Buddhism r/Islam}`; the duplicate prefix is also rejected.
    For each legacy prefix `rp/`, `rr/` and `rx/`, try `edit 1 PREFIXIslam`,
    `edit 1 PREFIX`, and `edit 1 {PREFIXIslam}`, replacing `PREFIX` literally.<br>
    Expected: Legacy prefixes are rejected, including blank values; no record changes.
