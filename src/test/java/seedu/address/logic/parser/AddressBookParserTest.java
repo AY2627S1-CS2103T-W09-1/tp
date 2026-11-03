@@ -49,6 +49,7 @@ public class AddressBookParserTest {
     public void parseCommand_clear() throws Exception {
         assertTrue(parser.parseCommand(ClearCommand.COMMAND_WORD) instanceof ClearCommand);
         assertTrue(parser.parseCommand(ClearCommand.COMMAND_WORD + " 3") instanceof ClearCommand);
+        assertTrue(parser.parseCommand(ClearCommand.COMMAND_WORD + " x/what") instanceof ClearCommand);
     }
 
     @Test
@@ -71,6 +72,7 @@ public class AddressBookParserTest {
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
+        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " x/what") instanceof ExitCommand);
     }
 
     @Test
@@ -92,12 +94,14 @@ public class AddressBookParserTest {
     public void parseCommand_help() throws Exception {
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD) instanceof HelpCommand);
         assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD + " 3") instanceof HelpCommand);
+        assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD + " x/what") instanceof HelpCommand);
     }
 
     @Test
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);
+        assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " x/what") instanceof ListCommand);
     }
 
     @Test
@@ -143,8 +147,7 @@ public class AddressBookParserTest {
                 "match n/Alice x/what n/Bob",
                 "delete 1 x/what",
                 "grp VIP add 1 x/what",
-                "show VIP x/what",
-                "list x/what", "clear x/what", "help x/what", "exit x/what");
+                "show VIP x/what");
         for (String command : commands) {
             assertThrows(ParseException.class, "Unknown prefix: x/", () -> parser.parseCommand(command));
         }

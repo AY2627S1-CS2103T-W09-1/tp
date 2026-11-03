@@ -55,11 +55,10 @@ public class AddressBookParser {
         logger.fine("Command word: " + commandWord + "; Arguments: " + arguments);
 
         switch (commandWord) {
-            case GroupCommand.COMMAND_WORD, ShowGroupCommand.COMMAND_WORD, DeleteCommand.COMMAND_WORD,
-                    ClearCommand.COMMAND_WORD, ListCommand.COMMAND_WORD, ExitCommand.COMMAND_WORD,
-                    HelpCommand.COMMAND_WORD -> ArgumentTokenizer.tokenizeStrict(arguments);
+            case GroupCommand.COMMAND_WORD, ShowGroupCommand.COMMAND_WORD,
+                    DeleteCommand.COMMAND_WORD -> ArgumentTokenizer.tokenizeStrict(arguments);
             default -> {
-                // Commands with prefixed fields validate them in their own parsers.
+                // Field parsers validate prefixes; no-argument commands ignore extraneous arguments.
             }
         }
 
