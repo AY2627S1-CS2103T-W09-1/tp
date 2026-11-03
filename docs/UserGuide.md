@@ -112,6 +112,13 @@ religion and partner criteria are optional.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GENDER] [t/TAG]…​ [r/RELIGION] [{CRITERIA}] [<CRITERIA>]`
 
+* Each client must have a unique name. Duplicate checks compare only names: adding a client with an
+  existing name is rejected even if their phone number, email, address or dating attributes differ.
+  Editing a client's name to an existing name is also rejected.
+* Name comparisons are case-sensitive, and internal whitespace counts towards differences. Different
+  capitalization or a different number of spaces between words is treated as a different name and
+  accepted without a duplicate warning. Leading and trailing whitespace is trimmed before comparison.
+
 * `AGE` is compulsory. The valid values for `AGE`, `SMOKING`, `GENDER` and `RELIGION` are listed in
   [Parameter list](#parameter-list).
 
@@ -158,7 +165,7 @@ If these names already exist, use distinct names and adjust the later `match` co
 | Missing compulsory fields or invalid command structure | `Invalid add syntax. Type help for usage.` followed by the `add` usage |
 | A supplied profile value is invalid | The relevant field constraint, such as the age or email rules |
 | A single-valued field is supplied more than once | `Multiple values specified for the following single-valued field(s): ...` |
-| A client with the same identity already exists | `This person already exists in the address book.` |
+| A client with exactly the same name already exists, even if other details differ | `This person already exists in the address book.` |
 | `rg/` is used outside a criteria block | `Relationship goals are partner criteria. Use {rg/GOAL} for the goals the client is open to, or <rg/GOAL> for goals the client rules out.` |
 
 ### Editing a client: `edit`
