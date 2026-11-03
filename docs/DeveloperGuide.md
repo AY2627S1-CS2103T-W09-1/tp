@@ -88,9 +88,9 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 [![Structure of the UI Component](images/UiClassDiagram.png)](images/UiClassDiagram.png)
 
-This overview shows the main UI parts and their connections to `Logic`. UI inheritance, the command
+This overview shows the main UI parts, the `UiPart` class they extend and their connections to `Logic`. The command
 callback and list-cell implementation details are omitted for readability. `MatchResultView` extends
-JavaFX `ScrollPane`; the other visible UI parts shown extend `UiPart`. Click the diagram for a full-size view.
+JavaFX `ScrollPane` rather than `UiPart`. Click the diagram for a full-size view.
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
@@ -111,7 +111,8 @@ Here's a (partial) class diagram of the `Logic` component:
 
 [![Logic classes, including pairwise match results and candidate-search commands](images/LogicClassDiagram.png)](images/LogicClassDiagram.png)
 
-The overview omits command-specific parsers and dependencies on Model and Storage. Click for a full-size view.
+The overview omits command-specific parsers and dependencies on Model and Storage. `MatchCommand` holds two
+`ClientReference`s, each a `ByIndex` or a `ByName`. Click for a full-size view.
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 

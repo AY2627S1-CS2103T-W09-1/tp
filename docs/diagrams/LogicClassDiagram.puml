@@ -16,6 +16,9 @@ class MatchCommand
 class FindMatchCommand
 class CommandResult
 class MatchCommandResult
+interface ClientReference <<interface>>
+class ByIndex
+class ByName
 }
 
 LogicManager .up.|> Logic
@@ -29,5 +32,8 @@ MatchCommand -up-|> Command
 FindMatchCommand -up-|> Command
 MatchCommandResult -up-|> CommandResult
 MatchCommand ..> MatchCommandResult : creates
+MatchCommand -down-> "2" ClientReference
+ByIndex .up.|> ClientReference
+ByName .up.|> ClientReference
 
 @enduml
