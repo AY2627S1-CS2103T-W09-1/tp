@@ -28,6 +28,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Age;
 import seedu.address.model.person.AgeMatchesPredicate;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.NameContainsPhrasePredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Religion;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -144,17 +145,18 @@ public class AddressBookParserTest {
                 "grp VIP add 1 x/what",
                 "show VIP x/what");
         for (String command : commands) {
-            assertThrows(ParseException.class, "Unknown prefix: x/", () -> parser.parseCommand(command));
+            assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "x/"), () ->
+                    parser.parseCommand(command));
         }
     }
 
     @Test
     public void parseCommand_unknownPrefixSpellings_identifiesOffendingPrefix() {
         for (String prefix : List.of("unknown/", "X/", "agee/", "custom_1/", "custom-field/")) {
-            assertThrows(ParseException.class, "Unknown prefix: " + prefix, () ->
+            assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, prefix), () ->
                     parser.parseCommand("edit 1 age/25 " + prefix + "what"));
         }
-        assertThrows(ParseException.class, "Unknown prefix: x/", () ->
+        assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "x/"), () ->
                 parser.parseCommand("edit 1 age/25 x/what y/other"));
     }
 
@@ -190,8 +192,47 @@ public class AddressBookParserTest {
         assertEquals(new AddCommand(person), parser.parseCommand(command));
         Person unquoted = new PersonBuilder().withAddress("https://example.com/path 12/34").build();
         assertEquals(new AddCommand(unquoted), parser.parseCommand(PersonUtil.getAddCommand(unquoted)));
-        assertThrows(ParseException.class, "Unknown prefix: y/", () ->
+        assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "y/"), () ->
                 parser.parseCommand(command + " y/other"));
+    }
+
+    @Test
+    public void parseCommand_quotedPrefixLikeNames_preservesNamesInAddEditAndFind() throws Exception {
+        for (String name : List.of("Siti d/o Ahmad", "Ravi s/o Kumar", "Ravi xy/o")) {
+            Person person = new PersonBuilder().withName(name).build();
+            String add = PersonUtil.getAddCommand(person).replace("n/" + name, "n/\"" + name + "\"");
+            assertEquals(new AddCommand(person), parser.parseCommand(add));
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
+            assertEquals(new EditCommand(INDEX_FIRST_PERSON, descriptor),
+                    parser.parseCommand("edit 1 n/\"" + name + "\""));
+            assertEquals(new FindCommand(new NameContainsPhrasePredicate(name)),
+                    parser.parseCommand("find n/\"" + name + "\""));
+        }
+    }
+
+    @Test
+    public void parseCommand_quotedCareOfAddress_preservesAddressInAddAndEdit() throws Exception {
+        String address = "Blk 1 c/o John";
+        Person person = new PersonBuilder().withAddress(address).build();
+        String add = PersonUtil.getAddCommand(person).replace("a/" + address, "a/\"" + address + "\"");
+        assertEquals(new AddCommand(person), parser.parseCommand(add));
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(address).build();
+        assertEquals(new EditCommand(INDEX_FIRST_PERSON, descriptor),
+                parser.parseCommand("edit 1 a/\"" + address + "\""));
+    }
+
+    @Test
+    public void parseCommand_unquotedPrefixLikeValues_suggestsQuotingWholeValue() {
+        Map<String, String> commands = Map.of(
+                "add n/Siti d/o Ahmad p/91111111 e/s@x.com a/x age/25", "d/",
+                "add n/Bob p/92222222 e/b@x.com a/Blk 1 c/o John age/25", "c/",
+                "edit 1 n/Siti d/o Ahmad", "d/",
+                "edit 1 a/Blk 1 c/o John", "c/",
+                "find n/Ravi xy/o", "xy/");
+        commands.forEach((command, prefix) -> assertThrows(ParseException.class,
+                "Unknown prefix: " + prefix + ". To use / inside a value, "
+                        + "put the whole value in quotes, e.g. n/\"Siti d/o Ahmad\".", () ->
+                        parser.parseCommand(command)));
     }
 
     @Test

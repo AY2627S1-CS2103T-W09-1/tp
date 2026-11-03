@@ -73,13 +73,13 @@ public class FindCommandParserTest {
     public void parse_blankOrPrefixLikeNameKeywords_throwsParseException() {
         assertParseFailure(parser, "n/", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
         assertParseFailure(parser, "n/   ", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
-        assertParseFailure(parser, "n/Alice x/1", "Unknown prefix: x/");
-        assertParseFailure(parser, "n/Siti d/o Ahmad", "Unknown prefix: d/");
+        assertParseFailure(parser, "n/Alice x/1", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "x/"));
+        assertParseFailure(parser, "n/Siti d/o Ahmad", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "d/"));
         String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         assertParseFailure(parser, "n /Alice", usage);
-        assertParseFailure(parser, "N/Alice", "Unknown prefix: N/");
-        assertParseFailure(parser, "name/Alice", "Unknown prefix: name/");
+        assertParseFailure(parser, "N/Alice", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "N/"));
+        assertParseFailure(parser, "name/Alice", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "name/"));
     }
 
     @Test
@@ -152,8 +152,8 @@ public class FindCommandParserTest {
         for (String args : new String[] {"Alice g/m", "g /m"}) {
             assertParseFailure(parser, args, usage);
         }
-        assertParseFailure(parser, "G/m", "Unknown prefix: G/");
-        assertParseFailure(parser, "gp/m", "Unknown prefix: gp/");
+        assertParseFailure(parser, "G/m", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "G/"));
+        assertParseFailure(parser, "gp/m", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "gp/"));
         assertParseFailure(parser, "g/m Alice", Gender.MESSAGE_CONSTRAINTS);
     }
     @Test
@@ -189,9 +189,9 @@ public class FindCommandParserTest {
             "r/Jainism g/nb", "g/nb r/Jainism", "r /Jainism"}) {
             assertParseFailure(parser, args, message);
         }
-        assertParseFailure(parser, "R/Jainism", "Unknown prefix: R/");
-        assertParseFailure(parser, "rp/Jainism", "Unknown prefix: rp/");
-        assertParseFailure(parser, "rx/Islam", "Unknown prefix: rx/");
+        assertParseFailure(parser, "R/Jainism", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "R/"));
+        assertParseFailure(parser, "rp/Jainism", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "rp/"));
+        assertParseFailure(parser, "rx/Islam", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "rx/"));
     }
 
     @Test
@@ -240,7 +240,7 @@ public class FindCommandParserTest {
             "yes,no", "yes no", "y es", "yeſ", "yes Alice", "yes\ts/no"}) {
             assertParseFailure(parser, "s/" + value, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
         }
-        assertParseFailure(parser, "s/yes x/no", "Unknown prefix: x/");
+        assertParseFailure(parser, "s/yes x/no", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "x/"));
     }
 
     @Test
@@ -269,8 +269,8 @@ public class FindCommandParserTest {
         for (String args : new String[] {"s /yes", "{s/yes}", "<s/no>"}) {
             assertParseFailure(parser, args, message);
         }
-        assertParseFailure(parser, "S/yes", "Unknown prefix: S/");
-        assertParseFailure(parser, "smoking/yes", "Unknown prefix: smoking/");
+        assertParseFailure(parser, "S/yes", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "S/"));
+        assertParseFailure(parser, "smoking/yes", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "smoking/"));
         assertParseFailure(parser, "s/yes {s/no}", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
         assertParseFailure(parser, "s/no <s/yes>", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
     }

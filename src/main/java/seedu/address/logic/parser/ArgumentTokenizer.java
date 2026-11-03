@@ -25,7 +25,8 @@ public class ArgumentTokenizer {
             + "followed by a space or the end of the command, e.g. n/\"Ravi s/o Kumar\".";
     public static final String MESSAGE_TEXT_AFTER_QUOTE = "Unexpected text after a quoted value. "
             + "Put the whole value inside the quotes, e.g. n/\"Ravi s/o Kumar\".";
-    public static final String MESSAGE_UNKNOWN_PREFIX = "Unknown prefix: %s";
+    public static final String MESSAGE_UNKNOWN_PREFIX = "Unknown prefix: %s. To use / inside a value, "
+            + "put the whole value in quotes, e.g. n/\"Siti d/o Ahmad\".";
 
     private static final char QUOTE = '"';
     private static final Pattern PREFIX_TOKEN = Pattern.compile("(?<!\\S)([A-Za-z][A-Za-z0-9_-]*/)");

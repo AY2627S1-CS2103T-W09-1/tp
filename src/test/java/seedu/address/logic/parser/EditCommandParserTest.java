@@ -87,7 +87,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 some random string", MESSAGE_INVALID_FORMAT);
 
         // invalid prefix is identified before parsing the index
-        assertParseFailure(parser, "1 i/ string", "Unknown prefix: i/");
+        assertParseFailure(parser, "1 i/ string", String.format(ArgumentTokenizer.MESSAGE_UNKNOWN_PREFIX, "i/"));
     }
 
     @Test
