@@ -50,6 +50,17 @@ public class ArgumentTokenizer {
      * @throws ParseException if an unknown prefix or invalid quoted value is supplied
      */
     public static ArgumentMultimap tokenizeStrict(String argsString, Prefix... prefixes) throws ParseException {
+        return tokenizeStrict(argsString, MESSAGE_UNKNOWN_PREFIX, prefixes);
+    }
+
+    /**
+     * Tokenizes arguments using the supplied error message for unsupported prefixes.
+     * The message may contain {@code %s} for the offending prefix; quote errors retain their own messages.
+     *
+     * @throws ParseException if an unsupported prefix or invalid quoted value is supplied
+     */
+    public static ArgumentMultimap tokenizeStrict(String argsString, String unknownPrefixMessage, Prefix... prefixes)
+            throws ParseException {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
         Matcher matcher = PREFIX_TOKEN.matcher(argsString);
         int positionIndex = 0;
@@ -67,7 +78,7 @@ public class ArgumentTokenizer {
             }
             String prefix = matcher.group(1);
             if (Arrays.stream(prefixes).noneMatch(known -> known.getPrefix().equals(prefix))) {
-                throw new ParseException(String.format(MESSAGE_UNKNOWN_PREFIX, prefix));
+                throw new ParseException(String.format(unknownPrefixMessage, prefix));
             }
         }
         return extractArguments(argsString, positions);

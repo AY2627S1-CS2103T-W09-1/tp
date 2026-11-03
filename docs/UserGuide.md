@@ -254,7 +254,7 @@ Examples:
 | Error handled | Message shown |
 | --- | --- |
 | A block is nested, repeated, unbalanced, or malformed | `Dating criteria must use one non-nested {...} preference block and one non-nested <...> dealbreaker block.` |
-| A block uses an unsupported prefix | `Only age/, g/, s/, r/, and rg/ are supported inside dating criteria.` |
+| A block uses an unsupported prefix | `Dating criteria may use only age/, g/, s/, r/, or rg/.` |
 | A value is invalid, or retained and newly supplied criteria contradict each other | The relevant attribute constraint; the command makes no change. |
 
 

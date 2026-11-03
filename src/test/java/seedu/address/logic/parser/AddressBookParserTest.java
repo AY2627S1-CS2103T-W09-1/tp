@@ -128,13 +128,8 @@ public class AddressBookParserTest {
                 "add " + details + " x/what",
                 "add x/what " + details,
                 "add n/Extra x/what p/81231235 e/ex@x.com a/x age/25",
-                "add " + details + " {x/what}",
-                "add " + details + " {age/25 x/what}",
-                "add " + details + " <r/Islam x/what>",
                 "edit 1 age/25 x/what",
                 "edit 1 x/what n/Extra",
-                "edit 1 {r/ x/what}",
-                "edit 1 <x/what>",
                 "find x/what n/Extra",
                 "find n/Extra x/what",
                 "find age/25 x/what",
@@ -161,6 +156,30 @@ public class AddressBookParserTest {
         }
         assertThrows(ParseException.class, "Unknown prefix: x/", () ->
                 parser.parseCommand("edit 1 age/25 x/what y/other"));
+    }
+
+    @Test
+    public void parseCommand_unsupportedCriteriaPrefix_listsAllowedCriteriaPrefixes() {
+        String add = "add n/Extra p/81231235 e/ex@x.com a/x age/25 ";
+        for (String block : List.of("{t/friend}", "<n/Alice>", "{x/what}", "{age/25 x/what}",
+                "<r/Islam x/what>", "{r/ x/what}", "<x/what>")) {
+            for (String command : List.of(add + block, "edit 1 " + block)) {
+                assertThrows(ParseException.class, DatingCriteriaParser.MESSAGE_INVALID_CRITERION_PREFIX, () ->
+                        parser.parseCommand(command));
+            }
+        }
+    }
+
+    @Test
+    public void parseCommand_invalidCriteriaQuotes_preservesQuoteErrors() {
+        for (String command : List.of("edit 1 {r/\"Buddhism}", "edit 1 <r/\"Islam>")) {
+            assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_UNCLOSED_QUOTE, () ->
+                    parser.parseCommand(command));
+        }
+        for (String command : List.of("edit 1 {r/\"Buddhism\" text}", "edit 1 <r/\"Islam\" text>")) {
+            assertThrows(ParseException.class, ArgumentTokenizer.MESSAGE_TEXT_AFTER_QUOTE, () ->
+                    parser.parseCommand(command));
+        }
     }
 
     @Test

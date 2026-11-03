@@ -118,7 +118,8 @@ public final class DatingCriteriaParser {
         if (contents.isBlank()) {
             return new ParsedEnvironment(Map.of(), Set.of());
         }
-        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeStrict(" " + contents, supportedPrefixes());
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeStrict(" " + contents,
+                MESSAGE_INVALID_CRITERION_PREFIX, supportedPrefixes());
         if (!arguments.getPreamble().isEmpty()) {
             throw new ParseException(MESSAGE_INVALID_CRITERION_PREFIX);
         }
