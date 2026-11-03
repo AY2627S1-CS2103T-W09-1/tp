@@ -73,13 +73,13 @@ public class FindCommandParserTest {
     public void parse_blankOrPrefixLikeNameKeywords_throwsParseException() {
         assertParseFailure(parser, "n/", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
         assertParseFailure(parser, "n/   ", FindCommandParser.MESSAGE_EMPTY_NAME_KEYWORDS);
-        assertParseFailure(parser, "n/Alice x/1", FindCommandParser.MESSAGE_SLASH_IN_NAME_KEYWORDS);
-        assertParseFailure(parser, "n/Siti d/o Ahmad", FindCommandParser.MESSAGE_SLASH_IN_NAME_KEYWORDS);
+        assertParseFailure(parser, "n/Alice x/1", "Unknown prefix: x/");
+        assertParseFailure(parser, "n/Siti d/o Ahmad", "Unknown prefix: d/");
         String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
-        for (String args : new String[] {"N/Alice", "n /Alice", "name/Alice"}) {
-            assertParseFailure(parser, args, usage);
-        }
+        assertParseFailure(parser, "n /Alice", usage);
+        assertParseFailure(parser, "N/Alice", "Unknown prefix: N/");
+        assertParseFailure(parser, "name/Alice", "Unknown prefix: name/");
     }
 
     @Test
@@ -149,9 +149,11 @@ public class FindCommandParserTest {
     public void parse_mixedNameOrIncorrectPrefix_throwsParseException() {
         String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
-        for (String args : new String[] {"Alice g/m", "G/m", "g /m", "gp/m"}) {
+        for (String args : new String[] {"Alice g/m", "g /m"}) {
             assertParseFailure(parser, args, usage);
         }
+        assertParseFailure(parser, "G/m", "Unknown prefix: G/");
+        assertParseFailure(parser, "gp/m", "Unknown prefix: gp/");
         assertParseFailure(parser, "g/m Alice", Gender.MESSAGE_CONSTRAINTS);
     }
     @Test
@@ -184,9 +186,12 @@ public class FindCommandParserTest {
         String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
         for (String args : new String[] {"Alice r/Jainism", "r/Jainism age/25", "age/25 r/Jainism",
-            "r/Jainism g/nb", "g/nb r/Jainism", "R/Jainism", "r /Jainism", "rp/Jainism", "rx/Islam"}) {
+            "r/Jainism g/nb", "g/nb r/Jainism", "r /Jainism"}) {
             assertParseFailure(parser, args, message);
         }
+        assertParseFailure(parser, "R/Jainism", "Unknown prefix: R/");
+        assertParseFailure(parser, "rp/Jainism", "Unknown prefix: rp/");
+        assertParseFailure(parser, "rx/Islam", "Unknown prefix: rx/");
     }
 
     @Test
@@ -232,9 +237,10 @@ public class FindCommandParserTest {
     @Test
     public void parse_blankOrInvalidSmoking_throwsParseException() {
         for (String value : new String[] {"", "   ", "unknown", "sometimes", "true", "0", "y", "n",
-            "yes,no", "yes no", "y es", "yeſ", "yes Alice", "yes x/no", "yes\ts/no"}) {
+            "yes,no", "yes no", "y es", "yeſ", "yes Alice", "yes\ts/no"}) {
             assertParseFailure(parser, "s/" + value, ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
         }
+        assertParseFailure(parser, "s/yes x/no", "Unknown prefix: x/");
     }
 
     @Test
@@ -260,9 +266,11 @@ public class FindCommandParserTest {
     public void parse_incorrectSmokingPrefixOrCriteriaEnvironment_throwsParseException() {
         String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 FindCommand.COMMAND_WORD, FindCommand.MESSAGE_USAGE);
-        for (String args : new String[] {"S/yes", "s /yes", "smoking/yes", "{s/yes}", "<s/no>"}) {
+        for (String args : new String[] {"s /yes", "{s/yes}", "<s/no>"}) {
             assertParseFailure(parser, args, message);
         }
+        assertParseFailure(parser, "S/yes", "Unknown prefix: S/");
+        assertParseFailure(parser, "smoking/yes", "Unknown prefix: smoking/");
         assertParseFailure(parser, "s/yes {s/no}", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
         assertParseFailure(parser, "s/no <s/yes>", ParserUtil.MESSAGE_INVALID_SMOKING_STATUS);
     }

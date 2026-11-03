@@ -118,6 +118,61 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_unknownPrefixAnywhere_reportsUnknownPrefix() {
+        String details = "n/Extra p/81231235 e/ex@x.com a/x age/25";
+        List<String> commands = List.of(
+                "add " + details + " x/what",
+                "add x/what " + details,
+                "add n/Extra x/what p/81231235 e/ex@x.com a/x age/25",
+                "add " + details + " {x/what}",
+                "add " + details + " {age/25 x/what}",
+                "add " + details + " <r/Islam x/what>",
+                "edit 1 age/25 x/what",
+                "edit 1 x/what n/Extra",
+                "edit 1 {r/ x/what}",
+                "edit 1 <x/what>",
+                "find x/what n/Extra",
+                "find n/Extra x/what",
+                "find age/25 x/what",
+                "find g/m x/what",
+                "find s/no x/what",
+                "find r/Jainism x/what",
+                "find rg/long x/what",
+                "find match/1 x/what",
+                "match 1 2 x/what",
+                "match n/Alice x/what n/Bob",
+                "delete 1 x/what",
+                "grp VIP add 1 x/what",
+                "show VIP x/what",
+                "list x/what", "clear x/what", "help x/what", "exit x/what");
+        for (String command : commands) {
+            assertThrows(ParseException.class, "Unknown prefix: x/", () -> parser.parseCommand(command));
+        }
+    }
+
+    @Test
+    public void parseCommand_unknownPrefixSpellings_identifiesOffendingPrefix() {
+        for (String prefix : List.of("unknown/", "X/", "agee/", "custom_1/", "custom-field/")) {
+            assertThrows(ParseException.class, "Unknown prefix: " + prefix, () ->
+                    parser.parseCommand("edit 1 age/25 " + prefix + "what"));
+        }
+        assertThrows(ParseException.class, "Unknown prefix: x/", () ->
+                parser.parseCommand("edit 1 age/25 x/what y/other"));
+    }
+
+    @Test
+    public void parseCommand_quotedUnknownPrefixAndEmbeddedSlashes_preservesLiteralValues() throws Exception {
+        Person person = new PersonBuilder().withAddress("Block x/what https://example.com/path 12/34").build();
+        String command = PersonUtil.getAddCommand(person).replace("a/" + person.getAddress().value,
+                "a/\"" + person.getAddress().value + "\"");
+        assertEquals(new AddCommand(person), parser.parseCommand(command));
+        Person unquoted = new PersonBuilder().withAddress("https://example.com/path 12/34").build();
+        assertEquals(new AddCommand(unquoted), parser.parseCommand(PersonUtil.getAddCommand(unquoted)));
+        assertThrows(ParseException.class, "Unknown prefix: y/", () ->
+                parser.parseCommand(command + " y/other"));
+    }
+
+    @Test
     public void parseCommand_unrecognisedInput_throwsParseException() {
         for (String input : List.of("", " ", "\t\n")) {
             assertThrows(ParseException.class,

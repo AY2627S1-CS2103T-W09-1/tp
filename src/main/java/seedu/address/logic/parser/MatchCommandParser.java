@@ -22,7 +22,7 @@ public class MatchCommandParser implements Parser<MatchCommand> {
         requireNonNull(args);
         String usage = String.format(MESSAGE_INVALID_COMMAND_FORMAT,
                 MatchCommand.COMMAND_WORD, MatchCommand.MESSAGE_USAGE);
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NAME);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeStrict(args, PREFIX_NAME);
         String preamble = argMultimap.getPreamble();
         List<String> indexes = preamble.isEmpty() ? List.of() : List.of(preamble.split("\\s+"));
         List<String> names = argMultimap.getAllValues(PREFIX_NAME);

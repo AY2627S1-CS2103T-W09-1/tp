@@ -45,8 +45,8 @@ public class AddCommandParser implements Parser<AddCommand> {
         args = parsedCriteria.outsideArguments();
         ParserUtil.rejectRemovedReligionCriteria(args);
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG,
-                        PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING,
+                ArgumentTokenizer.tokenizeStrict(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                        PREFIX_TAG, PREFIX_GENDER, PREFIX_AGE, PREFIX_SMOKING,
                         PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_AGE)

@@ -13,8 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -34,9 +32,6 @@ public final class DatingCriteriaParser {
             + "{...} preference environment and one non-nested <...> dealbreaker environment.";
     public static final String MESSAGE_INVALID_CRITERION_PREFIX =
             "Dating criteria may use only age/, g/, s/, r/, or rg/.";
-    private static final Set<Prefix> SUPPORTED_PREFIXES = Set.of(
-            PREFIX_AGE, PREFIX_GENDER, PREFIX_SMOKING, PREFIX_RELIGION, PREFIX_RELATIONSHIP_GOAL);
-    private static final Pattern PREFIX_TOKEN = Pattern.compile("(?:^|\\s)([A-Za-z]+/)");
 
     private DatingCriteriaParser() {}
 
@@ -123,9 +118,7 @@ public final class DatingCriteriaParser {
         if (contents.isBlank()) {
             return new ParsedEnvironment(Map.of(), Set.of());
         }
-        verifyOnlySupportedPrefixes(contents);
-
-        ArgumentMultimap arguments = ArgumentTokenizer.tokenize(" " + contents, supportedPrefixes());
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeStrict(" " + contents, supportedPrefixes());
         if (!arguments.getPreamble().isEmpty()) {
             throw new ParseException(MESSAGE_INVALID_CRITERION_PREFIX);
         }
@@ -145,16 +138,6 @@ public final class DatingCriteriaParser {
             }
         }
         return new ParsedEnvironment(criteria, attributesToRemove);
-    }
-
-    private static void verifyOnlySupportedPrefixes(String contents) throws ParseException {
-        Matcher matcher = PREFIX_TOKEN.matcher(contents);
-        while (matcher.find()) {
-            Prefix prefix = new Prefix(matcher.group(1));
-            if (!SUPPORTED_PREFIXES.contains(prefix)) {
-                throw new ParseException(MESSAGE_INVALID_CRITERION_PREFIX);
-            }
-        }
     }
 
     private static Prefix[] supportedPrefixes() {
