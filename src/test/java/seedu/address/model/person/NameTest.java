@@ -31,6 +31,9 @@ public class NameTest {
         assertFalse(Name.isValidName("peter*")); // contains non-alphanumeric characters
         assertFalse(Name.isValidName("/Ravi")); // starts with a slash
         assertFalse(Name.isValidName("\"Ravi\"")); // quotes are not part of a name
+        assertFalse(Name.isValidName("-Mary")); // starts with a hyphen
+        assertFalse(Name.isValidName("'Sean")); // starts with an apostrophe
+        assertFalse(Name.isValidName("\u9648\u5927\u6587")); // non-Latin script
 
         // valid name
         assertTrue(Name.isValidName("peter jack")); // alphabets only
@@ -40,6 +43,10 @@ public class NameTest {
         assertTrue(Name.isValidName("David Roger Jackson Ray Jr 2nd")); // long names
         assertTrue(Name.isValidName("Ravi s/o Kumar")); // "son of"
         assertTrue(Name.isValidName("Siti d/o Ahmad")); // "daughter of"
+        assertTrue(Name.isValidName("Jos\u00e9 Tan")); // accented Latin letter
+        assertTrue(Name.isValidName("Mary-Jane Lim")); // hyphen
+        assertTrue(Name.isValidName("Sean O'Brien")); // apostrophe
+        assertTrue(Name.isValidName("Sean O\u2019Brien")); // typographic apostrophe
     }
 
     @Test

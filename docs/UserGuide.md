@@ -114,6 +114,8 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS age/AGE [s/SMOKING] [g/GEND
 
 * `AGE` is compulsory. The valid values for `AGE`, `SMOKING`, `GENDER` and `RELIGION` are listed in
   [Parameter list](#parameter-list).
+* `NAME` may contain Latin letters, including accented letters such as `é`, digits, spaces, hyphens, apostrophes
+  and slashes, and starts with a letter or digit, e.g. `José Tan`, `Mary-Jane Lim` or `Sean O'Brien`.
 
 * Relationship goals are recorded only inside the criteria blocks, e.g. `{rg/long}`. See
   [Relationship goals](#relationship-goals).
