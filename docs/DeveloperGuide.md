@@ -514,7 +514,7 @@ save after successful commands; the saved client data is unchanged. Invalid comm
 The following sequence focuses on successful command execution after parsing `match 1 n/Bernice Yu`.
 Each reference resolves a client before one assessment compares criteria in both directions. The result
 retains the structured assessment for the UI; the diagram omits parsing, error branches, saving and rendering.
-`ref` represents each reference in turn, not a reference shared by both clients. Click to view at full size.
+`firstClient` and `secondClient` are the command's two references. Click to view at full size.
 
 [![Pairwise matching execution and structured result](images/MatchSequenceDiagram.png)](images/MatchSequenceDiagram.png)
 

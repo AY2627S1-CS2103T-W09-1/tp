@@ -98,7 +98,7 @@ loop for each c in allClients
         deactivate MatchAssessment
 
         opt outcome != INCOMPATIBLE
-            GroupCommand -> GroupCommand : matches.add(c)
+            note right of GroupCommand : c is kept in matches
         end
     end
 end
