@@ -29,7 +29,11 @@ class DatingCriteria {
     -dealbreakers: Map<DatingAttribute, Set<String>>
 }
 enum DatingAttribute <<enumeration>> {
+    AGE
+    GENDER
+    SMOKING
     RELIGION
+    RELATIONSHIP_GOAL
 }
 
 show Person methods

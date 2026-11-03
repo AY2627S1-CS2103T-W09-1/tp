@@ -88,9 +88,9 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 [![Structure of the UI Component](images/UiClassDiagram.png)](images/UiClassDiagram.png)
 
-This overview shows the main UI parts and their connections to `Logic`. UI inheritance, the command
+This overview shows the main UI parts, the `UiPart` class they extend and their connections to `Logic`. The command
 callback and list-cell implementation details are omitted for readability. `MatchResultView` extends
-JavaFX `ScrollPane`; the other visible UI parts shown extend `UiPart`. Click the diagram for a full-size view.
+JavaFX `ScrollPane` rather than `UiPart`. Click the diagram for a full-size view.
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
@@ -111,7 +111,8 @@ Here's a (partial) class diagram of the `Logic` component:
 
 [![Logic classes, including pairwise match results and candidate-search commands](images/LogicClassDiagram.png)](images/LogicClassDiagram.png)
 
-The overview omits command-specific parsers and dependencies on Model and Storage. Click for a full-size view.
+The overview omits command-specific parsers and dependencies on Model and Storage. `MatchCommand` holds two
+`ClientReference`s, each a `ByIndex` or a `ByName`. Click for a full-size view.
 
 The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
 
@@ -125,7 +126,7 @@ How the `Logic` component works:
 1. `Logic` passes the command text to `AddressBookParser`. Commands with arguments use a command parser (for example, `DeleteCommandParser`); argument-free commands such as `list` and `help` are constructed directly.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
+   For `delete 1`, the command gets the displayed list from the `Model`, then asks the `Model` to delete the selected person.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 `MatchCommand` compares two clients, referenced by displayed index or name, and returns a `MatchCommandResult`, a subclass of
@@ -514,7 +515,7 @@ save after successful commands; the saved client data is unchanged. Invalid comm
 The following sequence focuses on successful command execution after parsing `match 1 n/Bernice Yu`.
 Each reference resolves a client before one assessment compares criteria in both directions. The result
 retains the structured assessment for the UI; the diagram omits parsing, error branches, saving and rendering.
-`ref` represents each reference in turn, not a reference shared by both clients. Click to view at full size.
+`firstClient` and `secondClient` are the command's two references. Click to view at full size.
 
 [![Pairwise matching execution and structured result](images/MatchSequenceDiagram.png)](images/MatchSequenceDiagram.png)
 

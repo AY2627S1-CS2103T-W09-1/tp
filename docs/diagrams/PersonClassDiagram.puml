@@ -18,16 +18,16 @@ class Religion
 class Tag
 class DatingCriteria
 
-Person *-down-> "1" Name
-Person *-down-> "1" Phone
-Person *-down-> "1" Email
-Person *-down-> "1" Address
-Person *-down-> "1" Age
-Person *-down-> "1" Gender
-Person *-down-> "1" SmokingStatus
-Person *-down-> "0..1" Religion
-Person *-down-> "*" Tag
-Person *-down-> "1" DatingCriteria
+Person -down-> "1" Name
+Person -down-> "1" Phone
+Person -down-> "1" Email
+Person -down-> "1" Address
+Person -down-> "1" Age
+Person -down-> "1" Gender
+Person -down-> "1" SmokingStatus
+Person -down-> "0..1" Religion
+Person -down-> "*" Tag
+Person -down-> "1" DatingCriteria
 
 Name -[hidden]right-> Phone
 Phone -[hidden]right-> Email

@@ -4,7 +4,7 @@
 skinparam arrowColor UI_COLOR_T4
 skinparam classBackgroundColor UI_COLOR
 skinparam nodesep 45
-skinparam ranksep 55
+skinparam ranksep 70
 
 package UI as UiPackage {
 interface Ui <<interface>>
@@ -16,6 +16,8 @@ class ResultDisplay
 class PersonListPanel
 class StatusBarFooter
 class MatchResultView
+class PersonCard
+abstract class UiPart
 }
 
 interface "Logic" as LogicApi <<interface>> LOGIC_COLOR
@@ -30,4 +32,17 @@ MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" PersonListPanel
 MainWindow *-down-> "1" StatusBarFooter
 ResultDisplay .down.> MatchResultView : creates
+PersonListPanel -down-> "*" PersonCard
+MainWindow -down-|> UiPart
+HelpWindow -down-|> UiPart
+CommandBox -down-|> UiPart
+ResultDisplay -down-|> UiPart
+PersonListPanel -down-|> UiPart
+StatusBarFooter -down-|> UiPart
+PersonCard -down-|> UiPart
+HelpWindow -[hidden]right-> CommandBox
+CommandBox -[hidden]right-> ResultDisplay
+ResultDisplay -[hidden]right-> PersonListPanel
+PersonListPanel -[hidden]right-> StatusBarFooter
+MatchResultView -[hidden]right-> PersonCard
 @enduml

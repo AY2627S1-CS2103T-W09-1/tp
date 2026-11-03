@@ -6,7 +6,8 @@ skinparam maxMessageSize 250
 box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
 participant "c:MatchCommand" as MatchCommand LOGIC_COLOR
-participant "ref:ClientReference" as ClientReference LOGIC_COLOR
+participant "firstClient:ClientReference" as FirstClient LOGIC_COLOR
+participant "secondClient:ClientReference" as SecondClient LOGIC_COLOR
 participant "r:MatchCommandResult" as MatchCommandResult LOGIC_COLOR
 end box
 
@@ -26,22 +27,22 @@ note right of LogicManager : The parser has returned c.
 LogicManager -> MatchCommand : execute(model)
 activate MatchCommand
 
-loop for each ref in {first, second}
-    MatchCommand -> ClientReference : resolve(model)
-    activate ClientReference
-    note right of ClientReference
-    ByIndex uses the displayed list.
-    ByName uses the full address book:
-    exact name, then a unique normalized match.
-    end note
-    ClientReference --> MatchCommand : resolved Person
-    deactivate ClientReference
-end
-
-note over MatchCommand, ClientReference
-ref represents each reference in turn.
-The two resolved clients must be different.
+MatchCommand -> FirstClient : resolve(model)
+activate FirstClient
+note right of FirstClient
+ByIndex uses the displayed list.
+ByName uses the full address book:
+exact name, then a unique normalized match.
 end note
+FirstClient --> MatchCommand : first
+deactivate FirstClient
+
+MatchCommand -> SecondClient : resolve(model)
+activate SecondClient
+SecondClient --> MatchCommand : second
+deactivate SecondClient
+
+note right of MatchCommand : The two resolved clients must be different.
 
 create MatchAssessment
 MatchCommand -> MatchAssessment : new MatchAssessment(first, second)
@@ -50,14 +51,31 @@ note right of MatchAssessment : Compare criteria in both directions.
 MatchAssessment --> MatchCommand
  deactivate MatchAssessment
 
+MatchCommand -> MatchAssessment : getOutcome()
+activate MatchAssessment
+MatchAssessment --> MatchCommand : outcome
+deactivate MatchAssessment
+
+MatchCommand -> MatchAssessment : getFirstComparisons()
+activate MatchAssessment
+MatchAssessment --> MatchCommand : first comparisons
+deactivate MatchAssessment
+
+MatchCommand -> MatchAssessment : getSecondComparisons()
+activate MatchAssessment
+MatchAssessment --> MatchCommand : second comparisons
+deactivate MatchAssessment
+
 note right of MatchCommand
-Read the outcome and both comparison lists
-from a; format plain-text feedback.
+Format plain-text feedback.
 No client record or displayed filter is changed.
 end note
 
 create MatchCommandResult
 MatchCommand -> MatchCommandResult : new MatchCommandResult(...)
+activate MatchCommandResult
+MatchCommandResult --> MatchCommand
+deactivate MatchCommandResult
 MatchCommand --> LogicManager : r
  deactivate MatchCommand
 [<-- LogicManager : r

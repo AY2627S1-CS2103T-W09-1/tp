@@ -37,6 +37,7 @@ AddressBook *-right-> "*" ClientGroup
 ClientGroup -down-> "1" GroupName
 ClientGroup --> "0..*" Person : members
 UniquePersonList -down-> "0..*" Person : all clients
+ModelManager --> "~* filtered" Person
 Person -down-> "1" DatingCriteria : datingCriteria
 
 show DatingCriteria fields
