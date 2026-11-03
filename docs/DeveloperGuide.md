@@ -126,7 +126,7 @@ How the `Logic` component works:
 1. `Logic` passes the command text to `AddressBookParser`. Commands with arguments use a command parser (for example, `DeleteCommandParser`); argument-free commands such as `list` and `help` are constructed directly.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
+   For `delete 1`, the command gets the displayed list from the `Model`, then asks the `Model` to delete the selected person.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 `MatchCommand` compares two clients, referenced by displayed index or name, and returns a `MatchCommandResult`, a subclass of
